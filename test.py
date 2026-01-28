@@ -372,6 +372,30 @@ class InvoiceApp(ct.CTk):
         self.client_name = self.create_input(client_frame, "Client Name", "👤")
         self.client_email = self.create_input(client_frame, "Client Email", "📧")
         self.client_address = self.create_input(client_frame, "Client Address", "📍")
+        
+        # Invoice Date
+        invoice_date_container = ct.CTkFrame(client_frame, fg_color="transparent")
+        invoice_date_container.pack(side="left", fill="x", expand=True, padx=10)
+        
+        label_frame = ct.CTkFrame(invoice_date_container, fg_color="transparent")
+        label_frame.pack(anchor="w", fill="x")
+        
+        ct.CTkLabel(label_frame, text="📅", 
+                   font=ct.CTkFont(size=14)).pack(side="left", padx=(0, 5))
+        lbl = ct.CTkLabel(label_frame, text="Invoice Date", 
+                         font=ct.CTkFont(size=13, weight="bold"),
+                         text_color=("#475569", "#cbd5e1"))
+        lbl.pack(side="left")
+        
+        self.invoice_date = ct.CTkEntry(invoice_date_container, height=40,
+                                        corner_radius=10,
+                                        border_width=2,
+                                        border_color=("#cbd5e1", "#475569"),
+                                        font=ct.CTkFont(size=12))
+        self.invoice_date.pack(fill="x", pady=(5, 0))
+        # Set today's date as default
+        self.invoice_date.insert(0, datetime.now().strftime("%d-%m-%Y"))
+        
         self.invoice_num = self.create_input(client_frame, "Invoice #", "🔢")
         self.invoice_num.insert(0, self.get_next_invoice_number())
         
@@ -563,6 +587,9 @@ class InvoiceApp(ct.CTk):
         self.current_biz_id = biz_id
         self.current_theme = self.profiles[biz_id]["color"]
         self.refresh_theme()
+        
+        # Refresh history to show current business invoices
+        self.refresh_history_ui()
 
     def refresh_theme(self):
         # 1. Update Sidebar Buttons with modern styling
@@ -688,15 +715,40 @@ class InvoiceApp(ct.CTk):
 
     def add_item(self):
         try:
-            desc = self.item_desc.get()
+            desc = self.item_desc.get().strip()
             price = float(self.item_price.get())
             if desc:
-                self.items.append({"desc": desc, "price": price})
+                # Check if item with same description already exists
+                item_exists = False
+                for item in self.items:
+                    if item['desc'].lower() == desc.lower():
+                        # Update existing item
+                        item['price'] = price
+                        item_exists = True
+                        break
+                
+                # If item doesn't exist, add new one
+                if not item_exists:
+                    self.items.append({"desc": desc, "price": price})
+                
+                # Clear input fields
                 self.item_desc.delete(0, 'end')
                 self.item_price.delete(0, 'end')
                 self.refresh_table()
         except ValueError:
             messagebox.showerror("Error", "Price must be a number")
+
+    def delete_item(self, item_desc):
+        """Delete an item from the invoice"""
+        self.items = [item for item in self.items if item['desc'] != item_desc]
+        self.refresh_table()
+
+    def edit_item(self, item_desc, item_price):
+        """Load item into text boxes for editing"""
+        self.item_desc.delete(0, 'end')
+        self.item_desc.insert(0, item_desc)
+        self.item_price.delete(0, 'end')
+        self.item_price.insert(0, str(item_price))
 
     def refresh_table(self):
         for w in self.table_frame.winfo_children(): w.destroy()
@@ -715,7 +767,7 @@ class InvoiceApp(ct.CTk):
                    text_color="white").pack(side="left", padx=10)
         ct.CTkLabel(header_content, text="Price (₹) 💰", 
                    font=ct.CTkFont(size=13, weight="bold"),
-                   text_color="white").pack(side="right", padx=20)
+                   text_color="white").pack(side="right", padx=(0, 80))
 
         subtotal = 0.0
         for idx, item in enumerate(self.items):
@@ -729,12 +781,48 @@ class InvoiceApp(ct.CTk):
             row_content = ct.CTkFrame(row, fg_color="transparent")
             row_content.pack(fill="x", padx=15, pady=10)
             
+            # Description on left
             ct.CTkLabel(row_content, text=item['desc'],
                        font=ct.CTkFont(size=12),
                        text_color=("#1e293b", "#e2e8f0")).pack(side="left", padx=10)
-            ct.CTkLabel(row_content, text=f"₹{item['price']:.2f}",
+            
+            # Buttons on right
+            button_frame = ct.CTkFrame(row_content, fg_color="transparent")
+            button_frame.pack(side="right", padx=10)
+            
+            # Price label
+            ct.CTkLabel(button_frame, text=f"₹{item['price']:.2f}",
                        font=ct.CTkFont(size=12, weight="bold"),
-                       text_color=("#059669", "#10b981")).pack(side="right", padx=20)
+                       text_color=("#059669", "#10b981")).pack(side="left", padx=(0, 10))
+            
+            # Edit button
+            edit_btn = ct.CTkButton(
+                button_frame,
+                text="✏️",
+                command=lambda d=item['desc'], p=item['price']: self.edit_item(d, p),
+                width=35,
+                height=30,
+                fg_color=("#3b82f6", "#2563eb"),
+                hover_color=("#2563eb", "#1d4ed8"),
+                corner_radius=8,
+                font=ct.CTkFont(size=12)
+            )
+            edit_btn.pack(side="left", padx=2)
+            
+            # Delete button
+            delete_btn = ct.CTkButton(
+                button_frame,
+                text="🗑️",
+                command=lambda d=item['desc']: self.delete_item(d),
+                width=35,
+                height=30,
+                fg_color=("#ef4444", "#dc2626"),
+                hover_color=("#dc2626", "#b91c1c"),
+                corner_radius=8,
+                font=ct.CTkFont(size=12)
+            )
+            delete_btn.pack(side="left", padx=2)
+            
             subtotal += item['price']
 
         # Tax Calc
@@ -804,9 +892,15 @@ class InvoiceApp(ct.CTk):
         self.client_address.delete(0, 'end')
         self.invoice_num.delete(0, 'end')
         self.invoice_num.insert(0, self.get_next_invoice_number())
+        self.invoice_date.delete(0, 'end')
+        self.invoice_date.insert(0, datetime.now().strftime("%d-%m-%Y"))
         self.due_date.delete(0, 'end')
+        self.pending_var.set(False)
+        self.due_date.configure(state="normal", placeholder_text="")
         self.tax_entry.delete(0, 'end')
         self.tax_entry.insert(0, "0")
+        self.item_desc.delete(0, 'end')
+        self.item_price.delete(0, 'end')
         self.refresh_table()
 
     # --- Generation Logic ---
@@ -824,9 +918,12 @@ class InvoiceApp(ct.CTk):
         if self.pending_var.get():
             due_date_value = "PENDING"
         
+        # Get invoice date from input or use today's date
+        invoice_date = self.invoice_date.get() or datetime.now().strftime("%d-%m-%Y")
+        
         data = {
             "id": self.invoice_num.get(),
-            "date": datetime.now().strftime("%d-%m-%Y"),
+            "date": invoice_date,
             "due_date": due_date_value,
             "client_name": self.client_name.get(),
             "client_email": self.client_email.get(),
@@ -1450,24 +1547,51 @@ class InvoiceApp(ct.CTk):
             "due_date": data['due_date'],
             "biz_id": self.current_biz_id
         }
-        self.history.append(history_item)
         
-        # Keep only the last 5 invoices
-        if len(self.history) > 5:
-            self.history = self.history[-5:]
+        # Add to current business history
+        if self.current_biz_id not in self.history:
+            self.history[self.current_biz_id] = []
         
+        self.history[self.current_biz_id].append(history_item)
+        
+        # Keep only the last 5 invoices for this business
+        if len(self.history[self.current_biz_id]) > 5:
+            self.history[self.current_biz_id] = self.history[self.current_biz_id][-5:]
+        
+        # Save to file
         with open(HISTORY_FILE, 'w') as f:
-            json.dump(self.history, f)
+            json.dump(self.history, f, indent=4)
+        
         self.refresh_history_ui()
 
     def load_history(self):
         if os.path.exists(HISTORY_FILE):
             try:
                 with open(HISTORY_FILE, 'r') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    # Ensure it's a dictionary with business IDs as keys
+                    if isinstance(data, dict):
+                        return data
+                    # Convert old list format to new dict format
+                    elif isinstance(data, list):
+                        # Migrate old format to new format
+                        new_format = {
+                            "biz_1": [],
+                            "biz_2": [],
+                            "biz_3": [],
+                            "biz_4": []
+                        }
+                        # Try to assign old invoices to businesses based on biz_id if available
+                        for item in data:
+                            biz_id = item.get('biz_id', 'biz_1')
+                            if biz_id in new_format:
+                                new_format[biz_id].append(item)
+                        return new_format
+                    else:
+                        return {"biz_1": [], "biz_2": [], "biz_3": [], "biz_4": []}
             except:
-                return []
-        return []
+                return {"biz_1": [], "biz_2": [], "biz_3": [], "biz_4": []}
+        return {"biz_1": [], "biz_2": [], "biz_3": [], "biz_4": []}
 
     def load_invoice_from_history(self, history_item):
         """Load invoice data from history into the form"""
@@ -1482,6 +1606,10 @@ class InvoiceApp(ct.CTk):
         self.invoice_num.delete(0, 'end')
         self.invoice_num.insert(0, history_item['id'])
         
+        # Load invoice date
+        self.invoice_date.delete(0, 'end')
+        self.invoice_date.insert(0, history_item.get('date', datetime.now().strftime("%d-%m-%Y")))
+        
         self.client_name.delete(0, 'end')
         self.client_name.insert(0, history_item['client'])
         
@@ -1492,22 +1620,40 @@ class InvoiceApp(ct.CTk):
         self.client_address.insert(0, history_item.get('client_address', ''))
         
         self.due_date.delete(0, 'end')
-        self.due_date.insert(0, history_item.get('due_date', ''))
+        due_date_val = history_item.get('due_date', '')
+        if due_date_val == "PENDING":
+            self.pending_var.set(True)
+            self.toggle_pending()
+        else:
+            self.due_date.insert(0, due_date_val)
+            self.pending_var.set(False)
         
         self.tax_entry.delete(0, 'end')
         self.tax_entry.insert(0, str(history_item.get('tax_rate', 0)))
         
-        # Load items
+        # Load items into the items list (this will show in the table)
         self.items = history_item.get('items', [])
+        
+        # Also populate the description and price text boxes with the first item (if exists)
+        # This allows user to see the format and add more items easily
+        if self.items:
+            first_item = self.items[0]
+            self.item_desc.delete(0, 'end')
+            self.item_desc.insert(0, first_item['desc'])
+            self.item_price.delete(0, 'end')
+            self.item_price.insert(0, str(first_item['price']))
         
         # Refresh table to show loaded items
         self.refresh_table()
 
     def delete_invoice_from_history(self, invoice_id):
-        """Delete an invoice from history with confirmation"""
+        """Delete an invoice from current business history with confirmation"""
+        # Get current business history
+        current_history = self.history.get(self.current_biz_id, [])
+        
         # Find invoice details for confirmation
         invoice_to_delete = None
-        for h in self.history:
+        for h in current_history:
             if h['id'] == invoice_id:
                 invoice_to_delete = h
                 break
@@ -1521,16 +1667,23 @@ class InvoiceApp(ct.CTk):
             )
             
             if result:
-                self.history = [h for h in self.history if h['id'] != invoice_id]
+                # Remove from current business history
+                self.history[self.current_biz_id] = [h for h in current_history if h['id'] != invoice_id]
+                
+                # Save to file
                 with open(HISTORY_FILE, 'w') as f:
-                    json.dump(self.history, f)
+                    json.dump(self.history, f, indent=4)
+                
                 self.refresh_history_ui()
                 messagebox.showinfo("Success", f"Invoice #{invoice_id} has been deleted.")
 
     def refresh_history_ui(self):
         for w in self.history_list.winfo_children(): w.destroy()
         
-        if not self.history:
+        # Get current business history
+        current_history = self.history.get(self.current_biz_id, [])
+        
+        if not current_history:
             empty_frame = ct.CTkFrame(self.history_list, 
                                      fg_color=("#f1f5f9", "#1e293b"),
                                      corner_radius=8)
@@ -1540,8 +1693,8 @@ class InvoiceApp(ct.CTk):
                        font=ct.CTkFont(size=11)).pack(pady=12)
             return
         
-        # Show last 5 invoices with compact modern card design
-        for idx, h in enumerate(reversed(self.history[-5:])):
+        # Show last 5 invoices for current business with compact modern card design
+        for idx, h in enumerate(reversed(current_history[-5:])):
             # Compact card for each invoice
             item_card = ct.CTkFrame(self.history_list, 
                                    fg_color=("#ffffff", "#1e293b"),
@@ -1571,18 +1724,20 @@ class InvoiceApp(ct.CTk):
                        font=ct.CTkFont(size=10),
                        text_color=("#1e293b", "#f1f5f9")).pack(anchor="w", pady=(2, 0))
             
-            # Bottom row - Business and date
+            # Bottom row - Date and status
             bottom_row = ct.CTkFrame(content_frame, fg_color="transparent")
             bottom_row.pack(fill="x", pady=(2, 0))
             
-            ct.CTkLabel(bottom_row, text=f"{h['business'][:15]}...", 
-                       font=ct.CTkFont(size=9),
-                       text_color=("#64748b", "#94a3b8")).pack(side="left")
-            
             if h.get('date'):
-                ct.CTkLabel(bottom_row, text=h['date'], 
+                ct.CTkLabel(bottom_row, text=f"📅 {h['date']}", 
                            font=ct.CTkFont(size=9),
-                           text_color=("#94a3b8", "#64748b")).pack(side="right")
+                           text_color=("#94a3b8", "#64748b")).pack(side="left")
+            
+            if h.get('due_date'):
+                due_text = "⏳ Pending" if h['due_date'] == "PENDING" else f"Due: {h['due_date']}"
+                ct.CTkLabel(bottom_row, text=due_text, 
+                           font=ct.CTkFont(size=9),
+                           text_color=("#f59e0b", "#fbbf24")).pack(side="right")
             
             # Action buttons row
             button_row = ct.CTkFrame(item_card, fg_color="transparent")
