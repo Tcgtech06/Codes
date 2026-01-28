@@ -487,7 +487,7 @@ class InvoiceApp(ct.CTk):
         tax_frame = ct.CTkFrame(items_card, fg_color="transparent")
         tax_frame.pack(fill="x", padx=25, pady=(0, 20))
 
-        ct.CTkLabel(tax_frame, text="💰 Tax Rate (%):", 
+        ct.CTkLabel(tax_frame, text="💰 Tax Rate(GST) (%):", 
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color=("#475569", "#cbd5e1")).pack(side="left", padx=(0, 10))
         
@@ -856,7 +856,7 @@ class InvoiceApp(ct.CTk):
         # Tax
         tax_row = ct.CTkFrame(summary_content, fg_color="transparent")
         tax_row.pack(fill="x", pady=3)
-        ct.CTkLabel(tax_row, text=f"Tax ({tax_rate}%):", 
+        ct.CTkLabel(tax_row, text=f"Tax(GST) ({tax_rate}%):", 
                    font=ct.CTkFont(size=12),
                    text_color=("#64748b", "#94a3b8")).pack(side="left")
         ct.CTkLabel(tax_row, text=f"₹{tax_amt:.2f}",
@@ -1110,7 +1110,7 @@ class InvoiceApp(ct.CTk):
 
         tax_row = ct.CTkFrame(totals_frame, fg_color="white")
         tax_row.pack(fill="x", pady=1)
-        ct.CTkLabel(tax_row, text=f"Tax ({data['tax_rate']}%):", 
+        ct.CTkLabel(tax_row, text=f"Tax(GST) ({data['tax_rate']}%):", 
                    font=ct.CTkFont(size=10), width=350, anchor="e").pack(side="left", padx=8)
         ct.CTkLabel(tax_row, text=f"₹{data['tax_amt']:.2f}", 
                    font=ct.CTkFont(size=10), width=120, anchor="e").pack(side="right", padx=8)
@@ -1255,7 +1255,7 @@ class InvoiceApp(ct.CTk):
         pdf.cell(140, 7, "Subtotal", 0, 0, 'R')
         pdf.cell(50, 7, f"INR {data['subtotal']:.2f}", 0, 1, 'R')
 
-        pdf.cell(140, 7, f"Tax ({data['tax_rate']}%)", 0, 0, 'R')
+        pdf.cell(140, 7, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
         pdf.cell(50, 7, f"INR {data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.set_text_color(r, g, b)
@@ -1321,7 +1321,7 @@ class InvoiceApp(ct.CTk):
             pdf.cell(40, 8, f"INR {item['price']:.2f}", 'B', 1, 'R')
 
         pdf.ln(5)
-        pdf.cell(150, 6, f"Tax ({data['tax_rate']}%)", 0, 0, 'R')
+        pdf.cell(150, 6, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
         pdf.cell(40, 6, f"INR {data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.ln(5)
@@ -1393,7 +1393,7 @@ class InvoiceApp(ct.CTk):
             pdf.cell(40, 10, f"INR {item['price']:.2f}", 1, 1, 'R')
 
         # Tax Rows in Grid
-        pdf.cell(160, 10, f"TAX ({data['tax_rate']}%)", 1, 0, 'R')
+        pdf.cell(160, 10, f"TAX(GST) ({data['tax_rate']}%)", 1, 0, 'R')
         pdf.cell(40, 10, f"INR {data['tax_amt']:.2f}", 1, 1, 'R')
 
         pdf.cell(160, 10, "TOTAL DUE", 1, 0, 'R', True)
@@ -1459,7 +1459,7 @@ class InvoiceApp(ct.CTk):
         pdf.ln(5)
         pdf.cell(140, 8, "Subtotal", 0, 0)
         pdf.cell(40, 8, f"INR {data['subtotal']:.2f}", 0, 1, 'R')
-        pdf.cell(140, 8, f"Tax ({data['tax_rate']}%)", 0, 0)
+        pdf.cell(140, 8, f"Tax(GST) ({data['tax_rate']}%)", 0, 0)
         pdf.cell(40, 8, f"INR {data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.ln(5)
@@ -1524,7 +1524,7 @@ class InvoiceApp(ct.CTk):
 
         # Tax Rows in Word
         row_tax = table.add_row().cells
-        row_tax[0].text = f"Tax ({data['tax_rate']}%)"
+        row_tax[0].text = f"Tax(GST)({data['tax_rate']}%)"
         row_tax[1].text = f"{data['tax_amt']:.2f}"
 
         doc.add_paragraph(f"\nTOTAL: {data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
