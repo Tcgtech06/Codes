@@ -1,4 +1,4 @@
-import customtkinter as ct
+﻿import customtkinter as ct
 import os
 import json
 import shutil
@@ -69,6 +69,142 @@ DEFAULT_PROFILES = {
         "last_invoice_num": 4000
     }
 }
+
+
+class SplashScreen(ct.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        
+        # Configure splash window - FULL SCREEN
+        self.title("")
+        self.resizable(False, False)
+        
+        # Remove window decorations
+        self.overrideredirect(True)
+        
+        # Get screen dimensions and make fullscreen
+        self.update_idletasks()
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        self.geometry(f'{screen_width}x{screen_height}+0+0')
+        
+        # Configure background - WHITE
+        self.configure(fg_color="white")
+        
+        # Main container - centered
+        container = ct.CTkFrame(self, fg_color="white")
+        container.pack(expand=True, fill="both")
+        
+        # Application Logo with fade-in animation
+        self.logo_label = ct.CTkLabel(container, text="", fg_color="white")
+        self.logo_label.pack(pady=(40, 10))
+        
+        try:
+            logo_img = Image.open("logo.png")
+            logo_img = logo_img.resize((150, 150), Image.Resampling.LANCZOS)
+            logo_photo = ct.CTkImage(light_image=logo_img, dark_image=logo_img, size=(150, 150))
+            self.logo_label.configure(image=logo_photo)
+            self.logo_label.image = logo_photo
+        except Exception as e:
+            print(f"Could not load logo: {e}")
+            self.logo_label.configure(text="📊", font=ct.CTkFont(size=80))
+        
+        # Application Title with colored text - TCG INVOICE
+        title_frame = ct.CTkFrame(container, fg_color="white")
+        title_frame.pack(pady=20)
+        
+        # Create colored labels for each letter/word
+        # T - Red
+        ct.CTkLabel(title_frame, text="T", 
+                   font=ct.CTkFont(size=40, weight="bold"),
+                   text_color="#FF0000", fg_color="white").pack(side="left")
+        
+        # C - Green
+        ct.CTkLabel(title_frame, text="C", 
+                   font=ct.CTkFont(size=40, weight="bold"),
+                   text_color="#00AA00", fg_color="white").pack(side="left")
+        
+        # G - Yellow
+        ct.CTkLabel(title_frame, text="G", 
+                   font=ct.CTkFont(size=40, weight="bold"),
+                   text_color="#FFD700", fg_color="white").pack(side="left")
+        
+        # Space
+        ct.CTkLabel(title_frame, text=" ", 
+                   font=ct.CTkFont(size=40), fg_color="white").pack(side="left")
+        
+        # INVOICE - Blue
+        ct.CTkLabel(title_frame, text="INVOICE", 
+                   font=ct.CTkFont(size=40, weight="bold"),
+                   text_color="#0066FF", fg_color="white").pack(side="left")
+        
+        # Spacer
+        ct.CTkFrame(container, height=60, fg_color="white").pack()
+        
+        # "Powered By" text
+        ct.CTkLabel(container, text="Powered By", 
+                   font=ct.CTkFont(size=16),
+                   text_color="#64748b", fg_color="white").pack(pady=(0, 20))
+        
+        # TCG Tech Logo - original size, no stretching
+        self.tcg_label = ct.CTkLabel(container, text="", fg_color="white")
+        self.tcg_label.pack(pady=20)
+        
+        tcg_loaded = False
+        try:
+            # Check current directory first
+            if os.path.exists("Image/Tcgtech.png"):
+                tcg_path = "Image/Tcgtech.png"
+            elif os.path.exists("Image\\Tcgtech.png"):
+                tcg_path = "Image\\Tcgtech.png"
+            else:
+                # Try to find it
+                import glob
+                matches = glob.glob("**/Tcgtech.png", recursive=True)
+                if matches:
+                    tcg_path = matches[0]
+                else:
+                    tcg_path = None
+            
+            if tcg_path and os.path.exists(tcg_path):
+                print(f"Loading TCG logo from: {tcg_path}")
+                tcg_img = Image.open(tcg_path)
+                # Increase size - scale to 200x80 max
+                tcg_img.thumbnail((200, 80), Image.Resampling.LANCZOS)
+                tcg_photo = ct.CTkImage(light_image=tcg_img, dark_image=tcg_img, size=tcg_img.size)
+                self.tcg_label.configure(image=tcg_photo)
+                self.tcg_label.image = tcg_photo
+                tcg_loaded = True
+                print("TCG logo loaded successfully")
+            else:
+                print(f"TCG logo file not found at: {tcg_path}")
+        except Exception as e:
+            print(f"Error loading TCG Tech logo: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # Fallback if image didn't load
+        if not tcg_loaded:
+            ct.CTkLabel(container, text="TCG TECH", 
+                       font=ct.CTkFont(size=28, weight="bold"),
+                       text_color="#1e40af", fg_color="white").pack(pady=20)
+        
+        # Start fade-in animation
+        self.alpha = 0.0
+        self.animate_fade_in()
+        
+        # Close splash screen after 4 seconds
+        self.after(4000, self.close_splash)
+    
+    def animate_fade_in(self):
+        """Animate fade-in effect"""
+        if self.alpha < 1.0:
+            self.alpha += 0.05
+            self.attributes('-alpha', self.alpha)
+            self.after(30, self.animate_fade_in)
+    
+    def close_splash(self):
+        self.destroy()
 
 
 class InvoiceApp(ct.CTk):
@@ -322,7 +458,14 @@ class InvoiceApp(ct.CTk):
                                            corner_radius=10,
                                            border_width=2,
                                            border_color=("#cbd5e1", "#475569"))
-        self.biz_phone_entry.pack(anchor="w")
+        self.biz_phone_entry.pack(anchor="w", pady=(0, 10))
+
+        self.biz_gst_entry = ct.CTkEntry(info_frame, width=350, height=40,
+                                         placeholder_text="GST No (Optional)",
+                                         corner_radius=10,
+                                         border_width=2,
+                                         border_color=("#cbd5e1", "#475569"))
+        self.biz_gst_entry.pack(anchor="w")
 
         # Save & Upload Buttons with modern styling
         btn_frame = ct.CTkFrame(content_frame, fg_color="transparent")
@@ -371,6 +514,7 @@ class InvoiceApp(ct.CTk):
 
         self.client_name = self.create_input(client_frame, "Client Name", "👤")
         self.client_email = self.create_input(client_frame, "Client Email", "📧")
+        self.client_phone = self.create_input(client_frame, "Client Phone", "📞")
         self.client_address = self.create_input(client_frame, "Client Address", "📍")
         
         # Invoice Date
@@ -455,18 +599,52 @@ class InvoiceApp(ct.CTk):
         entry_grid.pack(fill="x", padx=25, pady=(0, 15))
 
         self.item_desc = ct.CTkEntry(entry_grid, placeholder_text="Item Description", 
-                                     width=500, height=45,
+                                     width=400, height=45,
                                      corner_radius=12,
                                      border_width=2,
                                      font=ct.CTkFont(size=13))
         self.item_desc.pack(side="left", padx=5)
 
         self.item_price = ct.CTkEntry(entry_grid, placeholder_text="Amount (₹)", 
-                                      width=180, height=45,
+                                      width=150, height=45,
                                       corner_radius=12,
                                       border_width=2,
                                       font=ct.CTkFont(size=13))
         self.item_price.pack(side="left", padx=5)
+
+        # Quantity checkbox and fields
+        self.quantity_var = ct.BooleanVar(value=False)
+        self.quantity_checkbox = ct.CTkCheckBox(
+            entry_grid,
+            text="Quantity",
+            variable=self.quantity_var,
+            command=self.toggle_quantity_fields,
+            font=ct.CTkFont(size=12, weight="bold"),
+            corner_radius=8
+        )
+        self.quantity_checkbox.pack(side="left", padx=5)
+
+        # Quantity input (initially hidden)
+        self.item_quantity = ct.CTkEntry(entry_grid, placeholder_text="e.g. 1/2, 15.5",
+                                        width=100, height=45,
+                                        corner_radius=12,
+                                        border_width=2,
+                                        font=ct.CTkFont(size=13))
+        
+        # Unit dropdown (initially hidden)
+        self.item_unit = ct.CTkComboBox(entry_grid,
+                                       values=["gm", "Kg", "Litre", "Rounds", "Trips", "Piece", "Custom"],
+                                       width=100, height=45,
+                                       corner_radius=12,
+                                       font=ct.CTkFont(size=12),
+                                       command=self.on_unit_change)
+        
+        # Custom unit entry (initially hidden)
+        self.item_custom_unit = ct.CTkEntry(entry_grid, placeholder_text="Custom Unit",
+                                           width=120, height=45,
+                                           corner_radius=12,
+                                           border_width=2,
+                                           font=ct.CTkFont(size=13))
 
         self.add_btn = ct.CTkButton(entry_grid, text="➕ Add", 
                                     width=100, height=45,
@@ -577,16 +755,40 @@ class InvoiceApp(ct.CTk):
         else:
             self.due_date.configure(state="normal", placeholder_text="")
 
+    def toggle_quantity_fields(self):
+        """Toggle visibility of quantity input fields"""
+        if self.quantity_var.get():
+            self.item_quantity.pack(side="left", padx=5)
+            self.item_unit.pack(side="left", padx=5)
+            self.item_unit.set("Kg")  # Default value
+        else:
+            self.item_quantity.pack_forget()
+            self.item_unit.pack_forget()
+            self.item_custom_unit.pack_forget()
+
+    def on_unit_change(self, choice):
+        """Show custom unit entry if Custom is selected"""
+        if choice == "Custom":
+            self.item_custom_unit.pack(side="left", padx=5, before=self.add_btn)
+        else:
+            self.item_custom_unit.pack_forget()
+
     # --- Business Profile Logic ---
 
     def switch_business(self, biz_id):
         # AUTO-SAVE LOGIC: Save current input to the OLD profile before switching
         current_name = self.biz_name_entry.get()
         current_addr = self.biz_addr_entry.get()
+        current_email = self.biz_email_entry.get()
+        current_phone = self.biz_phone_entry.get()
+        current_gst = self.biz_gst_entry.get().strip()
 
         if current_name:
             self.profiles[self.current_biz_id]["name"] = current_name
             self.profiles[self.current_biz_id]["address"] = current_addr
+            self.profiles[self.current_biz_id]["email"] = current_email
+            self.profiles[self.current_biz_id]["phone"] = current_phone
+            self.profiles[self.current_biz_id]["gst_no"] = current_gst
             self.save_profiles()  # Commit to file so it persists
 
         # Now switch
@@ -630,6 +832,9 @@ class InvoiceApp(ct.CTk):
 
         self.biz_phone_entry.delete(0, 'end')
         self.biz_phone_entry.insert(0, profile.get("phone", ""))
+
+        self.biz_gst_entry.delete(0, 'end')
+        self.biz_gst_entry.insert(0, profile.get("gst_no", ""))
 
         self.style_label.configure(text=f"Current Format: {profile.get('style', 'Standard')}")
 
@@ -694,11 +899,13 @@ class InvoiceApp(ct.CTk):
         addr = self.biz_addr_entry.get()
         email = self.biz_email_entry.get()
         phone = self.biz_phone_entry.get()
+        gst_no = self.biz_gst_entry.get().strip()
         if name:
             self.profiles[self.current_biz_id]["name"] = name
             self.profiles[self.current_biz_id]["address"] = addr
             self.profiles[self.current_biz_id]["email"] = email
             self.profiles[self.current_biz_id]["phone"] = phone
+            self.profiles[self.current_biz_id]["gst_no"] = gst_no
             self.save_profiles()
             
             # Update the sidebar button text immediately
@@ -719,45 +926,109 @@ class InvoiceApp(ct.CTk):
         self.save_profiles()
         return str(next_num)
 
+    def parse_quantity(self, qty_str):
+        """Parse quantity string that can be fraction (1/2, 1/4) or decimal (15.5)"""
+        qty_str = qty_str.strip()
+        if not qty_str:
+            return None, None
+        
+        # Check if it's a fraction (e.g., 1/2, 1/4, 3/4)
+        if '/' in qty_str:
+            try:
+                parts = qty_str.split('/')
+                if len(parts) == 2:
+                    numerator = float(parts[0].strip())
+                    denominator = float(parts[1].strip())
+                    if denominator != 0:
+                        decimal_value = numerator / denominator
+                        # Return both the original fraction string and decimal value
+                        return qty_str, decimal_value
+            except:
+                pass
+        
+        # Try to parse as float/decimal
+        try:
+            decimal_value = float(qty_str)
+            return qty_str, decimal_value
+        except:
+            return None, None
+
     def add_item(self):
         try:
             desc = self.item_desc.get().strip()
-            price = float(self.item_price.get())
+            price_per_unit = float(self.item_price.get())
+            
+            # Get quantity data if checkbox is checked
+            quantity = None
+            quantity_display = None
+            unit = None
+            total_price = price_per_unit  # Default to single unit price
+            
+            if self.quantity_var.get():
+                qty_value = self.item_quantity.get().strip()
+                if qty_value:
+                    quantity_display, quantity = self.parse_quantity(qty_value)
+                    if quantity is None:
+                        messagebox.showerror("Error", "Invalid quantity format. Use numbers (15.5), fractions (1/2), or decimals.")
+                        return
+                    unit = self.item_unit.get()
+                    if unit == "Custom":
+                        unit = self.item_custom_unit.get().strip() or "units"
+                    
+                    # Auto-calculate total price: quantity * price_per_unit
+                    total_price = quantity * price_per_unit
+            
             if desc:
                 # Check if item with same description already exists
                 item_exists = False
                 for item in self.items:
                     if item['desc'].lower() == desc.lower():
                         # Update existing item
-                        item['price'] = price
+                        item['price'] = total_price  # Store calculated total price
+                        item['price_per_unit'] = price_per_unit  # Store unit price for reference
+                        item['quantity'] = quantity
+                        item['quantity_display'] = quantity_display
+                        item['unit'] = unit
                         item_exists = True
                         break
                 
                 # If item doesn't exist, add new one
                 if not item_exists:
-                    self.items.append({"desc": desc, "price": price})
+                    self.items.append({
+                        "desc": desc, 
+                        "price": total_price,  # Store calculated total price
+                        "price_per_unit": price_per_unit,  # Store unit price for reference
+                        "quantity": quantity,
+                        "quantity_display": quantity_display,
+                        "unit": unit
+                    })
                 
                 # Clear input fields
                 self.item_desc.delete(0, 'end')
                 self.item_price.delete(0, 'end')
+                self.item_quantity.delete(0, 'end')
+                self.item_custom_unit.delete(0, 'end')
                 self.refresh_table()
         except ValueError:
-            messagebox.showerror("Error", "Price must be a number")
+            messagebox.showerror("Error", "Price must be a valid number")
 
     def delete_item(self, item_desc):
         """Delete an item from the invoice"""
         self.items = [item for item in self.items if item['desc'] != item_desc]
         self.refresh_table()
 
-    def edit_item(self, item_desc, item_price):
+    def edit_item(self, item_desc, item_price_per_unit):
         """Load item into text boxes for editing"""
         self.item_desc.delete(0, 'end')
         self.item_desc.insert(0, item_desc)
         self.item_price.delete(0, 'end')
-        self.item_price.insert(0, str(item_price))
+        self.item_price.insert(0, str(item_price_per_unit))
 
     def refresh_table(self):
         for w in self.table_frame.winfo_children(): w.destroy()
+
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in self.items)
 
         # Modern Header with gradient
         h = ct.CTkFrame(self.table_frame, 
@@ -771,6 +1042,12 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(header_content, text="📋 Item Description", 
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color="white").pack(side="left", padx=10)
+        
+        if has_quantity:
+            ct.CTkLabel(header_content, text="Quantity", 
+                       font=ct.CTkFont(size=13, weight="bold"),
+                       text_color="white").pack(side="left", padx=(200, 10))
+        
         ct.CTkLabel(header_content, text="Price (₹) 💰", 
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color="white").pack(side="right", padx=(0, 80))
@@ -792,6 +1069,18 @@ class InvoiceApp(ct.CTk):
                        font=ct.CTkFont(size=12),
                        text_color=("#1e293b", "#e2e8f0")).pack(side="left", padx=10)
             
+            # Quantity in middle (if exists)
+            if has_quantity:
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    # Use quantity_display if available (shows fractions), otherwise use quantity
+                    display_qty = item.get('quantity_display', item['quantity'])
+                    qty_text = f"{display_qty} {item.get('unit', '')}"
+                ct.CTkLabel(row_content, text=qty_text,
+                           font=ct.CTkFont(size=11),
+                           text_color=("#64748b", "#94a3b8"),
+                           width=150).pack(side="left", padx=(150, 10))
+            
             # Buttons on right
             button_frame = ct.CTkFrame(row_content, fg_color="transparent")
             button_frame.pack(side="right", padx=10)
@@ -805,7 +1094,7 @@ class InvoiceApp(ct.CTk):
             edit_btn = ct.CTkButton(
                 button_frame,
                 text="✏️",
-                command=lambda d=item['desc'], p=item['price']: self.edit_item(d, p),
+                command=lambda d=item['desc'], p=item.get('price_per_unit', item['price']): self.edit_item(d, p),
                 width=35,
                 height=30,
                 fg_color=("#3b82f6", "#2563eb"),
@@ -914,6 +1203,7 @@ class InvoiceApp(ct.CTk):
         self.items = []
         self.client_name.delete(0, 'end')
         self.client_email.delete(0, 'end')
+        self.client_phone.delete(0, 'end')
         self.client_address.delete(0, 'end')
         self.invoice_num.delete(0, 'end')
         self.invoice_num.insert(0, self.get_next_invoice_number())
@@ -956,6 +1246,7 @@ class InvoiceApp(ct.CTk):
              "due_date": due_date_value,
              "client_name": self.client_name.get(),
              "client_email": self.client_email.get(),
+             "client_phone": self.client_phone.get(),
              "discount_rate": self.current_calc["discount_rate"],
              "discount_amt": self.current_calc["discount_amt"],
              "client_address": self.client_address.get(),
@@ -968,14 +1259,15 @@ class InvoiceApp(ct.CTk):
              "biz_addr": profile["address"],
              "biz_email": profile.get("email", ""),
              "biz_phone": profile.get("phone", ""),
+             "biz_gst_no": profile.get("gst_no", ""),
              "biz_logo": profile["logo"],
              "biz_color": profile["color"],
              "biz_style": profile.get("style", "Modern")
             }
 
             # Show preview dialog first
-            # if not self.show_preview_dialog(data, file_type):
-            #     return  # User cancelled
+            if not self.show_preview_dialog(data, file_type):
+                return  # User cancelled
             ext = ".pdf" if file_type == "pdf" else ".docx"
             filename = f"{data['biz_name'].replace(' ', '')}_Inv{data['id']}{ext}"
 
@@ -983,22 +1275,13 @@ class InvoiceApp(ct.CTk):
             if not save_path: return
 
             if file_type == "pdf":
-                # Dispatcher for PDF Styles
-                if self.current_biz_id == "biz_1":
-                    self.make_pdf_style_1(data, save_path)
-                elif self.current_biz_id == "biz_2":
-                    self.make_pdf_style_2(data, save_path)
-                elif self.current_biz_id == "biz_3":
-                    self.make_pdf_style_3(data, save_path)
-                elif self.current_biz_id == "biz_4":
-                    self.make_pdf_style_4(data, save_path)
-                else:
-                    self.make_pdf_style_1(data, save_path)  # Default
+                # Use modern style (Style 1) for all businesses
+                self.make_pdf_style_1(data, save_path)
             else:
                 self.make_word(data, save_path)
 
             self.save_to_history(data)
-            messagebox.showinfo("Success", f"Invoice saved!\nFormat: {data['biz_style']}")
+            messagebox.showinfo("Success", f"Invoice saved!")
         
         except Exception as e:
             messagebox.showerror("Error", f"Failed to generate invoice: {str(e)}")
@@ -1060,6 +1343,9 @@ class InvoiceApp(ct.CTk):
         if data['biz_phone']:
             ct.CTkLabel(biz_info_frame, text=data['biz_phone'], 
                        font=ct.CTkFont(size=10), anchor="w").pack(fill="x")
+        if data.get('biz_gst_no'):
+            ct.CTkLabel(biz_info_frame, text=f"GST No: {data['biz_gst_no']}", 
+                       font=ct.CTkFont(size=10), anchor="w").pack(fill="x")
 
         ct.CTkFrame(preview_frame, height=1, fg_color="#e0e0e0").pack(fill="x", padx=15, pady=10)
 
@@ -1075,8 +1361,13 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(invoice_header, text=f"Date: {data['date']}", 
                    font=ct.CTkFont(size=10)).pack(anchor="w")
         if data['due_date']:
-            ct.CTkLabel(invoice_header, text=f"Due Date: {data['due_date']}", 
-                       font=ct.CTkFont(size=10)).pack(anchor="w")
+            if data['due_date'] == "PENDING":
+                ct.CTkLabel(invoice_header, text=f"Due Date: PENDING", 
+                           font=ct.CTkFont(size=10, weight="bold"),
+                           text_color="red").pack(anchor="w")
+            else:
+                ct.CTkLabel(invoice_header, text=f"Due Date: {data['due_date']}", 
+                           font=ct.CTkFont(size=10)).pack(anchor="w")
 
         ct.CTkFrame(preview_frame, height=1, fg_color="#e0e0e0").pack(fill="x", padx=15, pady=10)
 
@@ -1091,6 +1382,9 @@ class InvoiceApp(ct.CTk):
                    font=ct.CTkFont(size=11, weight="bold")).pack(anchor="w", padx=8, pady=2)
         ct.CTkLabel(client_frame, text=data['client_email'], 
                    font=ct.CTkFont(size=10)).pack(anchor="w", padx=8, pady=2)
+        if data.get('client_phone'):
+            ct.CTkLabel(client_frame, text=f"Phone: {data['client_phone']}", 
+                       font=ct.CTkFont(size=10)).pack(anchor="w", padx=8, pady=2)
         if data.get('client_address'):
             ct.CTkLabel(client_frame, text=data['client_address'], 
                        font=ct.CTkFont(size=10)).pack(anchor="w", padx=8, pady=2)
@@ -1101,6 +1395,9 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(preview_frame, text="ITEMS:", 
                    font=ct.CTkFont(size=11, weight="bold")).pack(anchor="w", padx=15)
         
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in data['items'])
+        
         # Table Header
         table_header = ct.CTkFrame(preview_frame, fg_color=data['biz_color'])
         table_header.pack(fill="x", padx=15, pady=5)
@@ -1110,7 +1407,13 @@ class InvoiceApp(ct.CTk):
         
         ct.CTkLabel(header_row, text="Description", 
                    font=ct.CTkFont(size=11, weight="bold"),
-                   text_color="white", width=350, anchor="w").pack(side="left", padx=5)
+                   text_color="white", width=250 if has_quantity else 350, anchor="w").pack(side="left", padx=5)
+        
+        if has_quantity:
+            ct.CTkLabel(header_row, text="Quantity", 
+                       font=ct.CTkFont(size=11, weight="bold"),
+                       text_color="white", width=100, anchor="center").pack(side="left", padx=5)
+        
         ct.CTkLabel(header_row, text="Amount (₹)", 
                    font=ct.CTkFont(size=11, weight="bold"),
                    text_color="white", width=120, anchor="e").pack(side="right", padx=5)
@@ -1122,7 +1425,17 @@ class InvoiceApp(ct.CTk):
             item_row.pack(fill="x", padx=15, pady=1)
             
             ct.CTkLabel(item_row, text=item['desc'], 
-                       font=ct.CTkFont(size=10), width=350, anchor="w").pack(side="left", padx=8, pady=4)
+                       font=ct.CTkFont(size=10), width=250 if has_quantity else 350, anchor="w").pack(side="left", padx=8, pady=4)
+            
+            if has_quantity:
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    # Use quantity_display if available (shows fractions), otherwise use quantity
+                    display_qty = item.get('quantity_display', item['quantity'])
+                    qty_text = f"{display_qty} {item.get('unit', '')}"
+                ct.CTkLabel(item_row, text=qty_text, 
+                           font=ct.CTkFont(size=10), width=100, anchor="center").pack(side="left", padx=8, pady=4)
+            
             ct.CTkLabel(item_row, text=f"₹{item['price']:.2f}", 
                        font=ct.CTkFont(size=10), width=120, anchor="e").pack(side="right", padx=8, pady=4)
 
@@ -1164,10 +1477,6 @@ class InvoiceApp(ct.CTk):
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color=data['biz_color'], width=120, anchor="e").pack(side="right", padx=8)
 
-        ct.CTkLabel(preview_frame, text=f"Style: {data['biz_style']}", 
-                   font=ct.CTkFont(size=9, slant="italic"),
-                   text_color="#888").pack(pady=8)
-
         # Buttons at bottom - FIXED position
         button_frame = ct.CTkFrame(preview_window, fg_color="transparent")
         button_frame.grid(row=2, column=0, pady=15, sticky="ew")
@@ -1206,14 +1515,16 @@ class InvoiceApp(ct.CTk):
         pdf = FPDF()
         pdf.add_page()
         
-        # Add Unicode support font for INR symbol
+        # Add Unicode support font for rupees symbol
         try:
             pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
             pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
             font_name = 'DejaVu'
-        except:
+            print("DejaVu fonts loaded successfully for Unicode support")
+        except Exception as e:
             # Fallback to default font if DejaVu not available
             font_name = 'Arial'
+            print(f"DejaVu font loading failed: {e}, using Arial")
 
         # Color helper
         hex_color = data['biz_color'].lstrip('#')
@@ -1243,10 +1554,19 @@ class InvoiceApp(ct.CTk):
 
         pdf.set_font(font_name, '', 10)
         pdf.set_text_color(100)
+        if data.get('biz_gst_no'):
+            pdf.cell(0, 5, f"GST No: {data['biz_gst_no']}", 0, 1, 'R')
         pdf.cell(0, 5, f"#{data['id']}", 0, 1, 'R')
         pdf.cell(0, 5, f"Date: {data['date']}", 0, 1, 'R')
         if data['due_date']:
-            pdf.cell(0, 5, f"Due: {data['due_date']}", 0, 1, 'R')
+            if data['due_date'] == "PENDING":
+                pdf.set_text_color(255, 0, 0)  # Red color
+                pdf.set_font(font_name, 'B', 10)
+                pdf.cell(0, 5, "Due: PENDING", 0, 1, 'R')
+                pdf.set_font(font_name, '', 10)
+                pdf.set_text_color(100)
+            else:
+                pdf.cell(0, 5, f"Due: {data['due_date']}", 0, 1, 'R')
         pdf.ln(10)
 
         # Info Blocks
@@ -1268,41 +1588,59 @@ class InvoiceApp(ct.CTk):
         # To
         pdf.set_xy(x + 95, y)
         client_info = f"{data['client_name']}\n{data['client_email']}"
+        if data.get('client_phone'):
+            client_info += f"\nPhone: {data['client_phone']}"
         if data.get('client_address'):
             client_info += f"\n{data['client_address']}"
         pdf.multi_cell(90, 5, client_info)
         pdf.ln(15)
 
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in data['items'])
+
         pdf.set_fill_color(r, g, b)
         pdf.set_text_color(255)
-        pdf.cell(140, 10, " Description", 0, 0, 'L', True)
-        pdf.cell(50, 10, " Price (INR)", 0, 1, 'R', True)
+        if has_quantity:
+            pdf.cell(90, 10, " Description", 0, 0, 'L', True)
+            pdf.cell(50, 10, " Quantity", 0, 0, 'C', True)
+            pdf.cell(50, 10, " Price (?)", 0, 1, 'R', True)
+        else:
+            pdf.cell(140, 10, " Description", 0, 0, 'L', True)
+            pdf.cell(50, 10, " Price (?)", 0, 1, 'R', True)
 
         # Items
         pdf.set_text_color(0)
         pdf.set_fill_color(245, 245, 245)
         fill = False
         for item in data['items']:
-            pdf.cell(140, 10, f" {item['desc']}", 0, 0, 'L', fill)
-            pdf.cell(50, 10, f"INR {item['price']:.2f} ", 0, 1, 'R', fill)
+            if has_quantity:
+                pdf.cell(90, 10, f" {item['desc']}", 0, 0, 'L', fill)
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    qty_text = f"{item['quantity']} {item.get('unit', '')}"
+                pdf.cell(50, 10, qty_text, 0, 0, 'C', fill)
+                pdf.cell(50, 10, f"₹{item['price']:.2f} ", 0, 1, 'R', fill)
+            else:
+                pdf.cell(140, 10, f" {item['desc']}", 0, 0, 'L', fill)
+                pdf.cell(50, 10, f"₹{item['price']:.2f} ", 0, 1, 'R', fill)
             fill = not fill
 
         # Total
         pdf.ln(5)
         pdf.set_text_color(0)
         pdf.cell(140, 7, "Subtotal", 0, 0, 'R')
-        pdf.cell(50, 7, f"INR {data['subtotal']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"₹{data['subtotal']:.2f}", 0, 1, 'R')
         
         pdf.cell(140, 7, f"Discount ({data['discount_rate']}%)", 0, 0, 'R')
-        pdf.cell(50, 7, f"INR {data['discount_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"₹{data['discount_amt']:.2f}", 0, 1, 'R')
 
         pdf.cell(140, 7, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
-        pdf.cell(50, 7, f"INR {data['tax_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"₹{data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.set_text_color(r, g, b)
         pdf.set_font(font_name, 'B', 14)
         pdf.cell(140, 10, "GRAND TOTAL", 0, 0, 'R')
-        pdf.cell(50, 10, f"INR {data['total']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 10, f"₹{data['total']:.2f}", 0, 1, 'R')
 
         pdf.output(path)
 
@@ -1347,30 +1685,53 @@ class InvoiceApp(ct.CTk):
         if data.get('client_address'):
             pdf.cell(0, 6, f"Address: {data['client_address']}", 0, 1, 'L')
         pdf.cell(0, 6, f"Email: {data['client_email']}", 0, 1, 'L')
+        if data.get('client_phone'):
+            pdf.cell(0, 6, f"Phone: {data['client_phone']}", 0, 1, 'L')
+        
+        # Invoice details on right side
+        if data.get('biz_gst_no'):
+            pdf.cell(0, 6, f"GST No: {data['biz_gst_no']}", 0, 1, 'R')
         pdf.cell(0, 6, f"Invoice: #{data['id']}", 0, 1, 'R')
+        pdf.cell(0, 6, f"Date: {data['date']}", 0, 1, 'R')
 
         pdf.ln(10)
 
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in data['items'])
+
         # Table
         pdf.set_font("Times", 'B', 12)
-        pdf.cell(150, 8, "Item", 'B', 0)
-        pdf.cell(40, 8, "Cost (INR)", 'B', 1, 'R')
+        if has_quantity:
+            pdf.cell(90, 8, "Item", 'B', 0)
+            pdf.cell(40, 8, "Quantity", 'B', 0, 'C')
+            pdf.cell(60, 8, "Cost (?)", 'B', 1, 'R')
+        else:
+            pdf.cell(150, 8, "Item", 'B', 0)
+            pdf.cell(40, 8, "Cost (?)", 'B', 1, 'R')
 
         pdf.set_font("Times", '', 12)
         for item in data['items']:
-            pdf.cell(150, 8, item['desc'], 'B', 0)
-            pdf.cell(40, 8, f"INR {item['price']:.2f}", 'B', 1, 'R')
+            if has_quantity:
+                pdf.cell(90, 8, item['desc'], 'B', 0)
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    qty_text = f"{item['quantity']} {item.get('unit', '')}"
+                pdf.cell(40, 8, qty_text, 'B', 0, 'C')
+                pdf.cell(60, 8, f"₹{item['price']:.2f}", 'B', 1, 'R')
+            else:
+                pdf.cell(150, 8, item['desc'], 'B', 0)
+                pdf.cell(40, 8, f"₹{item['price']:.2f}", 'B', 1, 'R')
 
         pdf.ln(5)
         pdf.cell(150, 6, f"Discount ({data['discount_rate']}%)", 0, 0, 'R')
-        pdf.cell(40, 6, f"INR {data['discount_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 6, f"₹{data['discount_amt']:.2f}", 0, 1, 'R')
         
         pdf.cell(150, 6, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
-        pdf.cell(40, 6, f"INR {data['tax_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 6, f"₹{data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.ln(5)
         pdf.set_font("Times", 'B', 16)
-        pdf.cell(0, 10, f"Grand Total: INR {data['total']:.2f}", 0, 1, 'R')
+        pdf.cell(0, 10, f"Grand Total: ₹{data['total']:.2f}", 0, 1, 'R')
 
         pdf.output(path)
 
@@ -1410,10 +1771,16 @@ class InvoiceApp(ct.CTk):
         # Company info below name
         pdf.set_xy(40, 20)
         pdf.set_font("Courier", '', 10)
-        pdf.multi_cell(120, 4, f"{data['biz_addr']}\n{data['biz_email']}\n{data['biz_phone']}")
+        company_info = f"{data['biz_addr']}\n{data['biz_email']}\n{data['biz_phone']}"
+        pdf.multi_cell(120, 4, company_info)
 
+        # Invoice details on right side
         pdf.set_xy(107, 62)
-        pdf.multi_cell(90, 5, f"DETAILS:\nID: {data['id']}\nDate: {data['date']}")
+        details_text = "DETAILS:\n"
+        if data.get('biz_gst_no'):
+            details_text += f"GST No: {data['biz_gst_no']}\n"
+        details_text += f"ID: {data['id']}\nDate: {data['date']}"
+        pdf.multi_cell(90, 5, details_text)
 
         # Bill To section
         pdf.set_xy(10, 55)
@@ -1424,27 +1791,47 @@ class InvoiceApp(ct.CTk):
         if data.get('client_address'):
             bill_to += f"{data['client_address']}\n"
         bill_to += f"{data['client_email']}"
+        if data.get('client_phone'):
+            bill_to += f"\nPhone: {data['client_phone']}"
         pdf.multi_cell(90, 4, bill_to)
 
         pdf.set_y(95)
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in data['items'])
+        
         # Items Grid
         pdf.set_fill_color(220, 220, 220)
-        pdf.cell(160, 10, "DESCRIPTION", 1, 0, 'L', True)
-        pdf.cell(40, 10, "AMOUNT (INR)", 1, 1, 'C', True)
+        if has_quantity:
+            pdf.cell(100, 10, "DESCRIPTION", 1, 0, 'L', True)
+            pdf.cell(40, 10, "QUANTITY", 1, 0, 'C', True)
+            pdf.cell(60, 10, "AMOUNT (?)", 1, 1, 'C', True)
+        else:
+            pdf.cell(160, 10, "DESCRIPTION", 1, 0, 'L', True)
+            pdf.cell(40, 10, "AMOUNT (?)", 1, 1, 'C', True)
 
         for item in data['items']:
-            pdf.cell(160, 10, item['desc'], 1, 0)
-            pdf.cell(40, 10, f"INR {item['price']:.2f}", 1, 1, 'R')
+            if has_quantity:
+                pdf.cell(100, 10, item['desc'], 1, 0)
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    # Use quantity_display if available (shows fractions), otherwise use quantity
+                    display_qty = item.get('quantity_display', item['quantity'])
+                    qty_text = f"{display_qty} {item.get('unit', '')}"
+                pdf.cell(40, 10, qty_text, 1, 0, 'C')
+                pdf.cell(60, 10, f"₹{item['price']:.2f}", 1, 1, 'R')
+            else:
+                pdf.cell(160, 10, item['desc'], 1, 0)
+                pdf.cell(40, 10, f"₹{item['price']:.2f}", 1, 1, 'R')
 
         # Tax Rows in Grid
         pdf.cell(160, 10, f"DISCOUNT ({data['discount_rate']}%)", 1, 0, 'R')
-        pdf.cell(40, 10, f"INR {data['discount_amt']:.2f}", 1, 1, 'R')
+        pdf.cell(40, 10, f"₹{data['discount_amt']:.2f}", 1, 1, 'R')
 
         pdf.cell(160, 10, f"TAX(GST) ({data['tax_rate']}%)", 1, 0, 'R')
-        pdf.cell(40, 10, f"INR {data['tax_amt']:.2f}", 1, 1, 'R')
+        pdf.cell(40, 10, f"₹{data['tax_amt']:.2f}", 1, 1, 'R')
 
         pdf.cell(160, 10, "TOTAL DUE", 1, 0, 'R', True)
-        pdf.cell(40, 10, f"INR {data['total']:.2f}", 1, 1, 'R', True)
+        pdf.cell(40, 10, f"₹{data['total']:.2f}", 1, 1, 'R', True)
 
         pdf.output(path)
 
@@ -1484,20 +1871,45 @@ class InvoiceApp(ct.CTk):
         pdf.set_text_color(50)
         pdf.cell(0, 15, "invoice.", 0, 1)
 
+        # Invoice details on right
+        pdf.set_font("Helvetica", '', 9)
+        pdf.set_text_color(100)
+        if data.get('biz_gst_no'):
+            pdf.cell(0, 4, f"GST No: {data['biz_gst_no']}", 0, 1, 'R')
+        pdf.cell(0, 4, f"Invoice #{data['id']}", 0, 1, 'R')
+        pdf.cell(0, 4, f"Date: {data['date']}", 0, 1, 'R')
+        pdf.ln(5)
+
         pdf.set_font("Helvetica", '', 10)
+        pdf.set_text_color(50)
         pdf.cell(0, 5, data['client_name'], 0, 1)
         if data.get('client_address'):
             pdf.cell(0, 5, data['client_address'], 0, 1)
         pdf.cell(0, 5, data['client_email'], 0, 1)
+        if data.get('client_phone'):
+            pdf.cell(0, 5, f"Phone: {data['client_phone']}", 0, 1)
 
         pdf.ln(20)
+
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in data['items'])
 
         # Minimal List
         for item in data['items']:
             pdf.set_font("Helvetica", 'B', 12)
-            pdf.cell(140, 8, item['desc'], 0, 0)
-            pdf.set_font("Helvetica", '', 12)
-            pdf.cell(40, 8, f"INR {item['price']:.2f}", 0, 1, 'R')
+            if has_quantity:
+                pdf.cell(90, 8, item['desc'], 0, 0)
+                pdf.set_font("Helvetica", '', 10)
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    qty_text = f"{item['quantity']} {item.get('unit', '')}"
+                pdf.cell(50, 8, qty_text, 0, 0, 'C')
+                pdf.set_font("Helvetica", '', 12)
+                pdf.cell(40, 8, f"?{item['price']:.2f}", 0, 1, 'R')
+            else:
+                pdf.cell(140, 8, item['desc'], 0, 0)
+                pdf.set_font("Helvetica", '', 12)
+                pdf.cell(40, 8, f"?{item['price']:.2f}", 0, 1, 'R')
             # Light gray line
             pdf.set_draw_color(240)
             pdf.line(20, pdf.get_y(), 190, pdf.get_y())
@@ -1505,16 +1917,16 @@ class InvoiceApp(ct.CTk):
 
         pdf.ln(5)
         pdf.cell(140, 8, "Subtotal", 0, 0)
-        pdf.cell(40, 8, f"INR {data['subtotal']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 8, f"?{data['subtotal']:.2f}", 0, 1, 'R')
         pdf.cell(140, 8, f"Discount ({data['discount_rate']}%)", 0, 0)
-        pdf.cell(40, 8, f"INR {data['discount_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 8, f"?{data['discount_amt']:.2f}", 0, 1, 'R')
         pdf.cell(140, 8, f"Tax(GST) ({data['tax_rate']}%)", 0, 0)
-        pdf.cell(40, 8, f"INR {data['tax_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 8, f"?{data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.ln(5)
         pdf.set_font("Helvetica", 'B', 20)
         pdf.cell(140, 10, "Total", 0, 0)
-        pdf.cell(40, 10, f"INR {data['total']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 10, f"?{data['total']:.2f}", 0, 1, 'R')
 
         pdf.output(path)
 
@@ -1547,40 +1959,75 @@ class InvoiceApp(ct.CTk):
             p2.add_run(f"\n{data['biz_email']}")
         if data['biz_phone']:
             p2.add_run(f"\n{data['biz_phone']}")
+        if data.get('biz_gst_no'):
+            p2.add_run(f"\nGST No: {data['biz_gst_no']}")
 
-        doc.add_heading(f"INVOICE ({data['biz_style']})", 0)
+        doc.add_heading("INVOICE", 0)
         invoice_info = f"Invoice #: {data['id']}\nDate: {data['date']}"
         if data['due_date']:
-            invoice_info += f"\nDue: {data['due_date']}"
-        doc.add_paragraph(invoice_info)
+            if data['due_date'] == "PENDING":
+                invoice_info += f"\nDue: "
+                doc.add_paragraph(invoice_info)
+                # Add PENDING in red and bold
+                p = doc.add_paragraph()
+                run = p.add_run("PENDING")
+                run.bold = True
+                run.font.color.rgb = RGBColor(255, 0, 0)
+            else:
+                invoice_info += f"\nDue: {data['due_date']}"
+                doc.add_paragraph(invoice_info)
+        else:
+            doc.add_paragraph(invoice_info)
 
         doc.add_heading('Bill To:', level=2)
         client_info = f"{data['client_name']}\n{data['client_email']}"
+        if data.get('client_phone'):
+            client_info += f"\nPhone: {data['client_phone']}"
         if data.get('client_address'):
             client_info += f"\n{data['client_address']}"
         doc.add_paragraph(client_info)
 
-        table = doc.add_table(rows=1, cols=2)
-        table.style = 'Table Grid'
-        hdr_cells = table.rows[0].cells
-        hdr_cells[0].text = 'Description'
-        hdr_cells[1].text = 'Amount'
+        # Check if any item has quantity
+        has_quantity = any(item.get('quantity') is not None for item in data['items'])
+
+        if has_quantity:
+            table = doc.add_table(rows=1, cols=3)
+            table.style = 'Table Grid'
+            hdr_cells = table.rows[0].cells
+            hdr_cells[0].text = 'Description'
+            hdr_cells[1].text = 'Quantity'
+            hdr_cells[2].text = 'Amount'
+        else:
+            table = doc.add_table(rows=1, cols=2)
+            table.style = 'Table Grid'
+            hdr_cells = table.rows[0].cells
+            hdr_cells[0].text = 'Description'
+            hdr_cells[1].text = 'Amount'
 
         for item in data['items']:
             row_cells = table.add_row().cells
             row_cells[0].text = item['desc']
-            row_cells[1].text = str(item['price'])
+            if has_quantity:
+                qty_text = ""
+                if item.get('quantity') is not None:
+                    # Use quantity_display if available (shows fractions), otherwise use quantity
+                    display_qty = item.get('quantity_display', item['quantity'])
+                    qty_text = f"{display_qty} {item.get('unit', '')}"
+                row_cells[1].text = qty_text
+                row_cells[2].text = f"₹{item['price']:.2f}"
+            else:
+                row_cells[1].text = f"₹{item['price']:.2f}"
 
         # Tax Rows in Word
         row_disc = table.add_row().cells
         row_disc[0].text = f"Discount ({data['discount_rate']}%)"
-        row_disc[1].text = f"{data['discount_amt']:.2f}"
+        row_disc[1].text = f"₹{data['discount_amt']:.2f}"
 
         row_tax = table.add_row().cells
         row_tax[0].text = f"Tax(GST) ({data['tax_rate']}%)"
-        row_tax[1].text = f"{data['tax_amt']:.2f}"
+        row_tax[1].text = f"₹{data['tax_amt']:.2f}"
 
-        doc.add_paragraph(f"\nTOTAL: {data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        doc.add_paragraph(f"\nTOTAL: ₹{data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
         doc.save(path)
 
     def save_to_history(self, data):
@@ -1589,6 +2036,7 @@ class InvoiceApp(ct.CTk):
             "id": data['id'],
             "client": data['client_name'],
             "client_email": data['client_email'],
+            "client_phone": data.get('client_phone', ''),
             "client_address": data.get('client_address', ''),
             "total": data['total'],
             "business": data['biz_name'],
@@ -1670,6 +2118,9 @@ class InvoiceApp(ct.CTk):
         
         self.client_email.delete(0, 'end')
         self.client_email.insert(0, history_item.get('client_email', ''))
+        
+        self.client_phone.delete(0, 'end')
+        self.client_phone.insert(0, history_item.get('client_phone', ''))
         
         self.client_address.delete(0, 'end')
         self.client_address.insert(0, history_item.get('client_address', ''))
@@ -1831,5 +2282,20 @@ class InvoiceApp(ct.CTk):
 
 
 if __name__ == "__main__":
+    # Create a temporary root window for splash screen
+    root = ct.CTk()
+    root.withdraw()  # Hide the main window
+    
+    # Show splash screen
+    splash = SplashScreen(root)
+    splash.focus_force()
+    
+    # Wait for splash screen to close
+    root.wait_window(splash)
+    
+    # Destroy temporary root and create actual app
+    root.destroy()
+    
+    # Start the main application
     app = InvoiceApp()
     app.mainloop()
