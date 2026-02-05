@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { ArrowLeft, Send, CheckCircle, Upload, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFormSubmissions } from '../../hooks/useFirebaseData';
+import { useFormSubmissions } from '../../hooks/useLocalStorage';
 
 export default function AddDataPage() {
   const router = useRouter();
-  const { createSubmission } = useFormSubmissions();
+  const { addSubmission } = useFormSubmissions();
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
@@ -66,8 +66,8 @@ export default function AddDataPage() {
         status: 'pending' as const
       };
       
-      // Submit to Firebase (with localStorage fallback)
-      await createSubmission(submissionData);
+      // Submit to localStorage
+      addSubmission(submissionData);
       
       setSubmitStatus('success');
       

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { isFirebaseConfigured } from '../lib/migration';
 
 interface VisitorStats {
   liveVisitors: number;
@@ -40,7 +39,7 @@ export const useVisitorStats = () => {
       
       if (!sessionId) {
         // New session - generate unique ID
-        const newSessionId = `visitor_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newSessionId = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         sessionStorage.setItem('visitor_session_id', newSessionId);
         
         // Increment total visitors
@@ -64,10 +63,8 @@ export const useVisitorStats = () => {
       const newTotal = currentTotal + 1;
       localStorage.setItem('total_visitors', newTotal.toString());
       
-      // If Firebase is available, sync to database
-      if (isFirebaseConfigured()) {
-        syncVisitorToFirebase(newTotal);
-      }
+      // If using Firebase, sync to database (currently disabled)
+      // syncVisitorToFirebase(newTotal);
     } catch (error) {
       console.error('Error incrementing total visitors:', error);
     }
@@ -184,15 +181,6 @@ export const useVisitorStats = () => {
 
   const getTotalCompanies = async (): Promise<number> => {
     try {
-      // If Firebase is configured, get real count
-      if (isFirebaseConfigured()) {
-        // This would be implemented with actual Firebase query
-        // For now, return a realistic number with some growth
-        const baseCount = 850;
-        const growth = Math.floor(Math.random() * 25); // 0-24 additional companies
-        return baseCount + growth;
-      }
-      
       // Fallback to stored count with realistic baseline
       const storedCount = localStorage.getItem('total_companies_count');
       const baseCount = 850;
@@ -201,8 +189,9 @@ export const useVisitorStats = () => {
         return Math.max(parseInt(storedCount), baseCount);
       }
       
-      // Generate and store initial count
-      const initialCount = baseCount + Math.floor(Math.random() * 50);
+      // Generate and store initial count with some growth
+      const growth = Math.floor(Math.random() * 50);
+      const initialCount = baseCount + growth;
       localStorage.setItem('total_companies_count', initialCount.toString());
       return initialCount;
       

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, Filter, Phone, MapPin, Package } from 'lucide-react';
 import Link from 'next/link';
-import { usePriorities, useCompanies } from '../../../hooks/useFirebaseData';
+import { usePriorities, useCompanies } from '../../../hooks/useLocalStorage';
 
 const sampleCompanies = [
   {
@@ -35,8 +35,8 @@ export default function YarnPage() {
   const [selectedCity, setSelectedCity] = useState('all');
   
   // Use Firebase hooks
-  const { priorities, loading: prioritiesLoading } = usePriorities('Yarn');
-  const { companies: firebaseCompanies, loading: companiesLoading } = useCompanies('Yarn');
+  const { priorities, loading: prioritiesLoading } = usePriorities();
+  const { companies: firebaseCompanies, loading: companiesLoading } = useCompanies();
 
   // Use Firebase companies if available, otherwise fall back to sample data
   const companies = firebaseCompanies.length > 0 ? firebaseCompanies.map(company => ({
@@ -50,7 +50,7 @@ export default function YarnPage() {
   const filteredCompanies = companies.filter(company => {
     const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          company.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         company.products.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
+                         (Array.isArray(company.products) && company.products.some((p: string) => p.toLowerCase().includes(searchQuery.toLowerCase())));
     
     const matchesCity = selectedCity === 'all' || company.address.toLowerCase().includes(selectedCity.toLowerCase());
     
@@ -62,14 +62,12 @@ export default function YarnPage() {
     const aPriority = priorities.find(p => 
       p.companyName.toLowerCase() === a.name.toLowerCase() && 
       p.category.toLowerCase() === 'yarn' &&
-      p.status === 'active' &&
-      (!p.expiresAt || new Date() < new Date(p.expiresAt.toDate())) // Check if not expired
+      (!p.expiresAt || new Date() < new Date(p.expiresAt)) // Check if not expired
     );
     const bPriority = priorities.find(p => 
       p.companyName.toLowerCase() === b.name.toLowerCase() && 
       p.category.toLowerCase() === 'yarn' &&
-      p.status === 'active' &&
-      (!p.expiresAt || new Date() < new Date(p.expiresAt.toDate())) // Check if not expired
+      (!p.expiresAt || new Date() < new Date(p.expiresAt)) // Check if not expired
     );
 
     // If both have priority, sort by position
@@ -163,8 +161,7 @@ export default function YarnPage() {
             const priority = priorities.find(p => 
               p.companyName.toLowerCase() === company.name.toLowerCase() && 
               p.category.toLowerCase() === 'yarn' &&
-              p.status === 'active' &&
-              (!p.expiresAt || new Date() < new Date(p.expiresAt.toDate())) // Check if not expired
+              (!p.expiresAt || new Date() < new Date(p.expiresAt)) // Check if not expired
             );
             
             return (
@@ -207,7 +204,7 @@ export default function YarnPage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-gray-700 mb-1">Products:</p>
                     <div className="flex flex-wrap gap-2">
-                      {company.products.map((product, idx) => (
+                      {Array.isArray(company.products) && company.products.map((product: string, idx: number) => (
                         <span
                           key={idx}
                           className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"

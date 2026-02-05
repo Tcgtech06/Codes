@@ -25,23 +25,21 @@ import {
   CloudOff,
   RefreshCw
 } from 'lucide-react';
-import { usePriorities, useFormSubmissions, useFirebaseData } from '../../../hooks/useFirebaseData';
-import { migrationService } from '../../../lib/migration';
+import { usePriorities, useFormSubmissions, useDataService } from '../../../hooks/useLocalStorage';
 
 interface AddDataSubmission {
   companyName: string;
   contactPerson: string;
   email: string;
   phone: string;
-  website: string;
+  website?: string;
   address: string;
   category: string;
   description: string;
-  products: string;
-  certifications: string;
-  gstNumber: string;
-  visitingCardName: string;
-  filesCount: number;
+  products?: string;
+  certifications?: string;
+  gstNumber?: string;
+  visitingCardName?: string;
   submittedAt: string;
   type: string;
 }
@@ -51,11 +49,11 @@ interface AdvertiseSubmission {
   contactPerson: string;
   email: string;
   phone: string;
-  website: string;
+  website?: string;
   category: string;
   adType: string;
-  budget: string;
-  message: string;
+  budget?: string;
+  message?: string;
   submittedAt: string;
   type: string;
 }
@@ -65,14 +63,13 @@ interface CollaborateSubmission {
   contactPerson: string;
   email: string;
   phone: string;
-  website: string;
+  website?: string;
   organizationType: string;
   collaborationType: string;
   projectDescription: string;
-  timeline: string;
-  budget: string;
-  experience: string;
-  message: string;
+  timeline?: string;
+  budget?: string;
+  experience?: string;
   submittedAt: string;
   type: string;
 }
@@ -84,7 +81,7 @@ export default function AdminDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority' | 'firebase'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority'>('overview');
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [priorityForm, setPriorityForm] = useState({
     companyName: '',
@@ -95,19 +92,25 @@ export default function AdminDashboard() {
     durationType: 'days' // days, months, years
   });
   const [editingPriority, setEditingPriority] = useState<any>(null);
-  const [migrationStatus, setMigrationStatus] = useState<'idle' | 'running' | 'success' | 'error'>('idle');
-  const [migrationMessage, setMigrationMessage] = useState('');
   const router = useRouter();
 
-  // Use Firebase hooks
-  const { isFirebaseReady, isOffline } = useFirebaseData();
+  // Use local storage hooks
+  const { isReady, isOffline } = useDataService();
   const { priorities, loading: prioritiesLoading, createPriority, updatePriority, deletePriority, reload: reloadPriorities } = usePriorities();
   const { submissions: allSubmissions, loading: submissionsLoading, reload: reloadSubmissions } = useFormSubmissions();
 
-  // Filter submissions by type
-  const addDataSubmissions = allSubmissions.filter(s => s.type === 'add-data').map(s => ({ ...s.formData, type: s.type, submittedAt: s.submittedAt }));
-  const advertiseSubmissions = allSubmissions.filter(s => s.type === 'advertise').map(s => ({ ...s.formData, type: s.type, submittedAt: s.submittedAt }));
-  const collaborateSubmissions = allSubmissions.filter(s => s.type === 'collaborate').map(s => ({ ...s.formData, type: s.type, submittedAt: s.submittedAt }));
+  // Filter submissions by type with proper typing
+  const addDataSubmissions = allSubmissions
+    .filter(s => s.type === 'add-data')
+    .map(s => ({ ...s.formData, type: s.type, submittedAt: s.submittedAt } as AddDataSubmission));
+  
+  const advertiseSubmissions = allSubmissions
+    .filter(s => s.type === 'advertise')
+    .map(s => ({ ...s.formData, type: s.type, submittedAt: s.submittedAt } as AdvertiseSubmission));
+  
+  const collaborateSubmissions = allSubmissions
+    .filter(s => s.type === 'collaborate')
+    .map(s => ({ ...s.formData, type: s.type, submittedAt: s.submittedAt } as CollaborateSubmission));
 
   const categories = [
     'Yarn',
@@ -130,37 +133,6 @@ export default function AdminDashboard() {
       router.push('/admin');
     }
   }, [router]);
-
-  const runMigration = async () => {
-    setMigrationStatus('running');
-    setMigrationMessage('Starting data migration...');
-    
-    try {
-      const results = await migrationService.runAllMigrations();
-      
-      let message = 'Migration completed:\n';
-      if (results.categories.success) {
-        message += `• Categories: ${results.categories.created || 0} created\n`;
-      }
-      if (results.priorities.success) {
-        message += `• Priorities: ${results.priorities.migrated} migrated\n`;
-      }
-      if (results.submissions.success) {
-        message += `• Form submissions: ${results.submissions.migrated} migrated`;
-      }
-      
-      setMigrationStatus('success');
-      setMigrationMessage(message);
-      
-      // Reload data
-      reloadPriorities();
-      reloadSubmissions();
-      
-    } catch (error) {
-      setMigrationStatus('error');
-      setMigrationMessage(`Migration failed: ${error.message}`);
-    }
-  };
 
   const calculateExpiryDate = (duration: string, durationType: string) => {
     const now = new Date();
@@ -333,7 +305,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-4">
               {/* Firebase Status Indicator */}
               <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm">
-                {isFirebaseReady ? (
+                {isReady ? (
                   isOffline ? (
                     <>
                       <CloudOff size={16} className="text-orange-500" />
@@ -450,16 +422,6 @@ export default function AdminDashboard() {
             >
               Priority ({priorities.length})
             </button>
-            <button
-              onClick={() => setActiveTab('firebase')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'firebase'
-                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Firebase Setup
-            </button>
           </div>
         </div>
 
@@ -575,7 +537,7 @@ export default function AdminDashboard() {
                       <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
                       <p className="text-sm text-gray-500">
                         <Calendar size={14} className="inline mr-1" />
-                        {new Date(submission.submittedAt?.toDate ? submission.submittedAt.toDate() : submission.submittedAt).toLocaleString()}
+                        {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
@@ -654,7 +616,7 @@ export default function AdminDashboard() {
                       <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
                       <p className="text-sm text-gray-500">
                         <Calendar size={14} className="inline mr-1" />
-                        {new Date(submission.submittedAt?.toDate ? submission.submittedAt.toDate() : submission.submittedAt).toLocaleString()}
+                        {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
                     <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
@@ -722,7 +684,7 @@ export default function AdminDashboard() {
                       <h3 className="text-xl font-bold text-gray-900">{submission.organizationName}</h3>
                       <p className="text-sm text-gray-500">
                         <Calendar size={14} className="inline mr-1" />
-                        {new Date(submission.submittedAt?.toDate ? submission.submittedAt.toDate() : submission.submittedAt).toLocaleString()}
+                        {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
                     <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
@@ -781,159 +743,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Firebase Setup Tab */}
-        {activeTab === 'firebase' && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Firebase Integration Status</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
-                    isFirebaseReady ? 'bg-green-100' : 'bg-gray-100'
-                  }`}>
-                    {isFirebaseReady ? (
-                      <Cloud size={24} className="text-green-600" />
-                    ) : (
-                      <Database size={24} className="text-gray-600" />
-                    )}
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Configuration</h3>
-                  <p className={`text-sm ${isFirebaseReady ? 'text-green-600' : 'text-gray-600'}`}>
-                    {isFirebaseReady ? 'Firebase Configured' : 'Using Local Storage'}
-                  </p>
-                </div>
-                
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center ${
-                    !isOffline ? 'bg-green-100' : 'bg-orange-100'
-                  }`}>
-                    {!isOffline ? (
-                      <CheckCircle size={24} className="text-green-600" />
-                    ) : (
-                      <CloudOff size={24} className="text-orange-600" />
-                    )}
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Connection</h3>
-                  <p className={`text-sm ${!isOffline ? 'text-green-600' : 'text-orange-600'}`}>
-                    {!isOffline ? 'Online' : 'Offline'}
-                  </p>
-                </div>
-                
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center bg-blue-100">
-                    <RefreshCw size={24} className="text-blue-600" />
-                  </div>
-                  <h3 className="font-semibold text-gray-900">Migration</h3>
-                  <p className="text-sm text-blue-600">Ready to Migrate</p>
-                </div>
-              </div>
-
-              {!isFirebaseReady && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle size={20} className="text-yellow-600 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-yellow-800">Firebase Not Configured</h4>
-                      <p className="text-yellow-700 text-sm mt-1">
-                        Your app is currently using localStorage. To enable Firebase features, please follow the setup guide.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Setup Instructions</h3>
-                  <div className="space-y-3 text-sm text-gray-600">
-                    <div className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                      <div>
-                        <p className="font-medium text-gray-900">Install Firebase</p>
-                        <code className="text-xs bg-gray-100 px-2 py-1 rounded">npm install firebase</code>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                      <div>
-                        <p className="font-medium text-gray-900">Create Firebase Project</p>
-                        <p>Go to Firebase Console and create a new project</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                      <div>
-                        <p className="font-medium text-gray-900">Configure Environment</p>
-                        <p>Copy .env.local.example to .env.local and add your Firebase config</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">4</span>
-                      <div>
-                        <p className="font-medium text-gray-900">Run Migration</p>
-                        <p>Use the migration tool to transfer existing data</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Data Migration</h3>
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-4">
-                      Migrate your existing localStorage data to Firebase. This will transfer:
-                    </p>
-                    <ul className="text-sm text-gray-600 space-y-1 mb-4">
-                      <li>• Company priorities</li>
-                      <li>• Form submissions</li>
-                      <li>• Category data</li>
-                    </ul>
-                    
-                    {migrationStatus === 'idle' && (
-                      <button
-                        onClick={runMigration}
-                        disabled={!isFirebaseReady}
-                        className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        <RefreshCw size={16} />
-                        <span>Start Migration</span>
-                      </button>
-                    )}
-                    
-                    {migrationStatus === 'running' && (
-                      <div className="flex items-center gap-3 text-blue-600">
-                        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-sm">Migrating data...</span>
-                      </div>
-                    )}
-                    
-                    {migrationStatus === 'success' && (
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-green-800 mb-2">
-                          <CheckCircle size={16} />
-                          <span className="font-medium">Migration Completed</span>
-                        </div>
-                        <pre className="text-xs text-green-700 whitespace-pre-wrap">{migrationMessage}</pre>
-                      </div>
-                    )}
-                    
-                    {migrationStatus === 'error' && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 text-red-800 mb-2">
-                          <AlertCircle size={16} />
-                          <span className="font-medium">Migration Failed</span>
-                        </div>
-                        <p className="text-xs text-red-700">{migrationMessage}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Priority Management Tab */}
         {activeTab === 'priority' && (
           <div>
@@ -964,9 +773,9 @@ export default function AdminDashboard() {
                 priorities
                   .sort((a, b) => a.position - b.position)
                   .map((priority) => {
-                    const isExpired = priority.expiresAt && new Date() > new Date(priority.expiresAt.toDate ? priority.expiresAt.toDate() : priority.expiresAt);
+                    const isExpired = priority.expiresAt && new Date() > new Date(priority.expiresAt);
                     const daysLeft = priority.expiresAt 
-                      ? Math.ceil((new Date(priority.expiresAt.toDate ? priority.expiresAt.toDate() : priority.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                      ? Math.ceil((new Date(priority.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
                       : null;
                     
                     return (
@@ -1003,7 +812,7 @@ export default function AdminDashboard() {
                               <Calendar size={16} className="text-gray-400" />
                               <span className="text-gray-600">Added:</span>
                               <span className="font-medium">
-                                {new Date(priority.createdAt?.toDate ? priority.createdAt.toDate() : priority.createdAt).toLocaleDateString()}
+                                {new Date(priority.createdAt).toLocaleDateString()}
                               </span>
                             </div>
                             {priority.expiresAt && (
@@ -1011,7 +820,7 @@ export default function AdminDashboard() {
                                 <Calendar size={16} className="text-gray-400" />
                                 <span className="text-gray-600">Expires:</span>
                                 <span className={`font-medium ${isExpired ? 'text-red-600' : 'text-gray-900'}`}>
-                                  {new Date(priority.expiresAt.toDate ? priority.expiresAt.toDate() : priority.expiresAt).toLocaleDateString()}
+                                  {new Date(priority.expiresAt).toLocaleDateString()}
                                 </span>
                               </div>
                             )}
@@ -1026,7 +835,7 @@ export default function AdminDashboard() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeletePriority(priority.id)}
+                            onClick={() => priority.id && handleDeletePriority(priority.id)}
                             className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
                           >
                             Remove
