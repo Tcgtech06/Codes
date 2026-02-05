@@ -13,12 +13,17 @@ import {
   ChevronLeft,
   ChevronRight,
   User,
-  Bell
+  Bell,
+  Eye,
+  TrendingUp,
+  Building2
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { books } from '@/data/books';
+import { useVisitorStats } from '@/hooks/useVisitorStats';
+import StatCard from '@/components/StatCard';
 
 const categories = [
   { name: 'Yarn', icon: Layers, color: 'bg-blue-100 text-blue-600' },
@@ -53,6 +58,9 @@ export default function Home() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
+  
+  // Visitor statistics
+  const { stats, loading: statsLoading } = useVisitorStats();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -360,16 +368,64 @@ export default function Home() {
         </div>
       </section>
       
-      {/* App Download CTA */}
-      <section className="bg-indigo-900 text-white py-12 mx-4 sm:mx-6 lg:mx-8 rounded-3xl mb-8 overflow-hidden relative">
-         <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-900 opacity-50"></div>
-         <div className="relative z-10 text-center max-w-2xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Carry Knit Info in Your Pocket</h2>
-            <p className="text-indigo-200 mb-8">Access the directory anytime, anywhere. Optimized for mobile devices.</p>
-            <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition-colors">
-              Add to Home Screen
-            </button>
-         </div>
+      {/* Live Visitor Statistics Section */}
+      <section className="bg-gradient-to-br from-[#1e3a8a] via-blue-700 to-indigo-900 text-white py-12 mx-4 sm:mx-6 lg:mx-8 rounded-3xl mb-8 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-900/20"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
+        
+        <div className="relative z-10 max-w-6xl mx-auto px-6">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">Live Platform Statistics</h2>
+            <p className="text-blue-200 text-lg">Real-time insights into our growing textile community</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Live Visitors */}
+            <StatCard
+              icon={<Eye size={32} />}
+              title="LIVE"
+              value={stats.liveVisitors}
+              subtitle="Active Visitors"
+              description="Currently browsing"
+              loading={statsLoading}
+              isLive={true}
+              color="green"
+            />
+
+            {/* Total Visitors */}
+            <StatCard
+              icon={<TrendingUp size={32} />}
+              title="ALL TIME"
+              value={stats.totalVisitors}
+              subtitle="Total Visitors"
+              description="Since launch"
+              loading={statsLoading}
+              color="blue"
+            />
+
+            {/* Total Companies */}
+            <StatCard
+              icon={<Building2 size={32} />}
+              title="DATABASE"
+              value={stats.totalCompanies}
+              subtitle="Companies Listed"
+              description="Verified businesses"
+              loading={statsLoading}
+              color="purple"
+            />
+          </div>
+
+          {/* Additional Info */}
+          <div className="mt-8 text-center">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-blue-200">
+                Statistics update every 30 seconds
+              </span>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

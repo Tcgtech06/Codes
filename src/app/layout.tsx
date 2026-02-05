@@ -60,7 +60,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="/logo.jpg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/logo.jpg" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/logo.jpg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/logo.jpg" />
+        <link rel="shortcut icon" href="/logo.jpg" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50`}
