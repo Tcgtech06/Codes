@@ -1,5 +1,6 @@
 ﻿import customtkinter as ct
 import os
+import sys
 import json
 import shutil
 from datetime import datetime
@@ -12,7 +13,21 @@ import base64
 from PIL import Image, ImageTk
 
 # --- CONFIGURATION ---
-DB_FOLDER = "DB"
+# Get the correct base path for both development and frozen (EXE) environments
+if getattr(sys, 'frozen', False):
+    # Running as compiled EXE
+    BASE_DIR = os.path.dirname(sys.executable)
+    # Use AppData for writable files
+    APPDATA_DIR = os.path.join(os.getenv('APPDATA'), 'TCG_Invoice')
+    DB_FOLDER = os.path.join(APPDATA_DIR, "DB")
+    # Resources (fonts, images) from installation directory
+    RESOURCE_DIR = os.path.join(BASE_DIR, "_internal") if os.path.exists(os.path.join(BASE_DIR, "_internal")) else BASE_DIR
+else:
+    # Running as Python script
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DB_FOLDER = os.path.join(BASE_DIR, "DB")
+    RESOURCE_DIR = BASE_DIR
+
 LOGOS_FOLDER = os.path.join(DB_FOLDER, "logos")
 HISTORY_FILE = os.path.join(DB_FOLDER, "history.json")
 PROFILES_FILE = os.path.join(DB_FOLDER, "profiles.json")
@@ -20,7 +35,10 @@ PROFILES_FILE = os.path.join(DB_FOLDER, "profiles.json")
 # Ensure directories exist
 for folder in [DB_FOLDER, LOGOS_FOLDER]:
     if not os.path.exists(folder):
-        os.makedirs(folder)
+        try:
+            os.makedirs(folder)
+        except Exception as e:
+            print(f"Error creating directory {folder}: {e}")
 
 # Default Profiles Structure
 DEFAULT_PROFILES = {
@@ -51,7 +69,7 @@ DEFAULT_PROFILES = {
         "address": "88 Cargo Blvd, NY",
         "email": "ops@expresslogistics.com",
         "phone": "+1 (555) 456-7890",
-        "color": "#d97706",  # Orange
+        "color": "#ec4899",  # Pink
         "icon": "",
         "style": "Industrial",
         "logo": None,
@@ -95,56 +113,24 @@ class SplashScreen(ct.CTkToplevel):
         container = ct.CTkFrame(self, fg_color="white")
         container.pack(expand=True, fill="both")
         
-        # Application Logo with fade-in animation
+        # Application Logo with fade-in animation - BIGGER SIZE
         self.logo_label = ct.CTkLabel(container, text="", fg_color="white")
-        self.logo_label.pack(pady=(40, 10))
+        self.logo_label.pack(pady=(40, 20))
         
         try:
-            logo_img = Image.open("logo.png")
-            logo_img = logo_img.resize((150, 150), Image.Resampling.LANCZOS)
-            logo_photo = ct.CTkImage(light_image=logo_img, dark_image=logo_img, size=(150, 150))
+            logo_img = Image.open(os.path.join(RESOURCE_DIR, "Image", "logo.jpg"))
+            logo_img = logo_img.resize((250, 250), Image.Resampling.LANCZOS)
+            logo_photo = ct.CTkImage(light_image=logo_img, dark_image=logo_img, size=(250, 250))
             self.logo_label.configure(image=logo_photo)
             self.logo_label.image = logo_photo
         except Exception as e:
             print(f"Could not load logo: {e}")
-            self.logo_label.configure(text="📊", font=ct.CTkFont(size=80))
+            self.logo_label.configure(text="📊", font=ct.CTkFont(size=120))
         
-        # Application Title with colored text - TCG INVOICE
-        title_frame = ct.CTkFrame(container, fg_color="white")
-        title_frame.pack(pady=20)
-        
-        # Create colored labels for each letter/word
-        # T - Red
-        ct.CTkLabel(title_frame, text="T", 
-                   font=ct.CTkFont(size=40, weight="bold"),
-                   text_color="#FF0000", fg_color="white").pack(side="left")
-        
-        # C - Green
-        ct.CTkLabel(title_frame, text="C", 
-                   font=ct.CTkFont(size=40, weight="bold"),
-                   text_color="#00AA00", fg_color="white").pack(side="left")
-        
-        # G - Yellow
-        ct.CTkLabel(title_frame, text="G", 
-                   font=ct.CTkFont(size=40, weight="bold"),
-                   text_color="#FFD700", fg_color="white").pack(side="left")
-        
-        # Space
-        ct.CTkLabel(title_frame, text=" ", 
-                   font=ct.CTkFont(size=40), fg_color="white").pack(side="left")
-        
-        # INVOICE - Blue
-        ct.CTkLabel(title_frame, text="INVOICE", 
-                   font=ct.CTkFont(size=40, weight="bold"),
-                   text_color="#0066FF", fg_color="white").pack(side="left")
-        
-        # Spacer
-        ct.CTkFrame(container, height=60, fg_color="white").pack()
-        
-        # "Powered By" text
-        ct.CTkLabel(container, text="Powered By", 
-                   font=ct.CTkFont(size=16),
-                   text_color="#64748b", fg_color="white").pack(pady=(0, 20))
+        # "A PRODUCT OF" text in BOLD below logo
+        ct.CTkLabel(container, text="A PRODUCT OF", 
+                   font=ct.CTkFont(size=24, weight="bold"),
+                   text_color="#1e40af", fg_color="white").pack(pady=(20, 30))
         
         # TCG Tech Logo - original size, no stretching
         self.tcg_label = ct.CTkLabel(container, text="", fg_color="white")
@@ -152,25 +138,14 @@ class SplashScreen(ct.CTkToplevel):
         
         tcg_loaded = False
         try:
-            # Check current directory first
-            if os.path.exists("Image/Tcgtech.png"):
-                tcg_path = "Image/Tcgtech.png"
-            elif os.path.exists("Image\\Tcgtech.png"):
-                tcg_path = "Image\\Tcgtech.png"
-            else:
-                # Try to find it
-                import glob
-                matches = glob.glob("**/Tcgtech.png", recursive=True)
-                if matches:
-                    tcg_path = matches[0]
-                else:
-                    tcg_path = None
+            # Check for TCG Tech logo
+            tcg_path = os.path.join(RESOURCE_DIR, "Image", "Tcgtech.png")
             
             if tcg_path and os.path.exists(tcg_path):
                 print(f"Loading TCG logo from: {tcg_path}")
                 tcg_img = Image.open(tcg_path)
-                # Increase size - scale to 200x80 max
-                tcg_img.thumbnail((200, 80), Image.Resampling.LANCZOS)
+                # Increase size - scale to 300x120 max
+                tcg_img.thumbnail((300, 120), Image.Resampling.LANCZOS)
                 tcg_photo = ct.CTkImage(light_image=tcg_img, dark_image=tcg_img, size=tcg_img.size)
                 self.tcg_label.configure(image=tcg_photo)
                 self.tcg_label.image = tcg_photo
@@ -218,7 +193,7 @@ class InvoiceApp(ct.CTk):
 
         # Set window icon
         try:
-            icon_img = Image.open("logo.png")
+            icon_img = Image.open(os.path.join(RESOURCE_DIR, "Image", "logo.jpg"))
             icon_photo = ImageTk.PhotoImage(icon_img)
             self.iconphoto(True, icon_photo)
             self._icon_ref = icon_photo  # Keep reference
@@ -283,7 +258,7 @@ class InvoiceApp(ct.CTk):
         logo_container = ct.CTkFrame(self.sidebar, fg_color="transparent")
         logo_container.pack(pady=(15, 10))
         
-        logo_path = "logo.png"
+        logo_path = os.path.join(RESOURCE_DIR, "Image", "logo.jpg")
         if os.path.exists(logo_path):
             try:
                 logo_img = Image.open(logo_path)
@@ -318,7 +293,7 @@ class InvoiceApp(ct.CTk):
         header_frame = ct.CTkFrame(self.sidebar, fg_color="transparent")
         header_frame.pack(pady=(8, 10))
         
-        ct.CTkLabel(header_frame, text="🏢", 
+        ct.CTkLabel(header_frame, text="", 
                    font=ct.CTkFont(size=16)).pack(side="left", padx=(0, 6))
         ct.CTkLabel(header_frame, text="SELECT BUSINESS",
                    font=ct.CTkFont(size=12, weight="bold"), 
@@ -332,7 +307,7 @@ class InvoiceApp(ct.CTk):
 
         # Create modern card-style buttons for each profile
         for biz_id, data in self.profiles.items():
-            display_text = f"{data.get('icon', '🏢')}  {data['name']}"
+            display_text = f"{data['name']}"
 
             btn = ct.CTkButton(
                 self.biz_btn_frame,
@@ -355,17 +330,26 @@ class InvoiceApp(ct.CTk):
         ct.CTkFrame(self.sidebar, height=2, fg_color=("#e2e8f0", "#334155"),
                    corner_radius=1).pack(fill="x", pady=15, padx=25)
 
-        # Style Indicator with modern badge
-        style_container = ct.CTkFrame(self.sidebar, fg_color=("#f1f5f9", "#1e293b"),
-                                     corner_radius=8)
-        style_container.pack(pady=8, padx=20, fill="x")
+        # Search Section with modern header
+        search_header = ct.CTkFrame(self.sidebar, fg_color="transparent")
+        search_header.pack(pady=(15, 8))
         
-        ct.CTkLabel(style_container, text="✨", 
-                   font=ct.CTkFont(size=14)).pack(side="left", padx=(8, 4))
-        self.style_label = ct.CTkLabel(style_container, text="Current Style: Modern",
-                                       font=ct.CTkFont(size=10, weight="bold"),
-                                       text_color=("#64748b", "#94a3b8"))
-        self.style_label.pack(side="left", pady=6)
+        ct.CTkLabel(search_header, text="", 
+                   font=ct.CTkFont(size=16)).pack(side="left", padx=(0, 6))
+        ct.CTkLabel(search_header, text="SEARCH INVOICES",
+                   font=ct.CTkFont(size=12, weight="bold"), 
+                   text_color=("#475569", "#cbd5e1")).pack(side="left")
+
+        # Search input
+        self.search_entry = ct.CTkEntry(self.sidebar, 
+                                       placeholder_text="Search by ID or Client Name...",
+                                       height=35,
+                                       corner_radius=10,
+                                       border_width=2,
+                                       border_color=("#cbd5e1", "#475569"),
+                                       font=ct.CTkFont(size=11))
+        self.search_entry.pack(fill="x", padx=15, pady=(0, 10))
+        self.search_entry.bind("<KeyRelease>", self.on_search_change)
 
         # History Section with modern header
         history_header = ct.CTkFrame(self.sidebar, fg_color="transparent")
@@ -402,7 +386,7 @@ class InvoiceApp(ct.CTk):
         card_header = ct.CTkFrame(settings_card, fg_color="transparent")
         card_header.pack(fill="x", padx=25, pady=(20, 15))
         
-        ct.CTkLabel(card_header, text="🏢", 
+        ct.CTkLabel(card_header, text="", 
                    font=ct.CTkFont(size=24)).pack(side="left", padx=(0, 10))
         ct.CTkLabel(card_header, text="Business Information", 
                    font=ct.CTkFont(size=20, weight="bold"),
@@ -452,39 +436,75 @@ class InvoiceApp(ct.CTk):
                                            border_width=2,
                                            border_color=("#cbd5e1", "#475569"))
         self.biz_email_entry.pack(anchor="w", pady=(0, 10))
+        self.biz_email_entry.bind("<KeyRelease>", self.validate_business_email)
+        
+        # Business email validation warning label (inline - will be positioned separately)
+        self.biz_email_warning_label = ct.CTkLabel(info_frame, text="", 
+                                                    font=ct.CTkFont(size=10),
+                                                    text_color="red")
 
-        self.biz_phone_entry = ct.CTkEntry(info_frame, width=350, height=40,
+        # Phone with inline warning
+        phone_container = ct.CTkFrame(info_frame, fg_color="transparent")
+        phone_container.pack(anchor="w", fill="x", pady=(0, 10))
+        
+        self.biz_phone_entry = ct.CTkEntry(phone_container, width=350, height=40,
                                            placeholder_text="Business Phone",
                                            corner_radius=10,
                                            border_width=2,
                                            border_color=("#cbd5e1", "#475569"))
-        self.biz_phone_entry.pack(anchor="w", pady=(0, 10))
+        self.biz_phone_entry.pack(side="left")
+        self.biz_phone_entry.bind("<KeyRelease>", self.validate_phone)
+        
+        # Phone validation warning label (inline on right)
+        self.phone_warning_label = ct.CTkLabel(phone_container, text="", 
+                                               font=ct.CTkFont(size=10),
+                                               text_color="red")
+        self.phone_warning_label.pack(side="left", padx=(10, 0))
 
-        self.biz_gst_entry = ct.CTkEntry(info_frame, width=350, height=40,
+        # GST with inline warning
+        gst_container = ct.CTkFrame(info_frame, fg_color="transparent")
+        gst_container.pack(anchor="w", fill="x", pady=(0, 10))
+        
+        self.biz_gst_entry = ct.CTkEntry(gst_container, width=350, height=40,
                                          placeholder_text="GST No (Optional)",
                                          corner_radius=10,
                                          border_width=2,
                                          border_color=("#cbd5e1", "#475569"))
-        self.biz_gst_entry.pack(anchor="w")
+        self.biz_gst_entry.pack(side="left")
+        self.biz_gst_entry.bind("<KeyRelease>", self.validate_gst)
+        
+        # GST validation warning label (inline on right)
+        self.gst_warning_label = ct.CTkLabel(gst_container, text="", 
+                                             font=ct.CTkFont(size=10),
+                                             text_color="red")
+        self.gst_warning_label.pack(side="left", padx=(10, 0))
 
-        # Save & Upload Buttons with modern styling
-        btn_frame = ct.CTkFrame(content_frame, fg_color="transparent")
-        btn_frame.pack(side="right", padx=20)
+        self.biz_watermark_entry = ct.CTkEntry(info_frame, width=350, height=40,
+                                               placeholder_text="Watermark Text (Optional)",
+                                               corner_radius=10,
+                                               border_width=2,
+                                               border_color=("#cbd5e1", "#475569"))
+        self.biz_watermark_entry.pack(anchor="w", pady=(0, 10))
 
-        ct.CTkButton(btn_frame, text="📤 Upload Logo", 
+        # Right side frame for Upload Logo and Save Buttons
+        right_frame = ct.CTkFrame(content_frame, fg_color="transparent")
+        right_frame.pack(side="right", padx=20, pady=10)
+
+        # Upload Logo and Save Buttons in the right frame
+        ct.CTkButton(right_frame, text="Upload Logo", 
                     command=self.upload_logo, 
-                    width=140, height=45,
+                    width=250, height=45,
                     fg_color=("#64748b", "#475569"),
                     hover_color=("#475569", "#334155"),
                     corner_radius=12,
-                    font=ct.CTkFont(size=13, weight="bold")).pack(pady=8)
+                    font=ct.CTkFont(size=13, weight="bold")).pack(pady=(0, 8))
         
-        self.save_biz_btn = ct.CTkButton(btn_frame, text="💾 Save Info", 
+        self.save_biz_btn = ct.CTkButton(right_frame, text="Save Info", 
                                          command=self.save_current_profile_info,
-                                         width=140, height=45,
+                                         width=250, height=45,
                                          corner_radius=12,
                                          font=ct.CTkFont(size=13, weight="bold"))
-        self.save_biz_btn.pack(pady=8)
+        self.save_biz_btn.pack(pady=(0, 8))
 
         # --- Divider ---
         ct.CTkFrame(self.main_frame, height=3, 
@@ -503,7 +523,7 @@ class InvoiceApp(ct.CTk):
         invoice_header = ct.CTkFrame(invoice_card, fg_color="transparent")
         invoice_header.pack(fill="x", padx=25, pady=(20, 15))
         
-        ct.CTkLabel(invoice_header, text="👤", 
+        ct.CTkLabel(invoice_header, text="", 
                    font=ct.CTkFont(size=22)).pack(side="left", padx=(0, 10))
         ct.CTkLabel(invoice_header, text="CLIENT DETAILS", 
                    font=ct.CTkFont(size=18, weight="bold"),
@@ -511,27 +531,42 @@ class InvoiceApp(ct.CTk):
 
         client_frame = ct.CTkFrame(invoice_card, fg_color="transparent")
         client_frame.pack(fill="x", padx=20, pady=(0, 20))
-
-        self.client_name = self.create_input(client_frame, "Client Name", "👤")
-        self.client_email = self.create_input(client_frame, "Client Email", "📧")
-        self.client_phone = self.create_input(client_frame, "Client Phone", "📞")
-        self.client_address = self.create_input(client_frame, "Client Address", "📍")
+        
+        # First row - Client Name and Email (same height, aligned)
+        row1 = ct.CTkFrame(client_frame, fg_color="transparent")
+        row1.pack(fill="x", pady=(0, 15))
+        
+        self.client_name = self.create_input_fixed_width(row1, "Client Name", "", width=300)
+        self.client_email, self.client_email_warning = self.create_input_with_validation_fixed(row1, "Client Email", "", width=300)
+        
+        # Second row - Client Phone and Address (same height, aligned)
+        row2 = ct.CTkFrame(client_frame, fg_color="transparent")
+        row2.pack(fill="x", pady=(0, 15))
+        
+        self.client_phone, self.client_phone_warning = self.create_input_with_validation_fixed(row2, "Client Phone", "", width=300)
+        self.client_address = self.create_input_fixed_width(row2, "Client Address", "", width=300)
+        
+        # Third row - Invoice Date, Invoice #, Due Date (same height, aligned)
+        row3 = ct.CTkFrame(client_frame, fg_color="transparent")
+        row3.pack(fill="x")
+        
+        # Bind validation events for client fields
+        self.client_email.bind("<KeyRelease>", self.validate_client_email)
+        self.client_phone.bind("<KeyRelease>", self.validate_client_phone)
         
         # Invoice Date
-        invoice_date_container = ct.CTkFrame(client_frame, fg_color="transparent")
-        invoice_date_container.pack(side="left", fill="x", expand=True, padx=10)
+        invoice_date_container = ct.CTkFrame(row3, fg_color="transparent")
+        invoice_date_container.pack(side="left", padx=10)
         
         label_frame = ct.CTkFrame(invoice_date_container, fg_color="transparent")
         label_frame.pack(anchor="w", fill="x")
         
-        ct.CTkLabel(label_frame, text="📅", 
-                   font=ct.CTkFont(size=14)).pack(side="left", padx=(0, 5))
         lbl = ct.CTkLabel(label_frame, text="Invoice Date", 
                          font=ct.CTkFont(size=13, weight="bold"),
                          text_color=("#475569", "#cbd5e1"))
         lbl.pack(side="left")
         
-        self.invoice_date = ct.CTkEntry(invoice_date_container, height=40,
+        self.invoice_date = ct.CTkEntry(invoice_date_container, height=40, width=200,
                                         corner_radius=10,
                                         border_width=2,
                                         border_color=("#cbd5e1", "#475569"),
@@ -540,18 +575,33 @@ class InvoiceApp(ct.CTk):
         # Set today's date as default
         self.invoice_date.insert(0, datetime.now().strftime("%d-%m-%Y"))
         
-        self.invoice_num = self.create_input(client_frame, "Invoice #", "🔢")
+        # Invoice Number
+        invoice_num_container = ct.CTkFrame(row3, fg_color="transparent")
+        invoice_num_container.pack(side="left", padx=10)
+        
+        label_frame2 = ct.CTkFrame(invoice_num_container, fg_color="transparent")
+        label_frame2.pack(anchor="w", fill="x")
+        
+        lbl2 = ct.CTkLabel(label_frame2, text="Invoice #", 
+                         font=ct.CTkFont(size=13, weight="bold"),
+                         text_color=("#475569", "#cbd5e1"))
+        lbl2.pack(side="left")
+        
+        self.invoice_num = ct.CTkEntry(invoice_num_container, height=40, width=200,
+                                       corner_radius=10,
+                                       border_width=2,
+                                       border_color=("#cbd5e1", "#475569"),
+                                       font=ct.CTkFont(size=12))
+        self.invoice_num.pack(fill="x", pady=(5, 0))
         self.invoice_num.insert(0, self.get_next_invoice_number())
         
         # Due Date with Pending Checkbox - modern styling
-        due_date_container = ct.CTkFrame(client_frame, fg_color="transparent")
-        due_date_container.pack(side="left", fill="x", expand=True, padx=10)
+        due_date_container = ct.CTkFrame(row3, fg_color="transparent")
+        due_date_container.pack(side="left", padx=10)
         
         label_frame = ct.CTkFrame(due_date_container, fg_color="transparent")
         label_frame.pack(anchor="w", fill="x")
         
-        ct.CTkLabel(label_frame, text="📅", 
-                   font=ct.CTkFont(size=14)).pack(side="left", padx=(0, 5))
         lbl = ct.CTkLabel(label_frame, text="Due Date", 
                          font=ct.CTkFont(size=13, weight="bold"),
                          text_color=("#475569", "#cbd5e1"))
@@ -605,7 +655,7 @@ class InvoiceApp(ct.CTk):
                                      font=ct.CTkFont(size=13))
         self.item_desc.pack(side="left", padx=5)
 
-        self.item_price = ct.CTkEntry(entry_grid, placeholder_text="Amount (₹)", 
+        self.item_price = ct.CTkEntry(entry_grid, placeholder_text="Amount (Rs )", 
                                       width=150, height=45,
                                       corner_radius=12,
                                       border_width=2,
@@ -671,7 +721,7 @@ class InvoiceApp(ct.CTk):
         self.discount_entry.insert(0, "0")
         self.discount_entry.bind("<KeyRelease>", lambda e: self.refresh_table())
 
-        ct.CTkLabel(tax_frame, text="💰 Tax Rate(GST) (%):", 
+        ct.CTkLabel(tax_frame, text="Tax Rate(GST) (%):", 
                    font=ct.CTkFont(size=13, weight="bold"),
                     text_color=("#475569", "#cbd5e1")).pack(side="left", padx=(20, 10))
         
@@ -705,7 +755,7 @@ class InvoiceApp(ct.CTk):
                                     command=lambda: self.generate("pdf"))
         self.btn_pdf.pack(side="right", padx=10)
 
-        self.btn_word = ct.CTkButton(action_frame, text="📝 Generate Word", 
+        self.btn_word = ct.CTkButton(action_frame, text="Generate Word", 
                                      height=55,
                                      corner_radius=15,
                                      font=ct.CTkFont(size=15, weight="bold"),
@@ -714,7 +764,7 @@ class InvoiceApp(ct.CTk):
                                      hover_color=("#2563eb", "#1d4ed8"))
         self.btn_word.pack(side="right", padx=10)
 
-        ct.CTkButton(action_frame, text="🗑️ Clear Form", 
+        ct.CTkButton(action_frame, text="Clear Form", 
                     height=55,
                     corner_radius=15,
                     font=ct.CTkFont(size=15, weight="bold"),
@@ -746,6 +796,103 @@ class InvoiceApp(ct.CTk):
                            font=ct.CTkFont(size=12))
         entry.pack(fill="x", pady=(5, 0))
         return entry
+    
+    def create_input_fixed_width(self, master, placeholder, icon="", width=300):
+        """Create input field with fixed width for better alignment"""
+        container = ct.CTkFrame(master, fg_color="transparent")
+        container.pack(side="left", padx=10)
+        
+        # Label with icon
+        label_frame = ct.CTkFrame(container, fg_color="transparent")
+        label_frame.pack(anchor="w", fill="x")
+        
+        if icon:
+            ct.CTkLabel(label_frame, text=icon, 
+                       font=ct.CTkFont(size=14)).pack(side="left", padx=(0, 5))
+        
+        lbl = ct.CTkLabel(label_frame, text=placeholder, 
+                         font=ct.CTkFont(size=13, weight="bold"),
+                         text_color=("#475569", "#cbd5e1"))
+        lbl.pack(side="left")
+        
+        entry = ct.CTkEntry(container, height=40, width=width,
+                           corner_radius=10,
+                           border_width=2,
+                           border_color=("#cbd5e1", "#475569"),
+                           font=ct.CTkFont(size=12))
+        entry.pack(pady=(5, 0))
+        
+        # Add invisible spacer to match validation label height
+        spacer = ct.CTkLabel(container, text="", height=15)
+        spacer.pack(anchor="w", pady=(2, 0))
+        
+        return entry
+    
+    def create_input_with_validation(self, master, placeholder, icon=""):
+        """Create input field with validation warning label"""
+        container = ct.CTkFrame(master, fg_color="transparent")
+        container.pack(side="left", fill="x", expand=True, padx=10)
+        
+        # Label with icon
+        label_frame = ct.CTkFrame(container, fg_color="transparent")
+        label_frame.pack(anchor="w", fill="x")
+        
+        if icon:
+            ct.CTkLabel(label_frame, text=icon, 
+                       font=ct.CTkFont(size=14)).pack(side="left", padx=(0, 5))
+        
+        lbl = ct.CTkLabel(label_frame, text=placeholder, 
+                         font=ct.CTkFont(size=13, weight="bold"),
+                         text_color=("#475569", "#cbd5e1"))
+        lbl.pack(side="left")
+        
+        entry = ct.CTkEntry(container, height=40,
+                           corner_radius=10,
+                           border_width=2,
+                           border_color=("#cbd5e1", "#475569"),
+                           font=ct.CTkFont(size=12))
+        entry.pack(fill="x", pady=(5, 0))
+        
+        # Warning label
+        warning_label = ct.CTkLabel(container, text="", 
+                                    font=ct.CTkFont(size=10),
+                                    text_color="red")
+        warning_label.pack(anchor="w", pady=(2, 0))
+        
+        return entry, warning_label
+    
+    def create_input_with_validation_fixed(self, master, placeholder, icon="", width=300):
+        """Create input field with validation warning label and fixed width"""
+        container = ct.CTkFrame(master, fg_color="transparent")
+        container.pack(side="left", padx=10)
+        
+        # Label with icon
+        label_frame = ct.CTkFrame(container, fg_color="transparent")
+        label_frame.pack(anchor="w", fill="x")
+        
+        if icon:
+            ct.CTkLabel(label_frame, text=icon, 
+                       font=ct.CTkFont(size=14)).pack(side="left", padx=(0, 5))
+        
+        lbl = ct.CTkLabel(label_frame, text=placeholder, 
+                         font=ct.CTkFont(size=13, weight="bold"),
+                         text_color=("#475569", "#cbd5e1"))
+        lbl.pack(side="left")
+        
+        entry = ct.CTkEntry(container, height=40, width=width,
+                           corner_radius=10,
+                           border_width=2,
+                           border_color=("#cbd5e1", "#475569"),
+                           font=ct.CTkFont(size=12))
+        entry.pack(pady=(5, 0))
+        
+        # Warning label with fixed height to maintain alignment
+        warning_label = ct.CTkLabel(container, text="", 
+                                    font=ct.CTkFont(size=10),
+                                    text_color="red", width=width, height=15)
+        warning_label.pack(anchor="w", pady=(2, 0))
+        
+        return entry, warning_label
 
     def toggle_pending(self):
         """Toggle the pending status and update due date field"""
@@ -782,6 +929,7 @@ class InvoiceApp(ct.CTk):
         current_email = self.biz_email_entry.get()
         current_phone = self.biz_phone_entry.get()
         current_gst = self.biz_gst_entry.get().strip()
+        current_watermark = self.biz_watermark_entry.get().strip()
 
         if current_name:
             self.profiles[self.current_biz_id]["name"] = current_name
@@ -789,6 +937,7 @@ class InvoiceApp(ct.CTk):
             self.profiles[self.current_biz_id]["email"] = current_email
             self.profiles[self.current_biz_id]["phone"] = current_phone
             self.profiles[self.current_biz_id]["gst_no"] = current_gst
+            self.profiles[self.current_biz_id]["watermark"] = current_watermark
             self.save_profiles()  # Commit to file so it persists
 
         # Now switch
@@ -836,7 +985,8 @@ class InvoiceApp(ct.CTk):
         self.biz_gst_entry.delete(0, 'end')
         self.biz_gst_entry.insert(0, profile.get("gst_no", ""))
 
-        self.style_label.configure(text=f"Current Format: {profile.get('style', 'Standard')}")
+        self.biz_watermark_entry.delete(0, 'end')
+        self.biz_watermark_entry.insert(0, profile.get("watermark", ""))
 
         # 3. Update Buttons Color
         self.save_biz_btn.configure(fg_color=self.current_theme)
@@ -894,23 +1044,115 @@ class InvoiceApp(ct.CTk):
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save logo: {e}")
 
+    def validate_business_email(self, event=None):
+        """Validate business email format"""
+        import re
+        email = self.biz_email_entry.get().strip()
+        
+        # Simple email regex pattern
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        
+        if email and not re.match(email_pattern, email):
+            self.biz_email_warning_label.configure(text="Invalid email format")
+            self.biz_email_entry.configure(border_color="red")
+        else:
+            self.biz_email_warning_label.configure(text="")
+            self.biz_email_entry.configure(border_color=("#cbd5e1", "#475569"))
+    
+    def validate_phone(self, event=None):
+        """Validate phone number - should be 10 digits"""
+        phone = self.biz_phone_entry.get().strip()
+        
+        # Remove any non-digit characters for validation
+        digits_only = ''.join(filter(str.isdigit, phone))
+        
+        if phone and len(digits_only) != 10:
+            self.phone_warning_label.configure(text="Phone number must be exactly 10 digits")
+            self.biz_phone_entry.configure(border_color="red")
+        else:
+            self.phone_warning_label.configure(text="")
+            self.biz_phone_entry.configure(border_color=("#cbd5e1", "#475569"))
+    
+    def validate_gst(self, event=None):
+        """Validate GST number - should be 15 characters"""
+        gst = self.biz_gst_entry.get().strip()
+        
+        if gst and len(gst) != 15:
+            self.gst_warning_label.configure(text="GST number must be exactly 15 characters")
+            self.biz_gst_entry.configure(border_color="red")
+        else:
+            self.gst_warning_label.configure(text="")
+            self.biz_gst_entry.configure(border_color=("#cbd5e1", "#475569"))
+    
+    def validate_client_email(self, event=None):
+        """Validate client email format"""
+        import re
+        email = self.client_email.get().strip()
+        
+        # Simple email regex pattern
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        
+        if email and not re.match(email_pattern, email):
+            self.client_email_warning.configure(text="Invalid email format")
+            self.client_email.configure(border_color="red")
+        else:
+            self.client_email_warning.configure(text="")
+            self.client_email.configure(border_color=("#cbd5e1", "#475569"))
+    
+    def validate_client_phone(self, event=None):
+        """Validate client phone number - should be 10 digits"""
+        phone = self.client_phone.get().strip()
+        
+        # Remove any non-digit characters for validation
+        digits_only = ''.join(filter(str.isdigit, phone))
+        
+        if phone and len(digits_only) != 10:
+            self.client_phone_warning.configure(text="Phone must be 10 digits")
+            self.client_phone.configure(border_color="red")
+        else:
+            self.client_phone_warning.configure(text="")
+            self.client_phone.configure(border_color=("#cbd5e1", "#475569"))
+    
     def save_current_profile_info(self):
+        import re
         name = self.biz_name_entry.get()
         addr = self.biz_addr_entry.get()
         email = self.biz_email_entry.get()
         phone = self.biz_phone_entry.get()
         gst_no = self.biz_gst_entry.get().strip()
+        watermark = self.biz_watermark_entry.get().strip()
+        
+        # Validate business email
+        if email:
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, email):
+                messagebox.showerror("Validation Error", "Business email format is invalid!")
+                return
+        
+        # Validate business phone number before saving
+        if phone:
+            digits_only = ''.join(filter(str.isdigit, phone))
+            if len(digits_only) != 10:
+                messagebox.showerror("Validation Error", "Business phone number must be exactly 10 digits!")
+                return
+        
+        # Validate GST number
+        if gst_no and len(gst_no) != 15:
+            messagebox.showerror("Validation Error", "GST number must be exactly 15 characters!")
+            return
+        
         if name:
             self.profiles[self.current_biz_id]["name"] = name
             self.profiles[self.current_biz_id]["address"] = addr
             self.profiles[self.current_biz_id]["email"] = email
             self.profiles[self.current_biz_id]["phone"] = phone
             self.profiles[self.current_biz_id]["gst_no"] = gst_no
+            self.profiles[self.current_biz_id]["watermark"] = watermark
             self.save_profiles()
             
             # Update the sidebar button text immediately
             self.biz_buttons[self.current_biz_id].configure(
-                text=f"{self.profiles[self.current_biz_id].get('icon', '🏢')}  {name}"
+                text=f"{name}"
             )
             
             messagebox.showinfo("Saved", f"Details saved for {name}")
@@ -1048,7 +1290,7 @@ class InvoiceApp(ct.CTk):
                        font=ct.CTkFont(size=13, weight="bold"),
                        text_color="white").pack(side="left", padx=(200, 10))
         
-        ct.CTkLabel(header_content, text="Price (₹) 💰", 
+        ct.CTkLabel(header_content, text="Price (Rs)", 
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color="white").pack(side="right", padx=(0, 80))
 
@@ -1086,7 +1328,7 @@ class InvoiceApp(ct.CTk):
             button_frame.pack(side="right", padx=10)
             
             # Price label
-            ct.CTkLabel(button_frame, text=f"₹{item['price']:.2f}",
+            ct.CTkLabel(button_frame, text=f"Rs {item['price']:.2f}",
                        font=ct.CTkFont(size=12, weight="bold"),
                        text_color=("#059669", "#10b981")).pack(side="left", padx=(0, 10))
             
@@ -1107,7 +1349,7 @@ class InvoiceApp(ct.CTk):
             # Delete button
             delete_btn = ct.CTkButton(
                 button_frame,
-                text="🗑️",
+                text="X",
                 command=lambda d=item['desc']: self.delete_item(d),
                 width=35,
                 height=30,
@@ -1151,7 +1393,7 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(subtotal_row, text="Subtotal:", 
                    font=ct.CTkFont(size=12),
                    text_color=("#64748b", "#94a3b8")).pack(side="left")
-        ct.CTkLabel(subtotal_row, text=f"₹{subtotal:.2f}",
+        ct.CTkLabel(subtotal_row, text=f"Rs {subtotal:.2f}",
                    font=ct.CTkFont(size=12, weight="bold"),
                    text_color=("#1e293b", "#f1f5f9")).pack(side="right")
 
@@ -1161,7 +1403,7 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(disc_row, text=f"Discount ({discount_rate}%):", 
                    font=ct.CTkFont(size=12),
                    text_color=("#64748b", "#94a3b8")).pack(side="left")
-        ct.CTkLabel(disc_row, text=f"₹{discount_amt:.2f}",
+        ct.CTkLabel(disc_row, text=f"Rs {discount_amt:.2f}",
                    font=ct.CTkFont(size=12, weight="bold"),
                    text_color=("#1e293b", "#f1f5f9")).pack(side="right")
 
@@ -1171,7 +1413,7 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(tax_row, text=f"Tax(GST) ({tax_rate}%):", 
                    font=ct.CTkFont(size=12),
                    text_color=("#64748b", "#94a3b8")).pack(side="left")
-        ct.CTkLabel(tax_row, text=f"₹{tax_amt:.2f}",
+        ct.CTkLabel(tax_row, text=f"Rs {tax_amt:.2f}",
                    font=ct.CTkFont(size=12, weight="bold"),
                    text_color=("#1e293b", "#f1f5f9")).pack(side="right")
 
@@ -1185,7 +1427,7 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(total_row, text="GRAND TOTAL:", 
                    font=ct.CTkFont(size=16, weight="bold"),
                    text_color=self.current_theme).pack(side="left")
-        ct.CTkLabel(total_row, text=f"₹{grand_total:.2f}",
+        ct.CTkLabel(total_row, text=f"Rs {grand_total:.2f}",
                    font=ct.CTkFont(size=18, weight="bold"),
                    text_color=self.current_theme).pack(side="right")
 
@@ -1221,18 +1463,48 @@ class InvoiceApp(ct.CTk):
     # --- Generation Logic ---
 
     def generate(self, file_type):
+        import re
         try:
             # messagebox.showinfo("Debug", f"Generate clicked for {file_type}") # DEBUG POPUP
             if not self.items:
                 messagebox.showwarning("Warning", "Please add at least one item to the invoice before generating.")
                 return
+            
+            # Validate client email
+            client_email = self.client_email.get().strip()
+            if client_email:
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, client_email):
+                    messagebox.showerror("Validation Error", "Client email format is invalid!")
+                    return
+            
+            # Validate client phone
+            client_phone = self.client_phone.get().strip()
+            if client_phone:
+                digits_only = ''.join(filter(str.isdigit, client_phone))
+                if len(digits_only) != 10:
+                    messagebox.showerror("Validation Error", "Client phone number must be exactly 10 digits!")
+                    return
 
             self.refresh_table()
         
-            # Handle pending status
-            due_date_value = self.due_date.get() or ""
-            if self.pending_var.get():
-                due_date_value = "PENDING"
+            # Handle pending status and due date
+            due_date_value = self.due_date.get().strip() or ""
+            is_pending = self.pending_var.get()
+            
+            # Store both values separately for better display control
+            if is_pending and due_date_value:
+                # Both date and pending - will be displayed on separate lines
+                due_date_display = due_date_value
+                pending_status = True
+            elif is_pending and not due_date_value:
+                # Only pending, no date
+                due_date_display = ""
+                pending_status = True
+            else:
+                # Only date, no pending
+                due_date_display = due_date_value
+                pending_status = False
         
             # Get invoice date from input or use today's date
             invoice_date = self.invoice_date.get() or datetime.now().strftime("%d-%m-%Y")
@@ -1243,7 +1515,8 @@ class InvoiceApp(ct.CTk):
             data = {
              "id": self.invoice_num.get(),
              "date": invoice_date,
-             "due_date": due_date_value,
+             "due_date": due_date_display,
+             "is_pending": pending_status,
              "client_name": self.client_name.get(),
              "client_email": self.client_email.get(),
              "client_phone": self.client_phone.get(),
@@ -1262,7 +1535,8 @@ class InvoiceApp(ct.CTk):
              "biz_gst_no": profile.get("gst_no", ""),
              "biz_logo": profile["logo"],
              "biz_color": profile["color"],
-             "biz_style": profile.get("style", "Modern")
+             "biz_style": profile.get("style", "Modern"),
+             "biz_watermark": profile.get("watermark", "")
             }
 
             # Show preview dialog first
@@ -1360,14 +1634,16 @@ class InvoiceApp(ct.CTk):
                    font=ct.CTkFont(size=11, weight="bold")).pack(anchor="w")
         ct.CTkLabel(invoice_header, text=f"Date: {data['date']}", 
                    font=ct.CTkFont(size=10)).pack(anchor="w")
-        if data['due_date']:
-            if data['due_date'] == "PENDING":
-                ct.CTkLabel(invoice_header, text=f"Due Date: PENDING", 
-                           font=ct.CTkFont(size=10, weight="bold"),
-                           text_color="red").pack(anchor="w")
-            else:
+        
+        # Display due date and pending status
+        if data.get('due_date') or data.get('is_pending'):
+            if data.get('due_date'):
                 ct.CTkLabel(invoice_header, text=f"Due Date: {data['due_date']}", 
                            font=ct.CTkFont(size=10)).pack(anchor="w")
+            if data.get('is_pending'):
+                ct.CTkLabel(invoice_header, text="PENDING", 
+                           font=ct.CTkFont(size=10, weight="bold"),
+                           text_color="red").pack(anchor="w")
 
         ct.CTkFrame(preview_frame, height=1, fg_color="#e0e0e0").pack(fill="x", padx=15, pady=10)
 
@@ -1414,7 +1690,7 @@ class InvoiceApp(ct.CTk):
                        font=ct.CTkFont(size=11, weight="bold"),
                        text_color="white", width=100, anchor="center").pack(side="left", padx=5)
         
-        ct.CTkLabel(header_row, text="Amount (₹)", 
+        ct.CTkLabel(header_row, text="Amount (Rs )", 
                    font=ct.CTkFont(size=11, weight="bold"),
                    text_color="white", width=120, anchor="e").pack(side="right", padx=5)
 
@@ -1436,7 +1712,7 @@ class InvoiceApp(ct.CTk):
                 ct.CTkLabel(item_row, text=qty_text, 
                            font=ct.CTkFont(size=10), width=100, anchor="center").pack(side="left", padx=8, pady=4)
             
-            ct.CTkLabel(item_row, text=f"₹{item['price']:.2f}", 
+            ct.CTkLabel(item_row, text=f"Rs {item['price']:.2f}", 
                        font=ct.CTkFont(size=10), width=120, anchor="e").pack(side="right", padx=8, pady=4)
 
         ct.CTkFrame(preview_frame, height=1, fg_color="#e0e0e0").pack(fill="x", padx=15, pady=8)
@@ -1454,16 +1730,16 @@ class InvoiceApp(ct.CTk):
         disc_row.pack(fill="x", pady=1)
         ct.CTkLabel(disc_row, text=f"Discount ({data['discount_rate']}%):", 
                     font=ct.CTkFont(size=10), width=350, anchor="e").pack(side="left", padx=8)
-        ct.CTkLabel(disc_row, text=f"₹{data['discount_amt']:.2f}", 
+        ct.CTkLabel(disc_row, text=f"Rs {data['discount_amt']:.2f}", 
                    font=ct.CTkFont(size=10), width=350, anchor="e").pack(side="left", padx=8)
-        ct.CTkLabel(subtotal_row, text=f"₹{data['subtotal']:.2f}", 
+        ct.CTkLabel(subtotal_row, text=f"Rs {data['subtotal']:.2f}", 
                    font=ct.CTkFont(size=10), width=120, anchor="e").pack(side="right", padx=8)
 
         tax_row = ct.CTkFrame(totals_frame, fg_color="white")
         tax_row.pack(fill="x", pady=1)
         ct.CTkLabel(tax_row, text=f"Tax(GST) ({data['tax_rate']}%):", 
                    font=ct.CTkFont(size=10), width=350, anchor="e").pack(side="left", padx=8)
-        ct.CTkLabel(tax_row, text=f"₹{data['tax_amt']:.2f}", 
+        ct.CTkLabel(tax_row, text=f"Rs {data['tax_amt']:.2f}", 
                    font=ct.CTkFont(size=10), width=120, anchor="e").pack(side="right", padx=8)
 
         ct.CTkFrame(totals_frame, height=2, fg_color=data['biz_color']).pack(fill="x", pady=5)
@@ -1473,7 +1749,7 @@ class InvoiceApp(ct.CTk):
         ct.CTkLabel(total_row, text="GRAND TOTAL:", 
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color=data['biz_color'], width=350, anchor="e").pack(side="left", padx=8)
-        ct.CTkLabel(total_row, text=f"₹{data['total']:.2f}", 
+        ct.CTkLabel(total_row, text=f"Rs {data['total']:.2f}", 
                    font=ct.CTkFont(size=13, weight="bold"),
                    text_color=data['biz_color'], width=120, anchor="e").pack(side="right", padx=8)
 
@@ -1512,19 +1788,49 @@ class InvoiceApp(ct.CTk):
 
     def make_pdf_style_1(self, data, path):
         """ Style 1: Modern Tech - Right Aligned Blue Theme """
+        
+        print(f"PDF Generation: Starting make_pdf_style_1")
+        
+        # Debug: Print all data to see what might contain Unicode
+        print(f"DEBUG - Business name: {repr(data.get('biz_name', ''))}")
+        print(f"DEBUG - Client name: {repr(data.get('client_name', ''))}")
+        print(f"DEBUG - Items count: {len(data.get('items', []))}")
+        if data.get('items'):
+            for i, item in enumerate(data['items'][:2]):  # Show first 2 items
+                print(f"DEBUG - Item {i}: {repr(item.get('desc', ''))}")
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                original = data[field]
+                data[field] = self.sanitize_text(data[field])
+                if original != data[field]:
+                    print(f"DEBUG - Sanitized {field}: {repr(original)} -> {repr(data[field])}")
+        
+        # Sanitize items
+        if 'items' in data:
+            for i, item in enumerate(data['items']):
+                if 'desc' in item and isinstance(item['desc'], str):
+                    original = item['desc']
+                    item['desc'] = self.sanitize_text(item['desc'])
+                    if original != item['desc']:
+                        print(f"DEBUG - Sanitized item {i} desc: {repr(original)} -> {repr(item['desc'])}")
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
+        print(f"PDF Generation: All text sanitized for ASCII compatibility")
+        
         pdf = FPDF()
         pdf.add_page()
         
-        # Add Unicode support font for rupees symbol
-        try:
-            pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-            pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
-            font_name = 'DejaVu'
-            print("DejaVu fonts loaded successfully for Unicode support")
-        except Exception as e:
-            # Fallback to default font if DejaVu not available
-            font_name = 'Arial'
-            print(f"DejaVu font loading failed: {e}, using Arial")
+        # COMPLETELY AVOID UNICODE - Use only ASCII characters
+        font_name = 'Arial'
+        rupee = 'Rs.'  # ASCII-safe only
+        
+        print("PDF Generation: Using ASCII-only approach to avoid encoding errors")
 
         # Color helper
         hex_color = data['biz_color'].lstrip('#')
@@ -1558,15 +1864,20 @@ class InvoiceApp(ct.CTk):
             pdf.cell(0, 5, f"GST No: {data['biz_gst_no']}", 0, 1, 'R')
         pdf.cell(0, 5, f"#{data['id']}", 0, 1, 'R')
         pdf.cell(0, 5, f"Date: {data['date']}", 0, 1, 'R')
-        if data['due_date']:
-            if data['due_date'] == "PENDING":
+        
+        # Display due date and pending status
+        if data.get('due_date') or data.get('is_pending'):
+            if data.get('due_date'):
+                # Show due date first
+                pdf.cell(0, 5, f"Due: {data['due_date']}", 0, 1, 'R')
+            if data.get('is_pending'):
+                # Show PENDING below in red
                 pdf.set_text_color(255, 0, 0)  # Red color
                 pdf.set_font(font_name, 'B', 10)
-                pdf.cell(0, 5, "Due: PENDING", 0, 1, 'R')
+                pdf.cell(0, 5, "PENDING", 0, 1, 'R')
                 pdf.set_font(font_name, '', 10)
                 pdf.set_text_color(100)
-            else:
-                pdf.cell(0, 5, f"Due: {data['due_date']}", 0, 1, 'R')
+        
         pdf.ln(10)
 
         # Info Blocks
@@ -1603,10 +1914,10 @@ class InvoiceApp(ct.CTk):
         if has_quantity:
             pdf.cell(90, 10, " Description", 0, 0, 'L', True)
             pdf.cell(50, 10, " Quantity", 0, 0, 'C', True)
-            pdf.cell(50, 10, " Price (?)", 0, 1, 'R', True)
+            pdf.cell(50, 10, f" Price ({rupee})", 0, 1, 'R', True)
         else:
             pdf.cell(140, 10, " Description", 0, 0, 'L', True)
-            pdf.cell(50, 10, " Price (?)", 0, 1, 'R', True)
+            pdf.cell(50, 10, f" Price ({rupee})", 0, 1, 'R', True)
 
         # Items
         pdf.set_text_color(0)
@@ -1619,33 +1930,67 @@ class InvoiceApp(ct.CTk):
                 if item.get('quantity') is not None:
                     qty_text = f"{item['quantity']} {item.get('unit', '')}"
                 pdf.cell(50, 10, qty_text, 0, 0, 'C', fill)
-                pdf.cell(50, 10, f"?{item['price']:.2f} ", 0, 1, 'R', fill)
+                pdf.cell(50, 10, f"{rupee} {item['price']:.2f} ", 0, 1, 'R', fill)
             else:
                 pdf.cell(140, 10, f" {item['desc']}", 0, 0, 'L', fill)
-                pdf.cell(50, 10, f"?{item['price']:.2f} ", 0, 1, 'R', fill)
+                pdf.cell(50, 10, f"{rupee} {item['price']:.2f} ", 0, 1, 'R', fill)
             fill = not fill
 
         # Total
         pdf.ln(5)
         pdf.set_text_color(0)
         pdf.cell(140, 7, "Subtotal", 0, 0, 'R')
-        pdf.cell(50, 7, f"?{data['subtotal']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"{rupee} {data['subtotal']:.2f}", 0, 1, 'R')
         
         pdf.cell(140, 7, f"Discount ({data['discount_rate']}%)", 0, 0, 'R')
-        pdf.cell(50, 7, f"?{data['discount_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"{rupee} {data['discount_amt']:.2f}", 0, 1, 'R')
 
         pdf.cell(140, 7, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
-        pdf.cell(50, 7, f"?{data['tax_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"{rupee} {data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.set_text_color(r, g, b)
         pdf.set_font(font_name, 'B', 14)
         pdf.cell(140, 10, "GRAND TOTAL", 0, 0, 'R')
-        pdf.cell(50, 10, f"?{data['total']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 10, f"{rupee} {data['total']:.2f}", 0, 1, 'R')
+
+        # Add some space before watermark
+        pdf.ln(10)
+
+        # Add watermark at bottom if exists
+        if data.get('biz_watermark') and data['biz_watermark'].strip():
+            try:
+                # Use Arial for watermark to avoid encoding issues
+                pdf.set_font('Arial', 'I', 10)
+                pdf.set_text_color(150, 150, 150)
+                # Convert to ASCII, replacing non-ASCII characters
+                watermark_text = data['biz_watermark'].encode('ascii', 'ignore').decode('ascii')
+                if watermark_text:
+                    pdf.cell(0, 10, watermark_text, 0, 0, 'C')
+            except Exception as e:
+                print(f"Watermark error: {e}")
+                # Skip watermark if any error occurs
 
         pdf.output(path)
 
     def make_pdf_style_2(self, data, path):
         """ Style 2: Nature/Classic - Centered, Green Theme """
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
         pdf = FPDF()
         pdf.add_page()
 
@@ -1704,10 +2049,10 @@ class InvoiceApp(ct.CTk):
         if has_quantity:
             pdf.cell(90, 8, "Item", 'B', 0)
             pdf.cell(40, 8, "Quantity", 'B', 0, 'C')
-            pdf.cell(60, 8, "Cost (?)", 'B', 1, 'R')
+            pdf.cell(60, 8, "Cost (Rs)", 'B', 1, 'R')
         else:
             pdf.cell(150, 8, "Item", 'B', 0)
-            pdf.cell(40, 8, "Cost (?)", 'B', 1, 'R')
+            pdf.cell(40, 8, "Cost (Rs)", 'B', 1, 'R')
 
         pdf.set_font("Times", '', 12)
         for item in data['items']:
@@ -1717,26 +2062,43 @@ class InvoiceApp(ct.CTk):
                 if item.get('quantity') is not None:
                     qty_text = f"{item['quantity']} {item.get('unit', '')}"
                 pdf.cell(40, 8, qty_text, 'B', 0, 'C')
-                pdf.cell(60, 8, f"?{item['price']:.2f}", 'B', 1, 'R')
+                pdf.cell(60, 8, f"Rs {item['price']:.2f}", 'B', 1, 'R')
             else:
                 pdf.cell(150, 8, item['desc'], 'B', 0)
-                pdf.cell(40, 8, f"?{item['price']:.2f}", 'B', 1, 'R')
+                pdf.cell(40, 8, f"Rs {item['price']:.2f}", 'B', 1, 'R')
 
         pdf.ln(5)
         pdf.cell(150, 6, f"Discount ({data['discount_rate']}%)", 0, 0, 'R')
-        pdf.cell(40, 6, f"?{data['discount_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 6, f"Rs {data['discount_amt']:.2f}", 0, 1, 'R')
         
         pdf.cell(150, 6, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
-        pdf.cell(40, 6, f"?{data['tax_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(40, 6, f"Rs {data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.ln(5)
         pdf.set_font("Times", 'B', 16)
-        pdf.cell(0, 10, f"Grand Total: ?{data['total']:.2f}", 0, 1, 'R')
+        pdf.cell(0, 10, f"Grand Total: Rs {data['total']:.2f}", 0, 1, 'R')
 
         pdf.output(path)
 
     def make_pdf_style_3(self, data, path):
         """ Style 3: Industrial - Orange, Bold Lines, Grid """
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
         pdf = FPDF()
         pdf.add_page()
         pdf.set_draw_color(0)
@@ -1804,10 +2166,10 @@ class InvoiceApp(ct.CTk):
         if has_quantity:
             pdf.cell(100, 10, "DESCRIPTION", 1, 0, 'L', True)
             pdf.cell(40, 10, "QUANTITY", 1, 0, 'C', True)
-            pdf.cell(60, 10, "AMOUNT (?)", 1, 1, 'C', True)
+            pdf.cell(60, 10, "AMOUNT (Rs)", 1, 1, 'C', True)
         else:
             pdf.cell(160, 10, "DESCRIPTION", 1, 0, 'L', True)
-            pdf.cell(40, 10, "AMOUNT (?)", 1, 1, 'C', True)
+            pdf.cell(40, 10, "AMOUNT (Rs)", 1, 1, 'C', True)
 
         for item in data['items']:
             if has_quantity:
@@ -1818,25 +2180,42 @@ class InvoiceApp(ct.CTk):
                     display_qty = item.get('quantity_display', item['quantity'])
                     qty_text = f"{display_qty} {item.get('unit', '')}"
                 pdf.cell(40, 10, qty_text, 1, 0, 'C')
-                pdf.cell(60, 10, f"?{item['price']:.2f}", 1, 1, 'R')
+                pdf.cell(60, 10, f"Rs {item['price']:.2f}", 1, 1, 'R')
             else:
                 pdf.cell(160, 10, item['desc'], 1, 0)
-                pdf.cell(40, 10, f"?{item['price']:.2f}", 1, 1, 'R')
+                pdf.cell(40, 10, f"Rs {item['price']:.2f}", 1, 1, 'R')
 
         # Tax Rows in Grid
         pdf.cell(160, 10, f"DISCOUNT ({data['discount_rate']}%)", 1, 0, 'R')
-        pdf.cell(40, 10, f"?{data['discount_amt']:.2f}", 1, 1, 'R')
+        pdf.cell(40, 10, f"Rs {data['discount_amt']:.2f}", 1, 1, 'R')
 
         pdf.cell(160, 10, f"TAX(GST) ({data['tax_rate']}%)", 1, 0, 'R')
-        pdf.cell(40, 10, f"?{data['tax_amt']:.2f}", 1, 1, 'R')
+        pdf.cell(40, 10, f"Rs {data['tax_amt']:.2f}", 1, 1, 'R')
 
         pdf.cell(160, 10, "TOTAL DUE", 1, 0, 'R', True)
-        pdf.cell(40, 10, f"?{data['total']:.2f}", 1, 1, 'R', True)
+        pdf.cell(40, 10, f"Rs {data['total']:.2f}", 1, 1, 'R', True)
 
         pdf.output(path)
 
     def make_pdf_style_4(self, data, path):
         """ Style 4: Minimalist - Purple, Left Aligned, Clean """
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
         pdf = FPDF()
         pdf.add_page()
 
@@ -1905,11 +2284,11 @@ class InvoiceApp(ct.CTk):
                     qty_text = f"{item['quantity']} {item.get('unit', '')}"
                 pdf.cell(50, 8, qty_text, 0, 0, 'C')
                 pdf.set_font("Helvetica", '', 12)
-                pdf.cell(40, 8, f"?{item['price']:.2f}", 0, 1, 'R')
+                pdf.cell(40, 8, f"Rs {item['price']:.2f}", 0, 1, 'R')
             else:
                 pdf.cell(140, 8, item['desc'], 0, 0)
                 pdf.set_font("Helvetica", '', 12)
-                pdf.cell(40, 8, f"?{item['price']:.2f}", 0, 1, 'R')
+                pdf.cell(40, 8, f"Rs {item['price']:.2f}", 0, 1, 'R')
             # Light gray line
             pdf.set_draw_color(240)
             pdf.line(20, pdf.get_y(), 190, pdf.get_y())
@@ -1930,9 +2309,55 @@ class InvoiceApp(ct.CTk):
 
         pdf.output(path)
 
+    def sanitize_text(self, text):
+        """Remove or replace characters that can't be encoded in latin-1"""
+        if not text:
+            return ""
+        # Convert to string if not already
+        text = str(text)
+        
+        # AGGRESSIVE ASCII-only sanitization
+        try:
+            # Keep only ASCII characters (0-127)
+            ascii_text = ''.join(char if ord(char) < 128 else '?' for char in text)
+            return ascii_text
+        except Exception as e:
+            print(f"Sanitization error: {e}")
+            # Ultimate fallback - remove all non-alphanumeric
+            return ''.join(char for char in text if char.isalnum() or char in ' .-_()[]')
+    
+    def get_rupee_symbol(self, format_type='pdf'):
+        """
+        Get the rupee symbol using Unicode code point 8377
+        This is more reliable than font-dependent methods
+        """
+        try:
+            return chr(8377)  # Unicode code point for ₹ symbol
+        except:
+            return 'Rs.'  # Fallback if Unicode fails
+    
     def make_word(self, data, path):
         # Basic Word generation kept simple but robust
         doc = Document()
+        
+        # Get rupee symbol using Unicode code point (consistent with PDF)
+        rupee = self.get_rupee_symbol('word')
+
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
 
         # Header Table for Logo and Biz Name
         header_table = doc.add_table(rows=1, cols=2)
@@ -1964,20 +2389,19 @@ class InvoiceApp(ct.CTk):
 
         doc.add_heading("INVOICE", 0)
         invoice_info = f"Invoice #: {data['id']}\nDate: {data['date']}"
-        if data['due_date']:
-            if data['due_date'] == "PENDING":
-                invoice_info += f"\nDue: "
-                doc.add_paragraph(invoice_info)
-                # Add PENDING in red and bold
-                p = doc.add_paragraph()
-                run = p.add_run("PENDING")
-                run.bold = True
-                run.font.color.rgb = RGBColor(255, 0, 0)
-            else:
-                invoice_info += f"\nDue: {data['due_date']}"
-                doc.add_paragraph(invoice_info)
-        else:
-            doc.add_paragraph(invoice_info)
+        
+        # Add due date if present
+        if data.get('due_date'):
+            invoice_info += f"\nDue: {data['due_date']}"
+        
+        doc.add_paragraph(invoice_info)
+        
+        # Add PENDING on separate line in red if pending
+        if data.get('is_pending'):
+            p = doc.add_paragraph()
+            run = p.add_run("PENDING")
+            run.bold = True
+            run.font.color.rgb = RGBColor(255, 0, 0)
 
         doc.add_heading('Bill To:', level=2)
         client_info = f"{data['client_name']}\n{data['client_email']}"
@@ -2014,20 +2438,30 @@ class InvoiceApp(ct.CTk):
                     display_qty = item.get('quantity_display', item['quantity'])
                     qty_text = f"{display_qty} {item.get('unit', '')}"
                 row_cells[1].text = qty_text
-                row_cells[2].text = f"₹{item['price']:.2f}"
+                row_cells[2].text = f"{rupee} {item['price']:.2f}"
             else:
-                row_cells[1].text = f"₹{item['price']:.2f}"
+                row_cells[1].text = f"{rupee} {item['price']:.2f}"
 
         # Tax Rows in Word
         row_disc = table.add_row().cells
         row_disc[0].text = f"Discount ({data['discount_rate']}%)"
-        row_disc[1].text = f"₹{data['discount_amt']:.2f}"
+        row_disc[1].text = f"{rupee} {data['discount_amt']:.2f}"
 
         row_tax = table.add_row().cells
         row_tax[0].text = f"Tax(GST) ({data['tax_rate']}%)"
-        row_tax[1].text = f"₹{data['tax_amt']:.2f}"
+        row_tax[1].text = f"{rupee} {data['tax_amt']:.2f}"
 
-        doc.add_paragraph(f"\nTOTAL: ₹{data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        doc.add_paragraph(f"\nTOTAL: {rupee} {data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        
+        # Add watermark at bottom if exists
+        if data.get('biz_watermark'):
+            watermark_para = doc.add_paragraph()
+            watermark_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = watermark_para.add_run(data['biz_watermark'])
+            run.italic = True
+            run.font.size = Pt(10)
+            run.font.color.rgb = RGBColor(150, 150, 150)
+        
         doc.save(path)
 
     def save_to_history(self, data):
@@ -2057,9 +2491,8 @@ class InvoiceApp(ct.CTk):
         
         self.history[self.current_biz_id].append(history_item)
         
-        # Keep only the last 5 invoices for this business
-        if len(self.history[self.current_biz_id]) > 5:
-            self.history[self.current_biz_id] = self.history[self.current_biz_id][-5:]
+        # Store unlimited invoices - no limit removed
+        # Keep all invoices for unlimited storage
         
         # Save to file
         with open(HISTORY_FILE, 'w') as f:
@@ -2186,24 +2619,60 @@ class InvoiceApp(ct.CTk):
                 self.refresh_history_ui()
                 messagebox.showinfo("Success", f"Invoice #{invoice_id} has been deleted.")
 
+    def on_search_change(self, event=None):
+        """Handle search input changes"""
+        self.refresh_history_ui()
+
+    def filter_invoices(self, invoices, search_term):
+        """Filter invoices based on search term"""
+        if not search_term:
+            return invoices
+        
+        search_term = search_term.lower().strip()
+        filtered = []
+        
+        for invoice in invoices:
+            # Search by invoice ID
+            if search_term in str(invoice.get('id', '')).lower():
+                filtered.append(invoice)
+                continue
+            
+            # Search by client name
+            if search_term in invoice.get('client', '').lower():
+                filtered.append(invoice)
+                continue
+        
+        return filtered
+
     def refresh_history_ui(self):
         for w in self.history_list.winfo_children(): w.destroy()
         
         # Get current business history
         current_history = self.history.get(self.current_biz_id, [])
         
+        # Apply search filter if search entry exists
+        if hasattr(self, 'search_entry'):
+            search_term = self.search_entry.get()
+            current_history = self.filter_invoices(current_history, search_term)
+        
         if not current_history:
             empty_frame = ct.CTkFrame(self.history_list, 
                                      fg_color=("#f1f5f9", "#1e293b"),
                                      corner_radius=8)
             empty_frame.pack(fill="x", pady=10, padx=5)
-            ct.CTkLabel(empty_frame, text="📭 No recent invoices", 
-                       text_color=("#94a3b8", "#64748b"),
-                       font=ct.CTkFont(size=11)).pack(pady=12)
+            
+            if hasattr(self, 'search_entry') and self.search_entry.get():
+                ct.CTkLabel(empty_frame, text="No invoices found", 
+                           text_color=("#94a3b8", "#64748b"),
+                           font=ct.CTkFont(size=11)).pack(pady=12)
+            else:
+                ct.CTkLabel(empty_frame, text="No recent invoices", 
+                           text_color=("#94a3b8", "#64748b"),
+                           font=ct.CTkFont(size=11)).pack(pady=12)
             return
         
-        # Show last 5 invoices for current business with compact modern card design
-        for idx, h in enumerate(reversed(current_history[-5:])):
+        # Show all matching invoices (unlimited) with compact modern card design
+        for idx, h in enumerate(reversed(current_history)):
             # Compact card for each invoice
             item_card = ct.CTkFrame(self.history_list, 
                                    fg_color=("#ffffff", "#1e293b"),
@@ -2224,7 +2693,7 @@ class InvoiceApp(ct.CTk):
                        font=ct.CTkFont(size=11, weight="bold"),
                        text_color=("#1e40af", "#60a5fa")).pack(side="left")
             
-            ct.CTkLabel(top_row, text=f"₹{h['total']:.2f}", 
+            ct.CTkLabel(top_row, text=f"Rs {h['total']:.2f}", 
                        font=ct.CTkFont(size=11, weight="bold"),
                        text_color=("#059669", "#10b981")).pack(side="right")
             
@@ -2238,7 +2707,7 @@ class InvoiceApp(ct.CTk):
             bottom_row.pack(fill="x", pady=(2, 0))
             
             if h.get('date'):
-                ct.CTkLabel(bottom_row, text=f"📅 {h['date']}", 
+                ct.CTkLabel(bottom_row, text=f"{h['date']}", 
                            font=ct.CTkFont(size=9),
                            text_color=("#94a3b8", "#64748b")).pack(side="left")
             
@@ -2299,3 +2768,4 @@ if __name__ == "__main__":
     # Start the main application
     app = InvoiceApp()
     app.mainloop()
+

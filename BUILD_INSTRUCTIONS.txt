@@ -1,0 +1,105 @@
+================================================================================
+TCG INVOICE - BUILD INSTRUCTIONS FOR EXE
+================================================================================
+
+STEP 1: INSTALL PYINSTALLER
+----------------------------
+Open Command Prompt and run:
+    pip install pyinstaller
+
+STEP 2: BUILD THE EXE
+----------------------
+Navigate to the project folder and run:
+    pyinstaller build_exe.spec
+
+This will create:
+- dist/TCG_Invoice/ folder with the executable and all dependencies
+
+STEP 3: TEST THE EXE
+--------------------
+Before creating installer, test the EXE:
+1. Go to dist/TCG_Invoice/
+2. Double-click TCG_Invoice.exe
+3. Verify it works correctly
+
+STEP 4: CREATE INSTALLER WITH INNO SETUP
+-----------------------------------------
+1. Open Inno Setup Compiler
+2. Use the Script Wizard or create a script with these settings:
+
+[Setup]
+AppName=TCG Invoice Management System
+AppVersion=2.0
+DefaultDirName={autopf}\TCG Invoice
+DefaultGroupName=TCG Invoice
+OutputDir=Output
+OutputBaseFilename=TCG_Invoice_Setup
+Compression=lzma2
+SolidCompression=yes
+PrivilegesRequired=admin
+
+[Files]
+Source: "dist\TCG_Invoice\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+
+[Icons]
+Name: "{group}\TCG Invoice"; Filename: "{app}\TCG_Invoice.exe"
+Name: "{autodesktop}\TCG Invoice"; Filename: "{app}\TCG_Invoice.exe"
+
+[Run]
+Filename: "{app}\TCG_Invoice.exe"; Description: "Launch TCG Invoice"; Flags: postinstall nowait skipifsilent
+
+3. Compile the script
+4. The installer will be created in the Output folder
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+1. DATA STORAGE LOCATION:
+   - User data (invoices, profiles) is stored in: %APPDATA%\TCG_Invoice\DB\
+   - This prevents permission errors in Program Files
+
+2. RESOURCE FILES:
+   - Images and fonts are bundled with the EXE
+   - Located in the installation directory
+
+3. FIRST RUN:
+   - The app will automatically create the DB folder in AppData
+   - No manual setup required
+
+4. UNINSTALL:
+   - User data in AppData will remain after uninstall
+   - Users can manually delete %APPDATA%\TCG_Invoice if needed
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+If the EXE doesn't work:
+
+1. Check console output:
+   - Change "console=False" to "console=True" in build_exe.spec
+   - Rebuild and check error messages
+
+2. Missing modules:
+   - Add missing modules to hiddenimports in build_exe.spec
+
+3. Missing files:
+   - Add missing files to datas in build_exe.spec
+
+4. Permission errors:
+   - Run installer as Administrator
+   - Check that AppData folder is writable
+
+================================================================================
+ALTERNATIVE: ONE-FILE EXE
+================================================================================
+
+To create a single EXE file (slower startup but easier distribution):
+
+Run this command instead:
+    pyinstaller --onefile --windowed --add-data "Image;Image" --add-data "DejaVuSans.ttf;." --add-data "DejaVuSans-Bold.ttf;." --add-data "*.pkl;." --hidden-import customtkinter --hidden-import PIL._tkinter_finder test.py
+
+This creates a single TCG_Invoice.exe file in dist/
+
+================================================================================

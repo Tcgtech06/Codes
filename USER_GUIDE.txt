@@ -1,0 +1,760 @@
+TCG INVOICE - USER GUIDE
+
+Complete Guide to Using the TCG Invoice Management System
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. Getting Started
+2. Understanding the Interface
+3. Setting Up Your Business
+4. Creating Your First Invoice
+5. Advanced Features
+6. Managing Invoice History
+7. Tips and Best Practices
+8. Troubleshooting
+
+================================================================================
+1. GETTING STARTED
+================================================================================
+
+Installation
+------------
+
+1. Download the Application
+   - Clone or download the repository
+   - Extract to a folder on your computer
+
+2. Install Python (if not already installed)
+   - Download Python 3.8 or higher from python.org
+   - During installation, check "Add Python to PATH"
+
+3. Install Dependencies
+   - Open Command Prompt or Terminal
+   - Navigate to the application folder
+   - Run: pip install -r requirements.txt
+
+4. Launch the Application
+   - Double-click test.py or run "python test.py"
+   - The splash screen will appear for 4 seconds
+   - Main application window will open
+
+First Launch
+------------
+
+When you first launch the application:
+- The splash screen displays the TCG logo and "A PRODUCT OF" text
+- After 4 seconds, the main window opens
+- You'll see 4 business slots in the sidebar (Business 1-4)
+- Each business has a unique color theme
+
+================================================================================
+2. UNDERSTANDING THE INTERFACE
+================================================================================
+
+Main Window Layout
+------------------
+
+The application window is divided into three main sections:
+
+1. Sidebar (Left)
+   - Business Buttons: 4 colored buttons for different businesses
+     * Business 1: Blue
+     * Business 2: Green
+     * Business 3: Pink
+     * Business 4: Purple
+   - Search Bar: Search invoices by ID or client name
+   - Invoice History: List of recent invoices (scrollable)
+
+2. Business Information Section (Top Right)
+   - Business Name: Enter your business name
+   - Address: Multi-line address field
+   - Email: Business email address
+   - Phone: Business contact number
+   - GST Number: Optional GST registration number (right side)
+   - Watermark: Optional watermark text for invoices (right side)
+   - Logo Upload: Button to upload business logo
+   - Save Info: Button to save business details
+
+3. Invoice Creation Section (Bottom Right)
+   - Client Details: Name and phone number
+   - Invoice Details: Invoice number, date, status
+   - Items Table: Add products/services with quantity and price
+   - Calculations: Discount, tax, totals
+   - Action Buttons: Generate PDF, Generate Word, Preview
+
+================================================================================
+3. SETTING UP YOUR BUSINESS
+================================================================================
+
+Step 1: Select a Business Slot
+-------------------------------
+
+1. Click on one of the 4 business buttons in the sidebar
+2. The button will highlight to show it's selected
+3. The business information section will load existing data (if any)
+
+Step 2: Enter Business Information
+-----------------------------------
+
+1. Business Name
+   - Enter your official business name
+   - This appears at the top of invoices
+
+2. Address
+   - Enter your complete business address
+   - Use multiple lines if needed
+   - Include city, state, and PIN code
+
+3. Email
+   - Enter your business email
+   - This appears on invoices for client contact
+
+4. Phone
+   - Enter your business phone number
+   - Include country code if needed
+
+5. GST Number (Optional)
+   - Located on the right side
+   - Enter your GST registration number
+   - Appears on invoices if provided
+   - Leave blank if not applicable
+
+6. Watermark (Optional)
+   - Located on the right side below GST
+   - Enter custom text to appear at bottom of invoices
+   - Examples: "Thank you for your business", "Terms apply"
+   - Use ASCII characters only (avoid special symbols)
+
+Step 3: Upload Business Logo
+-----------------------------
+
+1. Click the "Upload Logo" button
+2. Select an image file (JPG or PNG)
+3. Recommended size: 500x500 pixels or smaller
+4. The logo will appear on all invoices for this business
+
+Step 4: Save Business Information
+----------------------------------
+
+1. Click the "Save Info" button
+2. A success message will appear
+3. Your business details are now saved
+4. You can switch to other businesses and return anytime
+
+Managing Multiple Businesses
+-----------------------------
+
+You can manage up to 4 different businesses:
+- Each business has independent settings
+- Each business has its own invoice numbering
+- Each business has its own invoice history
+- Each business has its own logo and branding
+- Switch between businesses using the sidebar buttons
+
+================================================================================
+4. CREATING YOUR FIRST INVOICE
+================================================================================
+
+Step 1: Enter Client Details
+-----------------------------
+
+1. Client Name
+   - Enter the customer's name or company name
+   - Required field
+
+2. Client Phone
+   - Enter the customer's phone number
+   - Saved in history for future reference
+   - Optional but recommended
+
+Step 2: Set Invoice Details
+----------------------------
+
+1. Invoice Number
+   - Auto-generated based on last invoice
+   - You can modify if needed
+   - Must be unique
+
+2. Date
+   - Defaults to today's date
+   - Click to change if needed
+   - Format: DD/MM/YYYY
+
+3. Status
+   - Choose "Paid" or "Pending"
+   - Pending invoices show in RED and BOLD
+   - Helps track unpaid invoices
+
+Step 3: Add Invoice Items
+--------------------------
+
+1. Item Description
+   - Enter product or service name
+   - Be specific (e.g., "Chocolate Cake 1kg")
+
+2. Enable Quantity (Optional)
+   - Check the "Quantity" checkbox to enable quantity-based pricing
+   - If unchecked, enter total amount directly
+
+3. Quantity (if enabled)
+   - Select unit from dropdown:
+     * gm: Grams
+     * Kg: Kilograms
+     * Litre: Liters
+     * Piece: Individual items
+     * Rounds: Delivery rounds
+     * Trips: Transport trips
+     * Custom: Enter your own unit
+   
+   - Enter quantity value:
+     * Whole numbers: 1, 2, 10
+     * Decimals: 15.5, 0.5, 2.75
+     * Fractions: 1/2, 1/4, 3/4, 1/3
+   
+   - Examples:
+     * "1/2 Kg" = Half kilogram
+     * "0.5 Kg" = Half kilogram
+     * "15.5 gm" = 15.5 grams
+     * "10 Piece" = 10 pieces
+
+4. Amount/Price
+   - If quantity is disabled: Enter total amount
+   - If quantity is enabled: Enter price per unit
+   - System auto-calculates: Quantity x Price = Total
+
+5. Add Item
+   - Click "Add Item" button
+   - Item appears in the table below
+   - Repeat for all items
+
+Step 4: Apply Discount and Tax
+-------------------------------
+
+1. Discount
+   - Enter discount percentage (0-100)
+   - Applied to subtotal
+   - Leave as 0 for no discount
+
+2. Tax
+   - Enter tax percentage (e.g., 18 for 18% GST)
+   - Applied after discount
+   - Leave as 0 for no tax
+
+3. Auto-Calculation
+   - Subtotal = Sum of all items
+   - Discount Amount = Subtotal x (Discount% / 100)
+   - Taxable Amount = Subtotal - Discount
+   - Tax Amount = Taxable Amount x (Tax% / 100)
+   - Grand Total = Taxable Amount + Tax Amount
+
+Step 5: Preview Invoice
+------------------------
+
+1. Click the "Preview" button
+2. A dialog window opens showing the invoice
+3. Review all details carefully
+4. Check calculations
+5. Close preview when satisfied
+
+Step 6: Generate Invoice
+-------------------------
+
+Choose one of the following options:
+
+Generate PDF
+1. Click "Generate PDF" button
+2. Choose save location
+3. Enter filename
+4. PDF is created with:
+   - Business logo and details
+   - Client information
+   - Itemized list with quantities
+   - Discount and tax breakdown
+   - Grand total with Rs symbol
+   - Watermark at bottom (if set)
+   - GST number (if provided)
+
+Generate Word Document
+1. Click "Generate Word" button
+2. Choose save location
+3. Enter filename
+4. Word document (.docx) is created with same details as PDF
+
+Step 7: Invoice Saved to History
+---------------------------------
+
+- Invoice is automatically saved to history
+- Appears in the sidebar under the business
+- Can be searched and loaded later
+
+================================================================================
+5. ADVANCED FEATURES
+================================================================================
+
+Quantity System
+---------------
+
+The quantity system allows flexible pricing:
+
+Without Quantity
+- Simple total amount entry
+- Good for fixed-price services
+- Example: "Website Design - Rs50,000"
+
+With Quantity
+- Price per unit x quantity
+- Supports multiple units
+- Auto-calculates total
+
+Supported Units:
+- gm (grams): For small weights
+- Kg (kilograms): For larger weights
+- Litre: For liquids
+- Piece: For countable items
+- Rounds: For delivery services
+- Trips: For transport services
+- Custom: Define your own unit
+
+Input Formats:
+- Whole: 1, 2, 10, 100
+- Decimal: 0.5, 15.5, 2.75
+- Fraction: 1/2, 1/4, 3/4, 1/3, 2/3
+
+Examples:
+Item: Chocolate Cake
+Quantity: 1/2 Kg
+Price: Rs800 per Kg
+Total: Rs400
+
+Item: Cupcakes
+Quantity: 24 Piece
+Price: Rs50 per Piece
+Total: Rs1,200
+
+Item: Milk
+Quantity: 2.5 Litre
+Price: Rs60 per Litre
+Total: Rs150
+
+Watermark Feature
+-----------------
+
+Add custom text at the bottom of invoices:
+
+1. Enter watermark text in Business Information section (right side)
+2. Text appears at bottom of PDF and Word documents
+3. Displayed in gray, italic, centered
+4. Use for:
+   - Thank you messages
+   - Terms and conditions
+   - Payment instructions
+   - Return policy notes
+
+Tips:
+- Keep it short (1-2 lines)
+- Use ASCII characters only
+- Avoid special symbols that may cause PDF errors
+- Examples:
+  * "Thank you for your business!"
+  * "Payment due within 30 days"
+  * "All sales are final"
+
+GST Number Display
+------------------
+
+If you enter a GST number:
+- Appears on the right side above the date in invoices
+- Format: "GST: [Your Number]"
+- Helps with tax compliance
+- Leave blank if not applicable
+
+Pending Status
+--------------
+
+Mark invoices as pending to track unpaid bills:
+
+1. Select "Pending" from status dropdown
+2. Invoice shows in RED and BOLD in:
+   - Preview dialog
+   - PDF documents
+   - Word documents
+   - Invoice history
+3. Easy to identify unpaid invoices at a glance
+
+================================================================================
+6. MANAGING INVOICE HISTORY
+================================================================================
+
+Viewing History
+---------------
+
+- All invoices appear in the sidebar under the business
+- Shows: Invoice ID, Client Name, Date, Amount
+- Scrollable list (unlimited invoices)
+- Color-coded by business theme
+
+Searching Invoices
+------------------
+
+Use the search bar to find specific invoices:
+
+1. Search by Invoice ID
+   - Type the invoice number (e.g., "1005")
+   - Exact or partial match
+
+2. Search by Client Name
+   - Type client name (e.g., "Mohan")
+   - Case-insensitive
+   - Partial match supported
+
+3. Real-Time Filtering
+   - Results update as you type
+   - Clear search to see all invoices
+
+4. No Results
+   - Shows "No invoices found" if no matches
+   - Shows "No recent invoices" if history is empty
+
+Loading Previous Invoices
+--------------------------
+
+1. Click on an invoice in the history list
+2. All details load into the form:
+   - Client name and phone
+   - Invoice number and date
+   - All items with quantities
+   - Discount and tax
+   - Status
+3. Modify as needed
+4. Generate new invoice or update existing
+
+Deleting Invoices
+-----------------
+
+Currently, invoices cannot be deleted from the UI. To remove invoices:
+
+1. Close the application
+2. Open DB/history.json in a text editor
+3. Carefully remove the invoice entry
+4. Save the file
+5. Restart the application
+
+Warning: Be careful when editing JSON files manually. Invalid JSON will cause errors.
+
+================================================================================
+7. TIPS AND BEST PRACTICES
+================================================================================
+
+Business Setup
+--------------
+
+- Use high-quality logos (500x500 px recommended)
+- Keep business information up-to-date
+- Use consistent formatting for addresses
+- Save GST number if applicable for tax compliance
+
+Invoice Creation
+----------------
+
+- Use descriptive item names
+- Double-check quantities and prices
+- Verify calculations before generating
+- Use preview feature to catch errors
+- Keep invoice numbers sequential
+
+Quantity System
+---------------
+
+- Choose appropriate units for your products
+- Use fractions for common measurements (1/2, 1/4)
+- Use decimals for precise measurements (15.5)
+- Verify auto-calculations are correct
+
+File Management
+---------------
+
+- Save invoices with descriptive filenames
+- Organize invoices in folders by month/year
+- Keep backups of the DB folder
+- Export important invoices to multiple formats
+
+Data Backup
+-----------
+
+Regular backups are essential:
+
+1. Manual Backup
+   - Copy the entire DB folder
+   - Save to external drive or cloud storage
+   - Do this weekly or after important invoices
+
+2. What to Backup
+   - DB/profiles.json - Business settings
+   - DB/history.json - Invoice history
+   - DB/logos/ - Business logos
+
+3. Restoring from Backup
+   - Close the application
+   - Replace DB folder with backup
+   - Restart the application
+
+Performance
+-----------
+
+- Keep invoice history reasonable (delete old invoices if needed)
+- Use compressed images for logos (JPG preferred)
+- Close preview dialogs when done
+- Restart application if it becomes slow
+
+================================================================================
+8. TROUBLESHOOTING
+================================================================================
+
+Application Won't Start
+-----------------------
+
+Problem: Double-clicking test.py does nothing
+
+Solutions:
+1. Check Python is installed: python --version
+2. Install dependencies: pip install -r requirements.txt
+3. Run from command line: python test.py
+4. Check for error messages in console
+
+PDF Generation Fails
+--------------------
+
+Problem: Error when clicking "Generate PDF"
+
+Solutions:
+1. Check DejaVuSans.ttf fonts are in the root folder
+2. Use ASCII characters only in watermark
+3. Verify all required fields are filled
+4. Check invoice number is valid
+5. Try without watermark first
+
+Common Errors:
+- "Font not found": Download DejaVu fonts
+- "Unicode error": Remove special characters from watermark
+- "File in use": Close any open PDF files
+
+Logo Not Displaying
+-------------------
+
+Problem: Logo doesn't appear on invoices
+
+Solutions:
+1. Check file format (JPG or PNG only)
+2. Verify file size (under 5MB recommended)
+3. Re-upload the logo
+4. Check DB/logos/ folder for the file
+5. Try a different image
+
+Calculations Are Wrong
+----------------------
+
+Problem: Totals don't match expectations
+
+Solutions:
+1. Verify quantity format (use 0.5 instead of .5)
+2. Check price per unit vs total amount
+3. Ensure quantity checkbox is enabled/disabled correctly
+4. Verify discount and tax percentages
+5. Use preview to see breakdown
+
+Search Not Working
+------------------
+
+Problem: Search bar doesn't find invoices
+
+Solutions:
+1. Check spelling of client name
+2. Try partial search (first few letters)
+3. Search is case-insensitive
+4. Clear search and try again
+5. Verify invoices exist in history
+
+Invoice History Not Loading
+----------------------------
+
+Problem: Previous invoices don't appear
+
+Solutions:
+1. Check DB/history.json exists
+2. Verify JSON file is not corrupted
+3. Restore from backup if needed
+4. Check correct business is selected
+5. Restart the application
+
+Watermark on Wrong Page
+------------------------
+
+Problem: Watermark appears on page 2
+
+Solutions:
+1. Reduce number of invoice items
+2. Shorten item descriptions
+3. Use shorter watermark text
+4. This is a layout issue with many items
+
+Business Theme Wrong Color
+---------------------------
+
+Problem: Business 3 shows orange instead of pink
+
+Solutions:
+1. Check DB/profiles.json file
+2. Verify color code is #ec4899 for biz_3
+3. Restart the application
+4. Re-save business information
+
+Data Loss Prevention
+--------------------
+
+Problem: Lost all invoices or business data
+
+Prevention:
+1. Regular backups of DB folder
+2. Don't manually edit JSON files unless necessary
+3. Close application properly (don't force quit)
+4. Keep backup before major changes
+
+Recovery:
+1. Restore from most recent backup
+2. Check if DB/history.json.bak exists
+3. Contact support if critical data is lost
+
+================================================================================
+KEYBOARD SHORTCUTS
+================================================================================
+
+Currently, the application uses standard shortcuts:
+
+- Ctrl+C: Copy selected text
+- Ctrl+V: Paste text
+- Ctrl+A: Select all text in field
+- Tab: Move to next field
+- Enter: Activate focused button
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+Important files and folders:
+
+Application Root/
+├── test.py                    # Main application
+├── main.py                    # Alternative main
+├── requirements.txt           # Dependencies
+├── DejaVuSans.ttf            # Font for PDF
+├── DejaVuSans-Bold.ttf       # Bold font
+├── DB/
+│   ├── profiles.json         # Business data
+│   ├── history.json          # Invoice history
+│   └── logos/                # Business logos
+└── Image/
+    ├── logo.jpg              # App logo
+    └── Tcgtech.png           # TCG Tech logo
+
+================================================================================
+FREQUENTLY ASKED QUESTIONS
+================================================================================
+
+Can I use this for multiple businesses?
+Yes! You can manage up to 4 different businesses, each with its own branding, invoices, and settings.
+
+Is my data secure?
+All data is stored locally on your computer. No data is sent to external servers. You are responsible for backing up your data.
+
+Can I customize the invoice layout?
+The current version has a fixed modern layout. Customization requires modifying the Python code.
+
+How many invoices can I store?
+Unlimited! Each business can store as many invoices as your hard drive allows.
+
+Can I export data to Excel?
+Not directly. You can manually copy data from the JSON files or generate Word documents and convert them.
+
+Does it work offline?
+Yes! The application works completely offline. No internet connection required.
+
+Can I print invoices?
+Yes! Generate a PDF and print it using your PDF viewer's print function.
+
+What if I need help?
+- Check this user guide
+- Review the README.txt file
+- Contact support: support@tcgtech.com
+- Visit: www.tcgtech.com
+
+================================================================================
+GETTING SUPPORT
+================================================================================
+
+If you need assistance:
+
+1. Check Documentation
+   - Read this user guide thoroughly
+   - Check the README.txt file
+   - Review TERMS_OF_SERVICE.txt
+
+2. Common Issues
+   - Most problems are covered in Troubleshooting section
+   - Check for typos in data entry
+   - Verify all dependencies are installed
+
+3. Contact Support
+   - Email: support@tcgtech.com
+   - Website: www.tcgtech.com
+   - Include:
+     * Description of the problem
+     * Error messages (if any)
+     * Steps to reproduce
+     * Screenshots (if helpful)
+
+================================================================================
+UPDATES AND IMPROVEMENTS
+================================================================================
+
+The application is actively maintained. Future updates may include:
+
+- Custom invoice templates
+- Email integration
+- Payment tracking
+- Expense management
+- Multi-currency support
+- Cloud backup
+- Mobile app
+
+Stay tuned for updates!
+
+================================================================================
+CONCLUSION
+================================================================================
+
+Congratulations! You now know how to use the TCG Invoice Management System effectively. This powerful tool will help you:
+
+- Manage multiple businesses
+- Generate professional invoices
+- Track payments
+- Organize client data
+- Save time on paperwork
+
+Remember to:
+- Back up your data regularly
+- Keep business information updated
+- Use the preview feature
+- Verify calculations
+- Save invoices with clear filenames
+
+Happy invoicing!
+
+================================================================================
+
+A PRODUCT OF TCG TECHNOLOGY
+
+For more information, visit www.tcgtech.com
+
+(c) 2026 TCG Technology. All rights reserved.
