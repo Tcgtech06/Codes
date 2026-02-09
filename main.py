@@ -505,6 +505,15 @@ class InvoiceApp(ct.CTk):
                                          corner_radius=12,
                                          font=ct.CTkFont(size=13, weight="bold"))
         self.save_biz_btn.pack(pady=(0, 8))
+        
+        # Layout Customizer Button
+        ct.CTkButton(right_frame, text="⚙️ Customize Layout", 
+                    command=self.open_layout_customizer,
+                    width=250, height=45,
+                    fg_color=("#8b5cf6", "#7c3aed"),
+                    hover_color=("#7c3aed", "#6d28d9"),
+                    corner_radius=12,
+                    font=ct.CTkFont(size=13, weight="bold")).pack(pady=(0, 8))
 
         # --- Divider ---
         ct.CTkFrame(self.main_frame, height=3, 
@@ -763,6 +772,16 @@ class InvoiceApp(ct.CTk):
                                      fg_color=("#3b82f6", "#2563eb"),
                                      hover_color=("#2563eb", "#1d4ed8"))
         self.btn_word.pack(side="right", padx=10)
+
+        # Print button - generates PDF and opens it for printing without saving
+        self.btn_print = ct.CTkButton(action_frame, text="🖨️ Print Invoice", 
+                                     height=55,
+                                     corner_radius=15,
+                                     font=ct.CTkFont(size=15, weight="bold"),
+                                     command=self.print_invoice,
+                                     fg_color=("#059669", "#047857"),
+                                     hover_color=("#047857", "#065f46"))
+        self.btn_print.pack(side="right", padx=10)
 
         ct.CTkButton(action_frame, text="Clear Form", 
                     height=55,
@@ -1156,6 +1175,189 @@ class InvoiceApp(ct.CTk):
             )
             
             messagebox.showinfo("Saved", f"Details saved for {name}")
+
+    def open_layout_customizer(self):
+        """Open the layout customizer dialog"""
+        customizer = ct.CTkToplevel(self)
+        customizer.title("Invoice Layout Customizer")
+        customizer.geometry("800x600")
+        customizer.transient(self)
+        customizer.grab_set()
+        
+        # Get current layout settings or use defaults
+        current_layout = self.profiles[self.current_biz_id].get("layout", self.get_default_layout())
+        
+        # Header
+        header = ct.CTkFrame(customizer, fg_color=("#1e40af", "#1e3a8a"), height=60)
+        header.pack(fill="x", padx=0, pady=0)
+        header.pack_propagate(False)
+        
+        ct.CTkLabel(header, text="⚙️ Customize Invoice Layout", 
+                   font=ct.CTkFont(size=20, weight="bold"),
+                   text_color="white").pack(pady=15)
+        
+        # Main content with scrollable frame
+        content = ct.CTkScrollableFrame(customizer, fg_color=("#f8fafc", "#1e293b"))
+        content.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        # Store field widgets for later access
+        field_widgets = {}
+        
+        # Business Information Section
+        self.create_layout_section(content, "Business Information", [
+            ("biz_name", "Business Name", current_layout),
+            ("biz_address", "Business Address", current_layout),
+            ("biz_email", "Business Email", current_layout),
+            ("biz_phone", "Business Phone", current_layout),
+            ("biz_gst", "GST Number", current_layout),
+            ("biz_logo", "Business Logo", current_layout),
+        ], field_widgets)
+        
+        # Client Information Section
+        self.create_layout_section(content, "Client Information", [
+            ("client_name", "Client Name", current_layout),
+            ("client_email", "Client Email", current_layout),
+            ("client_phone", "Client Phone", current_layout),
+            ("client_address", "Client Address", current_layout),
+        ], field_widgets)
+        
+        # Invoice Details Section
+        self.create_layout_section(content, "Invoice Details", [
+            ("invoice_number", "Invoice Number", current_layout),
+            ("invoice_date", "Invoice Date", current_layout),
+            ("due_date", "Due Date", current_layout),
+            ("pending_status", "Pending Status", current_layout),
+        ], field_widgets)
+        
+        # Items and Totals Section
+        self.create_layout_section(content, "Items & Totals", [
+            ("items_table", "Items Table", current_layout),
+            ("subtotal", "Subtotal", current_layout),
+            ("discount", "Discount", current_layout),
+            ("tax", "Tax/GST", current_layout),
+            ("grand_total", "Grand Total", current_layout),
+            ("watermark", "Watermark", current_layout),
+        ], field_widgets)
+        
+        # Bottom buttons
+        button_frame = ct.CTkFrame(customizer, fg_color="transparent")
+        button_frame.pack(fill="x", padx=20, pady=20)
+        
+        def save_layout():
+            # Collect all settings
+            new_layout = {}
+            for field_id, widgets in field_widgets.items():
+                new_layout[field_id] = {
+                    "visible": widgets["visible"].get(),
+                    "position": widgets["position"].get(),
+                    "label": widgets["label"].get()
+                }
+            
+            # Save to profile
+            self.profiles[self.current_biz_id]["layout"] = new_layout
+            self.save_profiles()
+            messagebox.showinfo("Success", "Layout customization saved!")
+            customizer.destroy()
+        
+        def reset_layout():
+            if messagebox.askyesno("Reset Layout", "Reset to default layout?"):
+                self.profiles[self.current_biz_id]["layout"] = self.get_default_layout()
+                self.save_profiles()
+                messagebox.showinfo("Reset", "Layout reset to default!")
+                customizer.destroy()
+                self.open_layout_customizer()  # Reopen with defaults
+        
+        ct.CTkButton(button_frame, text="💾 Save Layout", 
+                    command=save_layout,
+                    width=200, height=45,
+                    fg_color=("#059669", "#047857"),
+                    hover_color=("#047857", "#065f46"),
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
+        
+        ct.CTkButton(button_frame, text="🔄 Reset to Default", 
+                    command=reset_layout,
+                    width=200, height=45,
+                    fg_color=("#dc2626", "#b91c1c"),
+                    hover_color=("#b91c1c", "#991b1b"),
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
+        
+        ct.CTkButton(button_frame, text="Cancel", 
+                    command=customizer.destroy,
+                    width=150, height=45,
+                    fg_color=("#64748b", "#475569"),
+                    hover_color=("#475569", "#334155"),
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
+    
+    def create_layout_section(self, parent, section_title, fields, field_widgets):
+        """Create a section in the layout customizer"""
+        # Section header
+        section_frame = ct.CTkFrame(parent, fg_color=("#ffffff", "#2d3748"), 
+                                   corner_radius=10, border_width=2,
+                                   border_color=("#e2e8f0", "#4a5568"))
+        section_frame.pack(fill="x", pady=10)
+        
+        ct.CTkLabel(section_frame, text=section_title, 
+                   font=ct.CTkFont(size=16, weight="bold"),
+                   text_color=("#1e40af", "#60a5fa")).pack(anchor="w", padx=15, pady=10)
+        
+        # Fields
+        for field_id, field_label, current_layout in fields:
+            field_settings = current_layout.get(field_id, {"visible": True, "position": "default", "label": field_label})
+            
+            field_row = ct.CTkFrame(section_frame, fg_color="transparent")
+            field_row.pack(fill="x", padx=15, pady=5)
+            
+            # Checkbox for visibility
+            visible_var = ct.BooleanVar(value=field_settings["visible"])
+            checkbox = ct.CTkCheckBox(field_row, text="", variable=visible_var, width=30)
+            checkbox.pack(side="left", padx=(0, 10))
+            
+            # Label entry
+            label_entry = ct.CTkEntry(field_row, width=200, height=35)
+            label_entry.insert(0, field_settings["label"])
+            label_entry.pack(side="left", padx=5)
+            
+            # Position dropdown
+            position_var = ct.StringVar(value=field_settings["position"])
+            position_menu = ct.CTkOptionMenu(field_row, variable=position_var,
+                                            values=["default", "top", "left", "right", "bottom", "hidden"],
+                                            width=120, height=35)
+            position_menu.pack(side="left", padx=5)
+            
+            ct.CTkLabel(field_row, text="Position", 
+                       font=ct.CTkFont(size=11)).pack(side="left", padx=5)
+            
+            # Store widgets for later access
+            field_widgets[field_id] = {
+                "visible": visible_var,
+                "position": position_var,
+                "label": label_entry
+            }
+    
+    def get_default_layout(self):
+        """Get default layout configuration"""
+        return {
+            "biz_name": {"visible": True, "position": "default", "label": "Business Name"},
+            "biz_address": {"visible": True, "position": "default", "label": "Business Address"},
+            "biz_email": {"visible": True, "position": "default", "label": "Business Email"},
+            "biz_phone": {"visible": True, "position": "default", "label": "Business Phone"},
+            "biz_gst": {"visible": True, "position": "default", "label": "GST Number"},
+            "biz_logo": {"visible": True, "position": "default", "label": "Business Logo"},
+            "client_name": {"visible": True, "position": "default", "label": "Client Name"},
+            "client_email": {"visible": True, "position": "default", "label": "Client Email"},
+            "client_phone": {"visible": True, "position": "default", "label": "Client Phone"},
+            "client_address": {"visible": True, "position": "default", "label": "Client Address"},
+            "invoice_number": {"visible": True, "position": "default", "label": "Invoice Number"},
+            "invoice_date": {"visible": True, "position": "default", "label": "Invoice Date"},
+            "due_date": {"visible": True, "position": "default", "label": "Due Date"},
+            "pending_status": {"visible": True, "position": "default", "label": "Pending Status"},
+            "items_table": {"visible": True, "position": "default", "label": "Items Table"},
+            "subtotal": {"visible": True, "position": "default", "label": "Subtotal"},
+            "discount": {"visible": True, "position": "default", "label": "Discount"},
+            "tax": {"visible": True, "position": "default", "label": "Tax/GST"},
+            "grand_total": {"visible": True, "position": "default", "label": "Grand Total"},
+            "watermark": {"visible": True, "position": "default", "label": "Watermark"},
+        }
 
     # --- Core Invoice Logic ---
 
@@ -1560,6 +1762,128 @@ class InvoiceApp(ct.CTk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to generate invoice: {str(e)}")
             print(f"Generate Error: {e}")
+
+    def print_invoice(self):
+        """Generate PDF in temp folder and open it for printing with save option"""
+        import tempfile
+        import re
+        
+        try:
+            if not self.items:
+                messagebox.showwarning("Warning", "Please add at least one item to the invoice before printing.")
+                return
+            
+            # Validate client email
+            client_email = self.client_email.get().strip()
+            if client_email:
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, client_email):
+                    messagebox.showerror("Validation Error", "Client email format is invalid!")
+                    return
+            
+            # Validate client phone
+            client_phone = self.client_phone.get().strip()
+            if client_phone:
+                digits_only = ''.join(filter(str.isdigit, client_phone))
+                if len(digits_only) != 10:
+                    messagebox.showerror("Validation Error", "Client phone number must be exactly 10 digits!")
+                    return
+
+            self.refresh_table()
+        
+            # Handle pending status and due date
+            due_date_value = self.due_date.get().strip() or ""
+            is_pending = self.pending_var.get()
+            
+            # Store both values separately for better display control
+            if is_pending and due_date_value:
+                due_date_display = due_date_value
+                pending_status = True
+            elif is_pending and not due_date_value:
+                due_date_display = ""
+                pending_status = True
+            else:
+                due_date_display = due_date_value
+                pending_status = False
+        
+            # Get invoice date from input or use today's date
+            invoice_date = self.invoice_date.get() or datetime.now().strftime("%d-%m-%Y")
+
+            # Get Profile
+            profile = self.profiles[self.current_biz_id]
+        
+            data = {
+             "id": self.invoice_num.get(),
+             "date": invoice_date,
+             "due_date": due_date_display,
+             "is_pending": pending_status,
+             "client_name": self.client_name.get(),
+             "client_email": self.client_email.get(),
+             "client_phone": self.client_phone.get(),
+             "discount_rate": self.current_calc["discount_rate"],
+             "discount_amt": self.current_calc["discount_amt"],
+             "client_address": self.client_address.get(),
+             "items": self.items,
+             "subtotal": self.current_calc["subtotal"],
+             "tax_rate": self.current_calc["tax_rate"],
+             "tax_amt": self.current_calc["tax_amt"],
+             "total": self.current_calc["total"],
+             "biz_name": profile["name"],
+             "biz_addr": profile["address"],
+             "biz_email": profile.get("email", ""),
+             "biz_phone": profile.get("phone", ""),
+             "biz_gst_no": profile.get("gst_no", ""),
+             "biz_logo": profile["logo"],
+             "biz_color": profile["color"],
+             "biz_style": profile.get("style", "Modern"),
+             "biz_watermark": profile.get("watermark", "")
+            }
+
+            # Ask user if they want to save to history
+            save_response = messagebox.askyesno(
+                "Save Invoice?",
+                "Do you want to save this invoice to history?\n\n"
+                "• Yes: Invoice will be saved and can be accessed later\n"
+                "• No: Invoice will only be printed (not saved)",
+                icon='question'
+            )
+
+            # Create temporary PDF file
+            temp_dir = tempfile.gettempdir()
+            temp_filename = f"Invoice_{data['id']}_PRINT.pdf"
+            temp_path = os.path.join(temp_dir, temp_filename)
+
+            # Generate PDF in temp location
+            self.make_pdf_style_1(data, temp_path)
+
+            # Save to history if user chose Yes
+            if save_response:
+                self.save_to_history(data)
+                save_message = "Invoice saved to history and opened for printing."
+            else:
+                save_message = "⚠️ WARNING: This invoice will NOT be saved!\n\nThe printed invoice will not appear in your history."
+
+            # Open PDF with default viewer
+            try:
+                if sys.platform == 'win32':
+                    os.startfile(temp_path)
+                elif sys.platform == 'darwin':  # macOS
+                    os.system(f'open "{temp_path}"')
+                else:  # linux
+                    os.system(f'xdg-open "{temp_path}"')
+                
+                # Show appropriate message based on save choice
+                if save_response:
+                    messagebox.showinfo("Print Ready", f"{save_message}\n\nYou can now print from the PDF viewer.")
+                else:
+                    messagebox.showwarning("Print Ready - Not Saved", f"{save_message}\n\nYou can now print from the PDF viewer.")
+                    
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not open PDF viewer: {str(e)}")
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to prepare invoice for printing: {str(e)}")
+            print(f"Print Error: {e}")
 
     def show_preview_dialog(self, data, file_type):
         """Show a preview dialog before generating the invoice with PDF-like format"""

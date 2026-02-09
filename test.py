@@ -764,6 +764,16 @@ class InvoiceApp(ct.CTk):
                                      hover_color=("#2563eb", "#1d4ed8"))
         self.btn_word.pack(side="right", padx=10)
 
+        # Print button - generates PDF and opens it for printing without saving
+        self.btn_print = ct.CTkButton(action_frame, text="🖨️ Print Invoice", 
+                                     height=55,
+                                     corner_radius=15,
+                                     font=ct.CTkFont(size=15, weight="bold"),
+                                     command=self.print_invoice,
+                                     fg_color=("#059669", "#047857"),
+                                     hover_color=("#047857", "#065f46"))
+        self.btn_print.pack(side="right", padx=10)
+
         ct.CTkButton(action_frame, text="Clear Form", 
                     height=55,
                     corner_radius=15,
@@ -1488,10 +1498,23 @@ class InvoiceApp(ct.CTk):
 
             self.refresh_table()
         
-            # Handle pending status
-            due_date_value = self.due_date.get() or ""
-            if self.pending_var.get():
-                due_date_value = "PENDING"
+            # Handle pending status and due date
+            due_date_value = self.due_date.get().strip() or ""
+            is_pending = self.pending_var.get()
+            
+            # Store both values separately for better display control
+            if is_pending and due_date_value:
+                # Both date and pending - will be displayed on separate lines
+                due_date_display = due_date_value
+                pending_status = True
+            elif is_pending and not due_date_value:
+                # Only pending, no date
+                due_date_display = ""
+                pending_status = True
+            else:
+                # Only date, no pending
+                due_date_display = due_date_value
+                pending_status = False
         
             # Get invoice date from input or use today's date
             invoice_date = self.invoice_date.get() or datetime.now().strftime("%d-%m-%Y")
@@ -1502,7 +1525,8 @@ class InvoiceApp(ct.CTk):
             data = {
              "id": self.invoice_num.get(),
              "date": invoice_date,
-             "due_date": due_date_value,
+             "due_date": due_date_display,
+             "is_pending": pending_status,
              "client_name": self.client_name.get(),
              "client_email": self.client_email.get(),
              "client_phone": self.client_phone.get(),
@@ -1546,6 +1570,128 @@ class InvoiceApp(ct.CTk):
         except Exception as e:
             messagebox.showerror("Error", f"Failed to generate invoice: {str(e)}")
             print(f"Generate Error: {e}")
+
+    def print_invoice(self):
+        """Generate PDF in temp folder and open it for printing with save option"""
+        import tempfile
+        import re
+        
+        try:
+            if not self.items:
+                messagebox.showwarning("Warning", "Please add at least one item to the invoice before printing.")
+                return
+            
+            # Validate client email
+            client_email = self.client_email.get().strip()
+            if client_email:
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, client_email):
+                    messagebox.showerror("Validation Error", "Client email format is invalid!")
+                    return
+            
+            # Validate client phone
+            client_phone = self.client_phone.get().strip()
+            if client_phone:
+                digits_only = ''.join(filter(str.isdigit, client_phone))
+                if len(digits_only) != 10:
+                    messagebox.showerror("Validation Error", "Client phone number must be exactly 10 digits!")
+                    return
+
+            self.refresh_table()
+        
+            # Handle pending status and due date
+            due_date_value = self.due_date.get().strip() or ""
+            is_pending = self.pending_var.get()
+            
+            # Store both values separately for better display control
+            if is_pending and due_date_value:
+                due_date_display = due_date_value
+                pending_status = True
+            elif is_pending and not due_date_value:
+                due_date_display = ""
+                pending_status = True
+            else:
+                due_date_display = due_date_value
+                pending_status = False
+        
+            # Get invoice date from input or use today's date
+            invoice_date = self.invoice_date.get() or datetime.now().strftime("%d-%m-%Y")
+
+            # Get Profile
+            profile = self.profiles[self.current_biz_id]
+        
+            data = {
+             "id": self.invoice_num.get(),
+             "date": invoice_date,
+             "due_date": due_date_display,
+             "is_pending": pending_status,
+             "client_name": self.client_name.get(),
+             "client_email": self.client_email.get(),
+             "client_phone": self.client_phone.get(),
+             "discount_rate": self.current_calc["discount_rate"],
+             "discount_amt": self.current_calc["discount_amt"],
+             "client_address": self.client_address.get(),
+             "items": self.items,
+             "subtotal": self.current_calc["subtotal"],
+             "tax_rate": self.current_calc["tax_rate"],
+             "tax_amt": self.current_calc["tax_amt"],
+             "total": self.current_calc["total"],
+             "biz_name": profile["name"],
+             "biz_addr": profile["address"],
+             "biz_email": profile.get("email", ""),
+             "biz_phone": profile.get("phone", ""),
+             "biz_gst_no": profile.get("gst_no", ""),
+             "biz_logo": profile["logo"],
+             "biz_color": profile["color"],
+             "biz_style": profile.get("style", "Modern"),
+             "biz_watermark": profile.get("watermark", "")
+            }
+
+            # Ask user if they want to save to history
+            save_response = messagebox.askyesno(
+                "Save Invoice?",
+                "Do you want to save this invoice to history?\n\n"
+                "• Yes: Invoice will be saved and can be accessed later\n"
+                "• No: Invoice will only be printed (not saved)",
+                icon='question'
+            )
+
+            # Create temporary PDF file
+            temp_dir = tempfile.gettempdir()
+            temp_filename = f"Invoice_{data['id']}_PRINT.pdf"
+            temp_path = os.path.join(temp_dir, temp_filename)
+
+            # Generate PDF in temp location
+            self.make_pdf_style_1(data, temp_path)
+
+            # Save to history if user chose Yes
+            if save_response:
+                self.save_to_history(data)
+                save_message = "Invoice saved to history and opened for printing."
+            else:
+                save_message = "⚠️ WARNING: This invoice will NOT be saved!\n\nThe printed invoice will not appear in your history."
+
+            # Open PDF with default viewer
+            try:
+                if sys.platform == 'win32':
+                    os.startfile(temp_path)
+                elif sys.platform == 'darwin':  # macOS
+                    os.system(f'open "{temp_path}"')
+                else:  # linux
+                    os.system(f'xdg-open "{temp_path}"')
+                
+                # Show appropriate message based on save choice
+                if save_response:
+                    messagebox.showinfo("Print Ready", f"{save_message}\n\nYou can now print from the PDF viewer.")
+                else:
+                    messagebox.showwarning("Print Ready - Not Saved", f"{save_message}\n\nYou can now print from the PDF viewer.")
+                    
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not open PDF viewer: {str(e)}")
+        
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to prepare invoice for printing: {str(e)}")
+            print(f"Print Error: {e}")
 
     def show_preview_dialog(self, data, file_type):
         """Show a preview dialog before generating the invoice with PDF-like format"""
@@ -1620,14 +1766,16 @@ class InvoiceApp(ct.CTk):
                    font=ct.CTkFont(size=11, weight="bold")).pack(anchor="w")
         ct.CTkLabel(invoice_header, text=f"Date: {data['date']}", 
                    font=ct.CTkFont(size=10)).pack(anchor="w")
-        if data['due_date']:
-            if data['due_date'] == "PENDING":
-                ct.CTkLabel(invoice_header, text=f"Due Date: PENDING", 
-                           font=ct.CTkFont(size=10, weight="bold"),
-                           text_color="red").pack(anchor="w")
-            else:
+        
+        # Display due date and pending status
+        if data.get('due_date') or data.get('is_pending'):
+            if data.get('due_date'):
                 ct.CTkLabel(invoice_header, text=f"Due Date: {data['due_date']}", 
                            font=ct.CTkFont(size=10)).pack(anchor="w")
+            if data.get('is_pending'):
+                ct.CTkLabel(invoice_header, text="PENDING", 
+                           font=ct.CTkFont(size=10, weight="bold"),
+                           text_color="red").pack(anchor="w")
 
         ct.CTkFrame(preview_frame, height=1, fg_color="#e0e0e0").pack(fill="x", padx=15, pady=10)
 
@@ -1772,19 +1920,49 @@ class InvoiceApp(ct.CTk):
 
     def make_pdf_style_1(self, data, path):
         """ Style 1: Modern Tech - Right Aligned Blue Theme """
+        
+        print(f"PDF Generation: Starting make_pdf_style_1")
+        
+        # Debug: Print all data to see what might contain Unicode
+        print(f"DEBUG - Business name: {repr(data.get('biz_name', ''))}")
+        print(f"DEBUG - Client name: {repr(data.get('client_name', ''))}")
+        print(f"DEBUG - Items count: {len(data.get('items', []))}")
+        if data.get('items'):
+            for i, item in enumerate(data['items'][:2]):  # Show first 2 items
+                print(f"DEBUG - Item {i}: {repr(item.get('desc', ''))}")
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                original = data[field]
+                data[field] = self.sanitize_text(data[field])
+                if original != data[field]:
+                    print(f"DEBUG - Sanitized {field}: {repr(original)} -> {repr(data[field])}")
+        
+        # Sanitize items
+        if 'items' in data:
+            for i, item in enumerate(data['items']):
+                if 'desc' in item and isinstance(item['desc'], str):
+                    original = item['desc']
+                    item['desc'] = self.sanitize_text(item['desc'])
+                    if original != item['desc']:
+                        print(f"DEBUG - Sanitized item {i} desc: {repr(original)} -> {repr(item['desc'])}")
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
+        print(f"PDF Generation: All text sanitized for ASCII compatibility")
+        
         pdf = FPDF()
         pdf.add_page()
         
-        # Add Unicode support font for rupees symbol
-        try:
-            pdf.add_font('DejaVu', '', os.path.join(RESOURCE_DIR, 'DejaVuSans.ttf'), uni=True)
-            pdf.add_font('DejaVu', 'B', os.path.join(RESOURCE_DIR, 'DejaVuSans-Bold.ttf'), uni=True)
-            font_name = 'DejaVu'
-            print("DejaVu fonts loaded successfully for Unicode support")
-        except Exception as e:
-            # Fallback to default font if DejaVu not available
-            font_name = 'Arial'
-            print(f"DejaVu font loading failed: {e}, using Arial")
+        # COMPLETELY AVOID UNICODE - Use only ASCII characters
+        font_name = 'Arial'
+        rupee = 'Rs.'  # ASCII-safe only
+        
+        print("PDF Generation: Using ASCII-only approach to avoid encoding errors")
 
         # Color helper
         hex_color = data['biz_color'].lstrip('#')
@@ -1818,15 +1996,20 @@ class InvoiceApp(ct.CTk):
             pdf.cell(0, 5, f"GST No: {data['biz_gst_no']}", 0, 1, 'R')
         pdf.cell(0, 5, f"#{data['id']}", 0, 1, 'R')
         pdf.cell(0, 5, f"Date: {data['date']}", 0, 1, 'R')
-        if data['due_date']:
-            if data['due_date'] == "PENDING":
+        
+        # Display due date and pending status
+        if data.get('due_date') or data.get('is_pending'):
+            if data.get('due_date'):
+                # Show due date first
+                pdf.cell(0, 5, f"Due: {data['due_date']}", 0, 1, 'R')
+            if data.get('is_pending'):
+                # Show PENDING below in red
                 pdf.set_text_color(255, 0, 0)  # Red color
                 pdf.set_font(font_name, 'B', 10)
-                pdf.cell(0, 5, "Due: PENDING", 0, 1, 'R')
+                pdf.cell(0, 5, "PENDING", 0, 1, 'R')
                 pdf.set_font(font_name, '', 10)
                 pdf.set_text_color(100)
-            else:
-                pdf.cell(0, 5, f"Due: {data['due_date']}", 0, 1, 'R')
+        
         pdf.ln(10)
 
         # Info Blocks
@@ -1863,10 +2046,10 @@ class InvoiceApp(ct.CTk):
         if has_quantity:
             pdf.cell(90, 10, " Description", 0, 0, 'L', True)
             pdf.cell(50, 10, " Quantity", 0, 0, 'C', True)
-            pdf.cell(50, 10, " Price (?)", 0, 1, 'R', True)
+            pdf.cell(50, 10, f" Price ({rupee})", 0, 1, 'R', True)
         else:
             pdf.cell(140, 10, " Description", 0, 0, 'L', True)
-            pdf.cell(50, 10, " Price (?)", 0, 1, 'R', True)
+            pdf.cell(50, 10, f" Price ({rupee})", 0, 1, 'R', True)
 
         # Items
         pdf.set_text_color(0)
@@ -1879,28 +2062,28 @@ class InvoiceApp(ct.CTk):
                 if item.get('quantity') is not None:
                     qty_text = f"{item['quantity']} {item.get('unit', '')}"
                 pdf.cell(50, 10, qty_text, 0, 0, 'C', fill)
-                pdf.cell(50, 10, f"Rs {item['price']:.2f} ", 0, 1, 'R', fill)
+                pdf.cell(50, 10, f"{rupee} {item['price']:.2f} ", 0, 1, 'R', fill)
             else:
                 pdf.cell(140, 10, f" {item['desc']}", 0, 0, 'L', fill)
-                pdf.cell(50, 10, f"Rs {item['price']:.2f} ", 0, 1, 'R', fill)
+                pdf.cell(50, 10, f"{rupee} {item['price']:.2f} ", 0, 1, 'R', fill)
             fill = not fill
 
         # Total
         pdf.ln(5)
         pdf.set_text_color(0)
         pdf.cell(140, 7, "Subtotal", 0, 0, 'R')
-        pdf.cell(50, 7, f"Rs {data['subtotal']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"{rupee} {data['subtotal']:.2f}", 0, 1, 'R')
         
         pdf.cell(140, 7, f"Discount ({data['discount_rate']}%)", 0, 0, 'R')
-        pdf.cell(50, 7, f"Rs {data['discount_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"{rupee} {data['discount_amt']:.2f}", 0, 1, 'R')
 
         pdf.cell(140, 7, f"Tax(GST) ({data['tax_rate']}%)", 0, 0, 'R')
-        pdf.cell(50, 7, f"Rs {data['tax_amt']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 7, f"{rupee} {data['tax_amt']:.2f}", 0, 1, 'R')
 
         pdf.set_text_color(r, g, b)
         pdf.set_font(font_name, 'B', 14)
         pdf.cell(140, 10, "GRAND TOTAL", 0, 0, 'R')
-        pdf.cell(50, 10, f"Rs {data['total']:.2f}", 0, 1, 'R')
+        pdf.cell(50, 10, f"{rupee} {data['total']:.2f}", 0, 1, 'R')
 
         # Add some space before watermark
         pdf.ln(10)
@@ -1923,6 +2106,23 @@ class InvoiceApp(ct.CTk):
 
     def make_pdf_style_2(self, data, path):
         """ Style 2: Nature/Classic - Centered, Green Theme """
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
         pdf = FPDF()
         pdf.add_page()
 
@@ -1981,10 +2181,10 @@ class InvoiceApp(ct.CTk):
         if has_quantity:
             pdf.cell(90, 8, "Item", 'B', 0)
             pdf.cell(40, 8, "Quantity", 'B', 0, 'C')
-            pdf.cell(60, 8, "Cost (?)", 'B', 1, 'R')
+            pdf.cell(60, 8, "Cost (Rs)", 'B', 1, 'R')
         else:
             pdf.cell(150, 8, "Item", 'B', 0)
-            pdf.cell(40, 8, "Cost (?)", 'B', 1, 'R')
+            pdf.cell(40, 8, "Cost (Rs)", 'B', 1, 'R')
 
         pdf.set_font("Times", '', 12)
         for item in data['items']:
@@ -2014,6 +2214,23 @@ class InvoiceApp(ct.CTk):
 
     def make_pdf_style_3(self, data, path):
         """ Style 3: Industrial - Orange, Bold Lines, Grid """
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
         pdf = FPDF()
         pdf.add_page()
         pdf.set_draw_color(0)
@@ -2081,10 +2298,10 @@ class InvoiceApp(ct.CTk):
         if has_quantity:
             pdf.cell(100, 10, "DESCRIPTION", 1, 0, 'L', True)
             pdf.cell(40, 10, "QUANTITY", 1, 0, 'C', True)
-            pdf.cell(60, 10, "AMOUNT (?)", 1, 1, 'C', True)
+            pdf.cell(60, 10, "AMOUNT (Rs)", 1, 1, 'C', True)
         else:
             pdf.cell(160, 10, "DESCRIPTION", 1, 0, 'L', True)
-            pdf.cell(40, 10, "AMOUNT (?)", 1, 1, 'C', True)
+            pdf.cell(40, 10, "AMOUNT (Rs)", 1, 1, 'C', True)
 
         for item in data['items']:
             if has_quantity:
@@ -2114,6 +2331,23 @@ class InvoiceApp(ct.CTk):
 
     def make_pdf_style_4(self, data, path):
         """ Style 4: Minimalist - Purple, Left Aligned, Clean """
+        
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
+        
+        # Sanitize items
+        if 'items' in data:
+            for item in data['items']:
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
+        
         pdf = FPDF()
         pdf.add_page()
 
@@ -2182,11 +2416,11 @@ class InvoiceApp(ct.CTk):
                     qty_text = f"{item['quantity']} {item.get('unit', '')}"
                 pdf.cell(50, 8, qty_text, 0, 0, 'C')
                 pdf.set_font("Helvetica", '', 12)
-                pdf.cell(40, 8, f"?{item['price']:.2f}", 0, 1, 'R')
+                pdf.cell(40, 8, f"Rs {item['price']:.2f}", 0, 1, 'R')
             else:
                 pdf.cell(140, 8, item['desc'], 0, 0)
                 pdf.set_font("Helvetica", '', 12)
-                pdf.cell(40, 8, f"?{item['price']:.2f}", 0, 1, 'R')
+                pdf.cell(40, 8, f"Rs {item['price']:.2f}", 0, 1, 'R')
             # Light gray line
             pdf.set_draw_color(240)
             pdf.line(20, pdf.get_y(), 190, pdf.get_y())
@@ -2213,30 +2447,49 @@ class InvoiceApp(ct.CTk):
             return ""
         # Convert to string if not already
         text = str(text)
-        # Encode to ASCII, replacing problematic characters
+        
+        # AGGRESSIVE ASCII-only sanitization
         try:
-            # Try to encode as ASCII, replace errors with '?'
-            return text.encode('ascii', 'replace').decode('ascii')
+            # Keep only ASCII characters (0-127)
+            ascii_text = ''.join(char if ord(char) < 128 else '?' for char in text)
+            return ascii_text
+        except Exception as e:
+            print(f"Sanitization error: {e}")
+            # Ultimate fallback - remove all non-alphanumeric
+            return ''.join(char for char in text if char.isalnum() or char in ' .-_()[]')
+    
+    def get_rupee_symbol(self, format_type='pdf'):
+        """
+        Get the rupee symbol using Unicode code point 8377
+        This is more reliable than font-dependent methods
+        """
+        try:
+            return chr(8377)  # Unicode code point for ₹ symbol
         except:
-            # If that fails, just remove non-ASCII characters
-            return ''.join(char if ord(char) < 128 else '?' for char in text)
+            return 'Rs.'  # Fallback if Unicode fails
     
     def make_word(self, data, path):
         # Basic Word generation kept simple but robust
         doc = Document()
+        
+        # Get rupee symbol using Unicode code point (consistent with PDF)
+        rupee = self.get_rupee_symbol('word')
 
-        # Sanitize all text data before using
-        data = {
-            key: self.sanitize_text(value) if isinstance(value, str) else value
-            for key, value in data.items()
-        }
+        # Sanitize only text fields (not the entire data dict to preserve other types)
+        text_fields = ['biz_name', 'biz_addr', 'biz_email', 'biz_phone', 'biz_gst_no', 
+                       'client_name', 'client_email', 'client_phone', 'client_address',
+                       'id', 'date', 'due_date', 'watermark']
+        for field in text_fields:
+            if field in data and isinstance(data[field], str):
+                data[field] = self.sanitize_text(data[field])
         
         # Sanitize items
         if 'items' in data:
             for item in data['items']:
-                for key in item:
-                    if isinstance(item[key], str):
-                        item[key] = self.sanitize_text(item[key])
+                if 'desc' in item and isinstance(item['desc'], str):
+                    item['desc'] = self.sanitize_text(item['desc'])
+                if 'unit' in item and isinstance(item['unit'], str):
+                    item['unit'] = self.sanitize_text(item['unit'])
 
         # Header Table for Logo and Biz Name
         header_table = doc.add_table(rows=1, cols=2)
@@ -2268,20 +2521,19 @@ class InvoiceApp(ct.CTk):
 
         doc.add_heading("INVOICE", 0)
         invoice_info = f"Invoice #: {data['id']}\nDate: {data['date']}"
-        if data['due_date']:
-            if data['due_date'] == "PENDING":
-                invoice_info += f"\nDue: "
-                doc.add_paragraph(invoice_info)
-                # Add PENDING in red and bold
-                p = doc.add_paragraph()
-                run = p.add_run("PENDING")
-                run.bold = True
-                run.font.color.rgb = RGBColor(255, 0, 0)
-            else:
-                invoice_info += f"\nDue: {data['due_date']}"
-                doc.add_paragraph(invoice_info)
-        else:
-            doc.add_paragraph(invoice_info)
+        
+        # Add due date if present
+        if data.get('due_date'):
+            invoice_info += f"\nDue: {data['due_date']}"
+        
+        doc.add_paragraph(invoice_info)
+        
+        # Add PENDING on separate line in red if pending
+        if data.get('is_pending'):
+            p = doc.add_paragraph()
+            run = p.add_run("PENDING")
+            run.bold = True
+            run.font.color.rgb = RGBColor(255, 0, 0)
 
         doc.add_heading('Bill To:', level=2)
         client_info = f"{data['client_name']}\n{data['client_email']}"
@@ -2318,20 +2570,20 @@ class InvoiceApp(ct.CTk):
                     display_qty = item.get('quantity_display', item['quantity'])
                     qty_text = f"{display_qty} {item.get('unit', '')}"
                 row_cells[1].text = qty_text
-                row_cells[2].text = f"Rs {item['price']:.2f}"
+                row_cells[2].text = f"{rupee} {item['price']:.2f}"
             else:
-                row_cells[1].text = f"Rs {item['price']:.2f}"
+                row_cells[1].text = f"{rupee} {item['price']:.2f}"
 
         # Tax Rows in Word
         row_disc = table.add_row().cells
         row_disc[0].text = f"Discount ({data['discount_rate']}%)"
-        row_disc[1].text = f"Rs {data['discount_amt']:.2f}"
+        row_disc[1].text = f"{rupee} {data['discount_amt']:.2f}"
 
         row_tax = table.add_row().cells
         row_tax[0].text = f"Tax(GST) ({data['tax_rate']}%)"
-        row_tax[1].text = f"Rs {data['tax_amt']:.2f}"
+        row_tax[1].text = f"{rupee} {data['tax_amt']:.2f}"
 
-        doc.add_paragraph(f"\nTOTAL: Rs {data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        doc.add_paragraph(f"\nTOTAL: {rupee} {data['total']:.2f}", style='Heading 2').alignment = WD_ALIGN_PARAGRAPH.RIGHT
         
         # Add watermark at bottom if exists
         if data.get('biz_watermark'):
