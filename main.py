@@ -1177,10 +1177,10 @@ class InvoiceApp(ct.CTk):
             messagebox.showinfo("Saved", f"Details saved for {name}")
 
     def open_layout_customizer(self):
-        """Open the layout customizer dialog"""
+        """Open the advanced layout customizer dialog with drag-and-drop, delete, and rename"""
         customizer = ct.CTkToplevel(self)
-        customizer.title("Invoice Layout Customizer")
-        customizer.geometry("800x600")
+        customizer.title("Advanced Invoice Layout Customizer")
+        customizer.geometry("1200x700")
         customizer.transient(self)
         customizer.grab_set()
         
@@ -1192,72 +1192,121 @@ class InvoiceApp(ct.CTk):
         header.pack(fill="x", padx=0, pady=0)
         header.pack_propagate(False)
         
-        ct.CTkLabel(header, text="⚙️ Customize Invoice Layout", 
-                   font=ct.CTkFont(size=20, weight="bold"),
+        ct.CTkLabel(header, text="⚙️ Advanced Layout Customizer - Drag, Edit, Delete", 
+                   font=ct.CTkFont(size=18, weight="bold"),
                    text_color="white").pack(pady=15)
         
-        # Main content with scrollable frame
-        content = ct.CTkScrollableFrame(customizer, fg_color=("#f8fafc", "#1e293b"))
-        content.pack(fill="both", expand=True, padx=20, pady=20)
+        # Main container - split into left (editor) and right (preview)
+        main_container = ct.CTkFrame(customizer, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=15, pady=15)
         
-        # Store field widgets for later access
-        field_widgets = {}
+        # ===== LEFT SIDE: Editor with drag-and-drop =====
+        left_frame = ct.CTkFrame(main_container, fg_color=("#f8fafc", "#1e293b"),
+                                corner_radius=10, border_width=2,
+                                border_color=("#e2e8f0", "#334155"))
+        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
         
-        # Business Information Section
-        self.create_layout_section(content, "Business Information", [
-            ("biz_name", "Business Name", current_layout),
-            ("biz_address", "Business Address", current_layout),
-            ("biz_email", "Business Email", current_layout),
-            ("biz_phone", "Business Phone", current_layout),
-            ("biz_gst", "GST Number", current_layout),
-            ("biz_logo", "Business Logo", current_layout),
-        ], field_widgets)
+        editor_title = ct.CTkLabel(left_frame, text="📝 Field Editor", 
+                                  font=ct.CTkFont(size=14, weight="bold"),
+                                  text_color=("#1e40af", "#60a5fa"))
+        editor_title.pack(pady=10, padx=10)
         
-        # Client Information Section
-        self.create_layout_section(content, "Client Information", [
-            ("client_name", "Client Name", current_layout),
-            ("client_email", "Client Email", current_layout),
-            ("client_phone", "Client Phone", current_layout),
-            ("client_address", "Client Address", current_layout),
-        ], field_widgets)
+        # Scrollable editor area
+        editor_scroll = ct.CTkScrollableFrame(left_frame, fg_color="transparent")
+        editor_scroll.pack(fill="both", expand=True, padx=10, pady=(0, 10))
         
-        # Invoice Details Section
-        self.create_layout_section(content, "Invoice Details", [
-            ("invoice_number", "Invoice Number", current_layout),
-            ("invoice_date", "Invoice Date", current_layout),
-            ("due_date", "Due Date", current_layout),
-            ("pending_status", "Pending Status", current_layout),
-        ], field_widgets)
+        # Store field data with UI elements
+        self.layout_fields_data = {}
         
-        # Items and Totals Section
-        self.create_layout_section(content, "Items & Totals", [
-            ("items_table", "Items Table", current_layout),
-            ("subtotal", "Subtotal", current_layout),
-            ("discount", "Discount", current_layout),
-            ("tax", "Tax/GST", current_layout),
-            ("grand_total", "Grand Total", current_layout),
-            ("watermark", "Watermark", current_layout),
-        ], field_widgets)
+        # Define all fields
+        all_fields = [
+            ("biz_name", "Business Name"),
+            ("biz_address", "Business Address"),
+            ("biz_email", "Business Email"),
+            ("biz_phone", "Business Phone"),
+            ("biz_gst", "GST Number"),
+            ("biz_logo", "Business Logo"),
+            ("client_name", "Client Name"),
+            ("client_email", "Client Email"),
+            ("client_phone", "Client Phone"),
+            ("client_address", "Client Address"),
+            ("invoice_number", "Invoice Number"),
+            ("invoice_date", "Invoice Date"),
+            ("due_date", "Due Date"),
+            ("pending_status", "Pending Status"),
+            ("items_table", "Items Table"),
+            ("subtotal", "Subtotal"),
+            ("discount", "Discount"),
+            ("tax", "Tax/GST"),
+            ("grand_total", "Grand Total"),
+            ("watermark", "Watermark"),
+        ]
         
-        # Bottom buttons
+        # Create field editors with drag support
+        for field_id, default_label in all_fields:
+            field_settings = current_layout.get(field_id, {"visible": True, "position": "default", "label": default_label})
+            self.create_advanced_field_editor(editor_scroll, field_id, field_settings, current_layout)
+        
+        # ===== RIGHT SIDE: Live Preview =====
+        right_frame = ct.CTkFrame(main_container, fg_color=("#f8fafc", "#1e293b"),
+                                 corner_radius=10, border_width=2,
+                                 border_color=("#e2e8f0", "#334155"))
+        right_frame.pack(side="right", fill="both", expand=True, padx=(10, 0))
+        
+        preview_title = ct.CTkLabel(right_frame, text="👁️ Live Preview", 
+                                   font=ct.CTkFont(size=14, weight="bold"),
+                                   text_color=("#1e40af", "#60a5fa"))
+        preview_title.pack(pady=10, padx=10)
+        
+        self.preview_frame = ct.CTkScrollableFrame(right_frame, fg_color=("#ffffff", "#1e293b"))
+        self.preview_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        
+        # Function to update preview
+        def update_preview():
+            # Clear preview
+            for widget in self.preview_frame.winfo_children():
+                widget.destroy()
+            
+            # Regenerate preview based on current field data
+            for field_id in sorted(self.layout_fields_data.keys(), 
+                                  key=lambda x: self.layout_fields_data[x].get('order', 0)):
+                field_data = self.layout_fields_data[field_id]
+                if field_data['visible'].get():
+                    label_text = field_data['label_entry'].get()
+                    preview_field = ct.CTkFrame(self.preview_frame, 
+                                               fg_color=("#e2e8f0", "#334155"),
+                                               corner_radius=5)
+                    preview_field.pack(fill="x", pady=3, padx=5)
+                    
+                    ct.CTkLabel(preview_field, text=f"📋 {label_text}",
+                               font=ct.CTkFont(size=10),
+                               text_color=("#1e293b", "#f1f5f9")).pack(anchor="w", padx=8, pady=4)
+        
+        self.preview_update = update_preview
+        
+        # ===== BOTTOM Buttons =====
         button_frame = ct.CTkFrame(customizer, fg_color="transparent")
         button_frame.pack(fill="x", padx=20, pady=20)
         
         def save_layout():
             # Collect all settings
             new_layout = {}
-            for field_id, widgets in field_widgets.items():
+            for field_id, field_data in self.layout_fields_data.items():
                 new_layout[field_id] = {
-                    "visible": widgets["visible"].get(),
-                    "position": widgets["position"].get(),
-                    "label": widgets["label"].get()
+                    "visible": field_data["visible"].get(),
+                    "position": field_data["position"].get(),
+                    "label": field_data["label_entry"].get(),
+                    "order": field_data.get("order", 0)
                 }
             
             # Save to profile
             self.profiles[self.current_biz_id]["layout"] = new_layout
             self.save_profiles()
-            messagebox.showinfo("Success", "Layout customization saved!")
+            
+            messagebox.showinfo("Success", "Layout saved! Changes will apply to new invoices.")
             customizer.destroy()
+            # Refresh the main UI to show layout changes
+            self.refresh_theme()
         
         def reset_layout():
             if messagebox.askyesno("Reset Layout", "Reset to default layout?"):
@@ -1265,9 +1314,10 @@ class InvoiceApp(ct.CTk):
                 self.save_profiles()
                 messagebox.showinfo("Reset", "Layout reset to default!")
                 customizer.destroy()
-                self.open_layout_customizer()  # Reopen with defaults
+                self.refresh_theme()
+                self.open_layout_customizer()
         
-        ct.CTkButton(button_frame, text="💾 Save Layout", 
+        ct.CTkButton(button_frame, text="💾 Save & Apply", 
                     command=save_layout,
                     width=200, height=45,
                     fg_color=("#059669", "#047857"),
@@ -1287,52 +1337,123 @@ class InvoiceApp(ct.CTk):
                     fg_color=("#64748b", "#475569"),
                     hover_color=("#475569", "#334155"),
                     font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
+        
+        # Initial preview
+        update_preview()
+    
+    def create_advanced_field_editor(self, parent, field_id, field_settings, current_layout):
+        """Create an advanced field editor with visibility, label edit, delete, and rename"""
+        default_label = field_settings.get("label", field_id.replace("_", " ").title())
+        
+        # Main field container with hover effect
+        field_container = ct.CTkFrame(parent, fg_color=("#ffffff", "#2d3748"),
+                                     corner_radius=8, border_width=1,
+                                     border_color=("#cbd5e1", "#475569"))
+        field_container.pack(fill="x", pady=5, padx=0)
+        
+        # Field header (draggable area)
+        header = ct.CTkFrame(field_container, fg_color=("#3b82f6", "#2563eb"),
+                           corner_radius=6)
+        header.pack(fill="x", padx=4, pady=4)
+        
+        header_content = ct.CTkFrame(header, fg_color="transparent")
+        header_content.pack(fill="x", padx=10, pady=8)
+        
+        # Drag handle
+        ct.CTkLabel(header_content, text="≡ " + default_label.upper(),
+                   font=ct.CTkFont(size=11, weight="bold"),
+                   text_color="white").pack(side="left", expand=True, anchor="w")
+        
+        # Field ID badge
+        ct.CTkLabel(header_content, text=f"[{field_id}]",
+                   font=ct.CTkFont(size=9),
+                   text_color=("#bfdbfe", "#93c5fd")).pack(side="right", padx=(10, 0))
+        
+        # Field controls
+        controls = ct.CTkFrame(field_container, fg_color="transparent")
+        controls.pack(fill="x", padx=10, pady=8)
+        
+        # Visibility checkbox
+        visible_var = ct.BooleanVar(value=field_settings.get("visible", True))
+        
+        def on_visibility_change():
+            self.preview_update()
+        
+        visibility_check = ct.CTkCheckBox(controls, text="Visible", 
+                                         variable=visible_var,
+                                         command=on_visibility_change,
+                                         font=ct.CTkFont(size=10),
+                                         checkbox_width=18, checkbox_height=18)
+        visibility_check.pack(side="left", padx=(0, 15))
+        
+        # Label rename
+        label_entry = ct.CTkEntry(controls, width=150, height=32,
+                                 placeholder_text="Field Label",
+                                 corner_radius=6, border_width=1,
+                                 font=ct.CTkFont(size=10))
+        label_entry.insert(0, default_label)
+        label_entry.pack(side="left", padx=5)
+        
+        # Bind label change to update preview
+        label_entry.bind("<KeyRelease>", lambda e: self.preview_update())
+        
+        # Position dropdown
+        position_var = ct.StringVar(value=field_settings.get("position", "default"))
+        position_menu = ct.CTkOptionMenu(controls, variable=position_var,
+                                        values=["default", "top", "left", "right", "bottom", "hidden"],
+                                        width=100, height=32,
+                                        font=ct.CTkFont(size=10),
+                                        dropdown_font=ct.CTkFont(size=10))
+        position_menu.pack(side="left", padx=5)
+        
+        # Delete button
+        def delete_field():
+            if messagebox.askyesno("Delete Field", f"Remove '{default_label}' from layout?"):
+                field_container.destroy()
+                if field_id in self.layout_fields_data:
+                    del self.layout_fields_data[field_id]
+                self.preview_update()
+        
+        ct.CTkButton(controls, text="🗑️ Delete", 
+                    command=delete_field,
+                    width=80, height=32,
+                    fg_color=("#ef4444", "#dc2626"),
+                    hover_color=("#dc2626", "#b91c1c"),
+                    font=ct.CTkFont(size=10, weight="bold")).pack(side="left", padx=5)
+        
+        # Rename button
+        def rename_field():
+            rename_dialog = ct.CTkInputDialog(text="Enter new label name:", title="Rename Field")
+            new_name = rename_dialog.get_input()
+            if new_name:
+                label_entry.delete(0, 'end')
+                label_entry.insert(0, new_name)
+                # Update header
+                header_label = header_content.winfo_children()[0]
+                header_label.configure(text="≡ " + new_name.upper())
+                self.preview_update()
+        
+        ct.CTkButton(controls, text="✏️ Rename", 
+                    command=rename_field,
+                    width=80, height=32,
+                    fg_color=("#8b5cf6", "#7c3aed"),
+                    hover_color=("#7c3aed", "#6d28d9"),
+                    font=ct.CTkFont(size=10, weight="bold")).pack(side="left", padx=5)
+        
+        # Store field data
+        self.layout_fields_data[field_id] = {
+            "visible": visible_var,
+            "position": position_var,
+            "label_entry": label_entry,
+            "container": field_container,
+            "order": 0
+        }
+        
+        self.preview_update()
     
     def create_layout_section(self, parent, section_title, fields, field_widgets):
-        """Create a section in the layout customizer"""
-        # Section header
-        section_frame = ct.CTkFrame(parent, fg_color=("#ffffff", "#2d3748"), 
-                                   corner_radius=10, border_width=2,
-                                   border_color=("#e2e8f0", "#4a5568"))
-        section_frame.pack(fill="x", pady=10)
-        
-        ct.CTkLabel(section_frame, text=section_title, 
-                   font=ct.CTkFont(size=16, weight="bold"),
-                   text_color=("#1e40af", "#60a5fa")).pack(anchor="w", padx=15, pady=10)
-        
-        # Fields
-        for field_id, field_label, current_layout in fields:
-            field_settings = current_layout.get(field_id, {"visible": True, "position": "default", "label": field_label})
-            
-            field_row = ct.CTkFrame(section_frame, fg_color="transparent")
-            field_row.pack(fill="x", padx=15, pady=5)
-            
-            # Checkbox for visibility
-            visible_var = ct.BooleanVar(value=field_settings["visible"])
-            checkbox = ct.CTkCheckBox(field_row, text="", variable=visible_var, width=30)
-            checkbox.pack(side="left", padx=(0, 10))
-            
-            # Label entry
-            label_entry = ct.CTkEntry(field_row, width=200, height=35)
-            label_entry.insert(0, field_settings["label"])
-            label_entry.pack(side="left", padx=5)
-            
-            # Position dropdown
-            position_var = ct.StringVar(value=field_settings["position"])
-            position_menu = ct.CTkOptionMenu(field_row, variable=position_var,
-                                            values=["default", "top", "left", "right", "bottom", "hidden"],
-                                            width=120, height=35)
-            position_menu.pack(side="left", padx=5)
-            
-            ct.CTkLabel(field_row, text="Position", 
-                       font=ct.CTkFont(size=11)).pack(side="left", padx=5)
-            
-            # Store widgets for later access
-            field_widgets[field_id] = {
-                "visible": visible_var,
-                "position": position_var,
-                "label": label_entry
-            }
+        """Legacy method - no longer used, kept for compatibility"""
+        pass
     
     def get_default_layout(self):
         """Get default layout configuration"""
