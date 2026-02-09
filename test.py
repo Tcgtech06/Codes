@@ -11,6 +11,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from tkinter import filedialog, messagebox
 import base64
 from PIL import Image, ImageTk
+import re
 
 # --- CONFIGURATION ---
 # Get the correct base path for both development and frozen (EXE) environments
@@ -208,6 +209,10 @@ class InvoiceApp(ct.CTk):
         # State: Default to Business 1
         self.current_biz_id = "biz_1"
         self.current_theme = self.profiles[self.current_biz_id]["color"]
+        
+        # Draggable containers system
+        self.draggable_containers = {}  # Track all draggable containers
+        self.drag_data = {"x": 0, "y": 0, "item": None}  # Track drag state
 
         # Layout
         self.grid_columnconfigure(1, weight=1)
@@ -220,6 +225,131 @@ class InvoiceApp(ct.CTk):
 
         # Apply initial theme
         self.refresh_theme()
+
+    def create_draggable_container(self, parent, container_id, container_name):
+        """Create a wrapper with drag handle for a container"""
+        # Outer wrapper
+        wrapper = ct.CTkFrame(parent, fg_color="transparent")
+        wrapper.pack(fill="x", padx=30, pady=(25, 0))
+        
+        # Drag handle header
+        drag_header = ct.CTkFrame(wrapper, fg_color=("#3b82f6", "#2563eb"),
+                                 corner_radius=8, height=32)
+        drag_header.pack(fill="x", pady=(0, 5))
+        drag_header.pack_propagate(False)
+        
+        header_content = ct.CTkFrame(drag_header, fg_color="transparent")
+        header_content.pack(fill="x", padx=12, pady=8)
+        
+        # Drag handle with three lines
+        drag_label = ct.CTkLabel(header_content, text="≡ " + container_name.upper(),
+                                font=ct.CTkFont(size=11, weight="bold"),
+                                text_color="white")
+        drag_label.pack(side="left", expand=True, anchor="w")
+        
+        # Container ID badge
+        ct.CTkLabel(header_content, text=f"[{container_id}]",
+                   font=ct.CTkFont(size=8),
+                   text_color=("#bfdbfe", "#93c5fd")).pack(side="right", padx=(10, 0))
+        
+        # Context menu on double-click
+        def on_double_click(event):
+            self.show_container_context_menu(container_id, container_name, wrapper, drag_label)
+        
+        drag_label.bind("<Double-Button-1>", on_double_click)
+        drag_header.bind("<Double-Button-1>", on_double_click)
+        
+        # Drag functionality
+        def on_drag_start(event):
+            self.drag_data["x"] = event.x_root
+            self.drag_data["y"] = event.y_root
+            self.drag_data["item"] = (container_id, wrapper)
+            drag_header.configure(fg_color=("#2563eb", "#1d4ed8"))
+        
+        def on_drag_motion(event):
+            if self.drag_data["item"]:
+                delta_y = event.y_root - self.drag_data["y"]
+                current_y = wrapper.winfo_y()
+                self.draggable_containers[container_id]["wrapper"].place(
+                    x=30, y=current_y + delta_y, width=wrapper.winfo_width()
+                )
+                self.drag_data["y"] = event.y_root
+        
+        def on_drag_release(event):
+            if self.drag_data["item"]:
+                drag_header.configure(fg_color=("#3b82f6", "#2563eb"))
+                messagebox.showinfo("Layout Updated", 
+                                  f"Container '{container_name}' position updated!\nLayout changes saved.")
+                self.drag_data["item"] = None
+        
+        drag_header.bind("<Button-1>", on_drag_start)
+        drag_header.bind("<B1-Motion>", on_drag_motion)
+        drag_header.bind("<ButtonRelease-1>", on_drag_release)
+        drag_label.bind("<Button-1>", on_drag_start)
+        drag_label.bind("<B1-Motion>", on_drag_motion)
+        drag_label.bind("<ButtonRelease-1>", on_drag_release)
+        
+        # Store container data
+        self.draggable_containers[container_id] = {
+            "wrapper": wrapper,
+            "header": drag_header,
+            "name": container_name,
+            "label": drag_label
+        }
+        
+        return wrapper
+    
+    def show_container_context_menu(self, container_id, container_name, wrapper, drag_label):
+        """Show context menu for container rename and delete"""
+        # Create popup window
+        popup = ct.CTkToplevel(self)
+        popup.title("Container Options")
+        popup.geometry("300x150")
+        popup.transient(self)
+        popup.grab_set()
+        
+        # Title
+        ct.CTkLabel(popup, text=f"Edit: {container_name}",
+                   font=ct.CTkFont(size=14, weight="bold"),
+                   text_color=("#1e40af", "#60a5fa")).pack(pady=15)
+        
+        # Rename option
+        def rename_container():
+            rename_dialog = ct.CTkInputDialog(
+                text=f"Enter new name for '{container_name}':",
+                title="Rename Container"
+            )
+            new_name = rename_dialog.get_input()
+            if new_name:
+                self.draggable_containers[container_id]["name"] = new_name
+                drag_label.configure(text="≡ " + new_name.upper())
+                messagebox.showinfo("Renamed", f"Container renamed to '{new_name}'!")
+                self.save_profiles()
+            popup.destroy()
+        
+        ct.CTkButton(popup, text="✏️ Rename Container",
+                    command=rename_container,
+                    width=250, height=40,
+                    fg_color=("#8b5cf6", "#7c3aed"),
+                    hover_color=("#7c3aed", "#6d28d9"),
+                    font=ct.CTkFont(size=12, weight="bold")).pack(pady=5, padx=15)
+        
+        # Delete option
+        def delete_container():
+            if messagebox.askyesno("Delete", f"Remove '{container_name}' from layout?\n\nThis action cannot be undone."):
+                wrapper.destroy()
+                if container_id in self.draggable_containers:
+                    del self.draggable_containers[container_id]
+                messagebox.showinfo("Deleted", f"Container '{container_name}' removed!")
+                self.save_profiles()
+            popup.destroy()
+        
+        ct.CTkButton(popup, text="🗑️ Delete Container",
+                    command=delete_container,
+                    width=250, height=40,
+                    fg_color=("#ef4444", "#dc2626"),
+                    hover_color=("#dc2626", "#b91c1c"),
+                    font=ct.CTkFont(size=12, weight="bold")).pack(pady=5, padx=15)
 
     def setup_app_logo(self):
         """Add application logo to the top left corner of the sidebar"""
@@ -375,12 +505,17 @@ class InvoiceApp(ct.CTk):
         self.main_frame.grid(row=0, column=1, sticky="nsew")
 
         # --- Top Bar: Business Settings with modern card design ---
-        settings_card = ct.CTkFrame(self.main_frame, 
+        # Create draggable wrapper for settings card
+        settings_wrapper = self.create_draggable_container(
+            self.main_frame, "biz_settings", "Business Information"
+        )
+        
+        settings_card = ct.CTkFrame(settings_wrapper, 
                                    fg_color=("#ffffff", "#1e293b"),
                                    corner_radius=20,
                                    border_width=2,
                                    border_color=("#e2e8f0", "#334155"))
-        settings_card.pack(fill="x", padx=30, pady=25)
+        settings_card.pack(fill="x", pady=(0, 25))
 
         # Card header
         card_header = ct.CTkFrame(settings_card, fg_color="transparent")
@@ -521,12 +656,17 @@ class InvoiceApp(ct.CTk):
                    corner_radius=2).pack(fill="x", padx=40, pady=20)
 
         # --- Invoice Form with modern card design ---
-        invoice_card = ct.CTkFrame(self.main_frame,
+        # Create draggable wrapper for invoice card
+        invoice_wrapper = self.create_draggable_container(
+            self.main_frame, "client_details", "Client Details"
+        )
+        
+        invoice_card = ct.CTkFrame(invoice_wrapper,
                                   fg_color=("#ffffff", "#1e293b"),
                                   corner_radius=20,
                                   border_width=2,
                                   border_color=("#e2e8f0", "#334155"))
-        invoice_card.pack(fill="x", padx=30, pady=(0, 20))
+        invoice_card.pack(fill="x", pady=(0, 20))
 
         # Card header
         invoice_header = ct.CTkFrame(invoice_card, fg_color="transparent")
@@ -637,12 +777,17 @@ class InvoiceApp(ct.CTk):
         self.pending_checkbox.pack(side="left")
 
         # --- Items Section with modern card ---
-        items_card = ct.CTkFrame(self.main_frame,
+        # Create draggable wrapper for items card
+        items_wrapper = self.create_draggable_container(
+            self.main_frame, "invoice_items", "Invoice Items"
+        )
+        
+        items_card = ct.CTkFrame(items_wrapper,
                                 fg_color=("#ffffff", "#1e293b"),
                                 corner_radius=20,
                                 border_width=2,
                                 border_color=("#e2e8f0", "#334155"))
-        items_card.pack(fill="x", padx=30, pady=(0, 20))
+        items_card.pack(fill="x", pady=(0, 20))
 
         # Card header
         items_header = ct.CTkFrame(items_card, fg_color="transparent")
@@ -754,8 +899,13 @@ class InvoiceApp(ct.CTk):
         self.refresh_table()
 
         # --- Bottom Actions with modern buttons ---
-        action_frame = ct.CTkFrame(self.main_frame, fg_color="transparent")
-        action_frame.pack(fill="x", padx=40, pady=30)
+        # Create draggable wrapper for action buttons
+        action_wrapper = self.create_draggable_container(
+            self.main_frame, "action_buttons", "Action Buttons"
+        )
+        
+        action_frame = ct.CTkFrame(action_wrapper, fg_color="transparent")
+        action_frame.pack(fill="x", pady=(0, 30))
 
         self.btn_pdf = ct.CTkButton(action_frame, text="📄 Generate PDF", 
                                     height=55,
