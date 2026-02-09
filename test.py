@@ -125,7 +125,7 @@ class SplashScreen(ct.CTkToplevel):
         self.logo_label.pack(pady=(40, 20))
         
         try:
-            logo_img = Image.open(os.path.join(RESOURCE_DIR, "Image", "logo.jpg"))
+            logo_img = Image.open(os.path.join(RESOURCE_DIR, "Image", "logo.png"))
             logo_img = logo_img.resize((250, 250), Image.Resampling.LANCZOS)
             logo_photo = ct.CTkImage(light_image=logo_img, dark_image=logo_img, size=(250, 250))
             self.logo_label.configure(image=logo_photo)
@@ -285,7 +285,7 @@ class LoginScreen(ct.CTkToplevel):
         footer_frame = ct.CTkFrame(container, fg_color="transparent")
         footer_frame.pack(fill="x", pady=(20, 0))
 
-        ct.CTkLabel(footer_frame, text="© 2024 TCG Tech. All rights reserved.",
+        ct.CTkLabel(footer_frame, text=f"© {datetime.now().year} TCG Tech. All rights reserved.",
                    font=ct.CTkFont(size=10),
                    text_color="#94a3b8", fg_color="transparent").pack()
 
@@ -618,7 +618,7 @@ class InvoiceApp(ct.CTk):
 
         # Set window icon
         try:
-            icon_img = Image.open(os.path.join(RESOURCE_DIR, "Image", "logo.jpg"))
+            icon_img = Image.open(os.path.join(RESOURCE_DIR, "Image", "logo.png"))
             icon_photo = ImageTk.PhotoImage(icon_img)
             self.iconphoto(True, icon_photo)
             self._icon_ref = icon_photo  # Keep reference
@@ -867,7 +867,7 @@ class InvoiceApp(ct.CTk):
                 f.write("\n")
                 f.write("LICENSE POLICY:\n")
                 f.write("-" * 15 + "\n")
-                f.write("- Demo Account: 15-day trial period\n")
+                f.write("- Demo Account: 2-day trial period\n")
                 f.write("- Subscription Account: 365-day annual license\n")
                 f.write("- Permanent Account: Lifetime license\n")
                 f.write("- All licenses require valid activation keys\n")
@@ -940,9 +940,9 @@ class InvoiceApp(ct.CTk):
                 else:
                     return True, None
             elif account_type == "demo":
-                if days_since_activation >= 16:  # Block after 16 days
+                if days_since_activation >= 2:  # Block after 2 days
                     return False, "expired"
-                elif days_since_activation >= 14:  # Warning at 14 days
+                elif days_since_activation >= 1:  # Warning at 1 day
                     return True, "demo_expiring"
                 else:
                     return True, None
@@ -973,7 +973,7 @@ class InvoiceApp(ct.CTk):
                 elif account_type == "demo":
                     current_date = datetime.now()
                     days_since_activation = (current_date - activation_date).days
-                    days_remaining = max(0, 15 - days_since_activation)
+                    days_remaining = max(0, 2 - days_since_activation)
 
                 return {
                     "account_type": account_type,
@@ -1017,7 +1017,7 @@ class InvoiceApp(ct.CTk):
         logo_container = ct.CTkFrame(self.sidebar, fg_color="transparent")
         logo_container.pack(pady=(15, 10))
         
-        logo_path = os.path.join(RESOURCE_DIR, "Image", "logo.jpg")
+        logo_path = os.path.join(RESOURCE_DIR, "Image", "logo.png")
         if os.path.exists(logo_path):
             try:
                 logo_img = Image.open(logo_path)
