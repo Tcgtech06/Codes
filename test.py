@@ -19,8 +19,8 @@ if getattr(sys, 'frozen', False):
     # Running as compiled EXE
     BASE_DIR = os.path.dirname(sys.executable)
     # Use AppData for writable files
-    APPDATA_DIR = os.path.join(os.getenv('APPDATA'), 'TCG_Invoice')
-    DB_FOLDER = os.path.join(APPDATA_DIR, "DB")
+    APPDATA_DIR = os.getenv('APPDATA')
+    DB_FOLDER = os.path.join(APPDATA_DIR, "TCG_Invoice", "DB")
     # Resources (fonts, images) from installation directory
     RESOURCE_DIR = os.path.join(BASE_DIR, "_internal") if os.path.exists(os.path.join(BASE_DIR, "_internal")) else BASE_DIR
 else:
@@ -29,17 +29,23 @@ else:
     DB_FOLDER = os.path.join(BASE_DIR, "DB")
     RESOURCE_DIR = BASE_DIR
 
+# File paths
 LOGOS_FOLDER = os.path.join(DB_FOLDER, "logos")
 HISTORY_FILE = os.path.join(DB_FOLDER, "history.json")
 PROFILES_FILE = os.path.join(DB_FOLDER, "profiles.json")
+LICENSE_FILE = os.path.join(DB_FOLDER, "license.json")  # New license file
 
 # Ensure directories exist
-for folder in [DB_FOLDER, LOGOS_FOLDER]:
-    if not os.path.exists(folder):
-        try:
-            os.makedirs(folder)
-        except Exception as e:
-            print(f"Error creating directory {folder}: {e}")
+os.makedirs(DB_FOLDER, exist_ok=True)
+os.makedirs(LOGOS_FOLDER, exist_ok=True)
+
+# License keys - dynamic with current year
+current_year = str(datetime.now().year)
+VALID_LICENSE_KEYS = {
+    "demo": f"tcgtech{current_year}d",
+    "subscription": f"tcgtech{current_year}s", 
+    "permanent": f"tcgtech{current_year}p"
+}
 
 # Default Profiles Structure
 DEFAULT_PROFILES = {
@@ -183,6 +189,424 @@ class SplashScreen(ct.CTkToplevel):
         self.destroy()
 
 
+class LoginScreen(ct.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        # Configure login window
+        self.title("TCG Tech Invoice Generator - Login")
+        self.resizable(False, False)
+        self.geometry("500x600")
+        self.configure(fg_color="white")
+
+        # Center the window
+        self.update_idletasks()
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - 500) // 2
+        y = (screen_height - 600) // 2
+        self.geometry(f"500x600+{x}+{y}")
+
+        # Remove window decorations
+        self.overrideredirect(True)
+
+        # Main container
+        container = ct.CTkFrame(self, fg_color="white", corner_radius=20)
+        container.pack(expand=True, fill="both", padx=30, pady=30)
+
+        # TCG Logo at top
+        self.tcg_label = ct.CTkLabel(container, text="", fg_color="white")
+        self.tcg_label.pack(pady=(20, 10))
+
+        try:
+            # Check for TCG Tech logo
+            tcg_path = os.path.join(RESOURCE_DIR, "Image", "Tcgtech.png")
+
+            if tcg_path and os.path.exists(tcg_path):
+                print(f"Loading TCG logo from: {tcg_path}")
+                tcg_img = Image.open(tcg_path)
+                # Increase size - scale to 200x80 max
+                tcg_img.thumbnail((200, 80), Image.Resampling.LANCZOS)
+                tcg_photo = ct.CTkImage(light_image=tcg_img, dark_image=tcg_img, size=tcg_img.size)
+                self.tcg_label.configure(image=tcg_photo)
+                self.tcg_label.image = tcg_photo
+                print("TCG logo loaded successfully")
+            else:
+                print(f"TCG logo file not found at: {tcg_path}")
+        except Exception as e:
+            print(f"Error loading TCG Tech logo: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Title
+        ct.CTkLabel(container, text="INVOICE GENERATOR",
+                   font=ct.CTkFont(size=24, weight="bold"),
+                   text_color="#1e40af", fg_color="white").pack(pady=(10, 5))
+        ct.CTkLabel(container, text="Choose Your Account Type",
+                   font=ct.CTkFont(size=16, weight="bold"),
+                   text_color="#64748b", fg_color="white").pack(pady=(0, 30))
+
+        # Account Type Selection Frame
+        selection_frame = ct.CTkFrame(container, fg_color="#f8fafc", corner_radius=15)
+        selection_frame.pack(fill="x", padx=20, pady=(0, 20))
+
+        # Demo Account Button
+        self.demo_btn = ct.CTkButton(
+            selection_frame,
+            text="🎯 Demo Account",
+            command=self.open_demo_window,
+            height=60,
+            font=ct.CTkFont(size=16, weight="bold"),
+            fg_color="#10b981",
+            hover_color="#059669",
+            corner_radius=12
+        )
+        self.demo_btn.pack(fill="x", padx=20, pady=(20, 10))
+
+        # Professional Account Button
+        self.pro_btn = ct.CTkButton(
+            selection_frame,
+            text="💼 Professional Account",
+            command=self.open_professional_window,
+            height=60,
+            font=ct.CTkFont(size=16, weight="bold"),
+            fg_color="#3b82f6",
+            hover_color="#2563eb",
+            corner_radius=12
+        )
+        self.pro_btn.pack(fill="x", padx=20, pady=(10, 20))
+
+        # Dynamic content area (initially hidden)
+        self.content_frame = ct.CTkFrame(container, fg_color="transparent")
+        self.content_frame.pack(fill="x", padx=20, pady=20)
+        self.content_frame.pack_forget()  # Hide initially
+
+        # Footer
+        footer_frame = ct.CTkFrame(container, fg_color="transparent")
+        footer_frame.pack(fill="x", pady=(20, 0))
+
+        ct.CTkLabel(footer_frame, text="© 2024 TCG Tech. All rights reserved.",
+                   font=ct.CTkFont(size=10),
+                   text_color="#94a3b8", fg_color="transparent").pack()
+
+        # State variables
+        self.selected_account_type = None
+
+    def open_demo_window(self):
+        """Open a separate window for demo account license key entry"""
+        # Hide current window temporarily
+        self.withdraw()
+
+        # Create demo window
+        demo_window = ct.CTkToplevel(self)
+        demo_window.title("TCG Tech - Demo Account")
+        demo_window.geometry("450x400")
+        demo_window.resizable(False, False)
+        demo_window.configure(fg_color="white")
+
+        # Center the window
+        demo_window.update_idletasks()
+        screen_width = demo_window.winfo_screenwidth()
+        screen_height = demo_window.winfo_screenheight()
+        x = (screen_width - 450) // 2
+        y = (screen_height - 400) // 2
+        demo_window.geometry(f"450x400+{x}+{y}")
+
+        demo_window.overrideredirect(True)
+        demo_window.transient(self)
+        demo_window.grab_set()
+
+        # Main container
+        container = ct.CTkFrame(demo_window, fg_color="white", corner_radius=20)
+        container.pack(expand=True, fill="both", padx=30, pady=30)
+
+        # Title
+        ct.CTkLabel(container, text="Demo Account",
+                   font=ct.CTkFont(size=24, weight="bold"),
+                   text_color="#059669", fg_color="white").pack(pady=(20, 10))
+
+        # Subtitle
+        ct.CTkLabel(container, text="Enter your demo license key",
+                   font=ct.CTkFont(size=14),
+                   text_color="#64748b", fg_color="white").pack(pady=(0, 30))
+
+        # License Key Input
+        input_frame = ct.CTkFrame(container, fg_color="#f8fafc", corner_radius=10)
+        input_frame.pack(fill="x", pady=(0, 20))
+
+        ct.CTkLabel(input_frame, text="Demo License Key:",
+                   font=ct.CTkFont(size=14, weight="bold"),
+                   text_color="#374151").pack(pady=(20, 10))
+
+        license_key_entry = ct.CTkEntry(
+            input_frame,
+            placeholder_text="Enter your demo license key...",
+            height=45,
+            corner_radius=8,
+            border_width=2,
+            font=ct.CTkFont(size=12)
+        )
+        license_key_entry.pack(fill="x", padx=20, pady=(0, 20))
+
+        # Buttons
+        button_frame = ct.CTkFrame(container, fg_color="transparent")
+        button_frame.pack(fill="x", pady=(10, 0))
+
+        def activate_account():
+            license_key = license_key_entry.get().strip()
+            if not license_key:
+                messagebox.showerror("Error", "Please enter a demo license key.")
+                return
+
+            # Validate against expected keys
+            expected_key = VALID_LICENSE_KEYS.get("demo")
+            if license_key != expected_key:
+                messagebox.showerror("Error", "Invalid license key for demo account.")
+                return
+
+            # Create license data and activate
+            license_data = {
+                "account_type": "demo",
+                "license_key": license_key,
+                "activation_date": datetime.now().isoformat(),
+                "is_active": True
+            }
+
+            # Save license data using InvoiceApp method
+            temp_app = InvoiceApp.__new__(InvoiceApp)  # Create temp instance
+            temp_app.save_license_data(license_data)
+
+            messagebox.showinfo("Demo Activated",
+                              "Demo activated successfully!\n\nLicense Key: {}\n\nWelcome to TCG Tech Invoice Generator Demo.".format(license_key))
+
+            demo_window.destroy()
+            self.proceed_to_main_app()
+
+        def back_to_login():
+            demo_window.destroy()
+            self.deiconify()  # Show main login window again
+
+        ct.CTkButton(button_frame, text="🔑 Activate Demo",
+                    command=activate_account,
+                    height=45,
+                    fg_color="#10b981",
+                    hover_color="#059669",
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="left", expand=True, padx=(0, 5))
+
+        ct.CTkButton(button_frame, text="⬅️ Back",
+                    command=back_to_login,
+                    height=45,
+                    fg_color="#64748b",
+                    hover_color="#475569",
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", expand=True, padx=(5, 0))
+
+    def open_professional_window(self):
+        """Open a separate window for professional account options"""
+        # Hide current window temporarily
+        self.withdraw()
+
+        # Create professional window
+        pro_window = ct.CTkToplevel(self)
+        pro_window.title("TCG Tech - Professional Account")
+        pro_window.geometry("450x400")
+        pro_window.resizable(False, False)
+        pro_window.configure(fg_color="white")
+
+        # Center the window
+        pro_window.update_idletasks()
+        screen_width = pro_window.winfo_screenwidth()
+        screen_height = pro_window.winfo_screenheight()
+        x = (screen_width - 450) // 2
+        y = (screen_height - 400) // 2
+        pro_window.geometry(f"450x400+{x}+{y}")
+
+        pro_window.overrideredirect(True)
+        pro_window.transient(self)
+        pro_window.grab_set()
+
+        # Main container
+        container = ct.CTkFrame(pro_window, fg_color="white", corner_radius=20)
+        container.pack(expand=True, fill="both", padx=30, pady=30)
+
+        # Title
+        ct.CTkLabel(container, text="Professional Account",
+                   font=ct.CTkFont(size=24, weight="bold"),
+                   text_color="#2563eb", fg_color="white").pack(pady=(20, 10))
+
+        # Subtitle
+        ct.CTkLabel(container, text="Choose your account type",
+                   font=ct.CTkFont(size=14),
+                   text_color="#64748b", fg_color="white").pack(pady=(0, 30))
+
+        # Options
+        options_frame = ct.CTkFrame(container, fg_color="#f8fafc", corner_radius=10)
+        options_frame.pack(fill="x", pady=(0, 20))
+
+        def select_subscription():
+            pro_window.destroy()
+            self.open_license_activation("subscription")
+
+        def select_permanent():
+            pro_window.destroy()
+            self.open_license_activation("permanent")
+
+        def back_to_login():
+            pro_window.destroy()
+            self.deiconify()  # Show main login window again
+
+        # Subscription Account Button
+        ct.CTkButton(
+            options_frame,
+            text="📅 Subscription Account",
+            command=select_subscription,
+            height=50,
+            font=ct.CTkFont(size=14, weight="bold"),
+            fg_color="#8b5cf6",
+            hover_color="#7c3aed",
+            corner_radius=10
+        ).pack(fill="x", padx=20, pady=(20, 10))
+
+        # Permanent Account Button
+        ct.CTkButton(
+            options_frame,
+            text="🔒 Permanent Account",
+            command=select_permanent,
+            height=50,
+            font=ct.CTkFont(size=14, weight="bold"),
+            fg_color="#f59e0b",
+            hover_color="#d97706",
+            corner_radius=10
+        ).pack(fill="x", padx=20, pady=(10, 20))
+
+        # Back button
+        ct.CTkButton(container, text=" Back to Login",
+                    command=back_to_login,
+                    height=45,
+                    fg_color="#64748b",
+                    hover_color="#475569",
+                    font=ct.CTkFont(size=14, weight="bold")).pack(fill="x", pady=(10, 0))
+
+    def open_license_activation(self, account_type):
+        """Open license activation window for subscription and permanent accounts"""
+        # Create activation window
+        activation_window = ct.CTkToplevel(self)
+        activation_window.title(f"TCG Tech - {account_type.title()} Account Activation")
+        activation_window.geometry("450x400")
+        activation_window.resizable(False, False)
+        activation_window.configure(fg_color="white")
+
+        # Center the window
+        activation_window.update_idletasks()
+        screen_width = activation_window.winfo_screenwidth()
+        screen_height = activation_window.winfo_screenheight()
+        x = (screen_width - 450) // 2
+        y = (screen_height - 400) // 2
+        activation_window.geometry(f"450x400+{x}+{y}")
+
+        activation_window.overrideredirect(True)
+        activation_window.transient(self)
+        activation_window.grab_set()
+
+        # Main container
+        container = ct.CTkFrame(activation_window, fg_color="white", corner_radius=20)
+        container.pack(expand=True, fill="both", padx=30, pady=30)
+
+        # Title based on account type
+        if account_type == "subscription":
+            title_text = "Subscription Account"
+            subtitle_text = "Enter your subscription license key"
+            button_text = " Activate Subscription"
+            color = "#7c3aed"
+        elif account_type == "permanent":
+            title_text = "Permanent Account"
+            subtitle_text = "Enter your permanent license key"
+            button_text = " Activate Permanent"
+            color = "#d97706"
+
+        ct.CTkLabel(container, text=title_text,
+                   font=ct.CTkFont(size=24, weight="bold"),
+                   text_color=color, fg_color="white").pack(pady=(20, 10))
+
+        ct.CTkLabel(container, text=subtitle_text,
+                   font=ct.CTkFont(size=14),
+                   text_color="#64748b", fg_color="white").pack(pady=(0, 30))
+
+        # License Key Input
+        input_frame = ct.CTkFrame(container, fg_color="#f8fafc", corner_radius=10)
+        input_frame.pack(fill="x", pady=(0, 20))
+
+        ct.CTkLabel(input_frame, text=f"{title_text} License Key:",
+                   font=ct.CTkFont(size=14, weight="bold"),
+                   text_color="#374151").pack(pady=(20, 10))
+
+        license_key_entry = ct.CTkEntry(
+            input_frame,
+            placeholder_text="Enter your license key...",
+            height=45,
+            corner_radius=8,
+            border_width=2,
+            font=ct.CTkFont(size=12)
+        )
+        license_key_entry.pack(fill="x", padx=20, pady=(0, 20))
+
+        # Buttons
+        button_frame = ct.CTkFrame(container, fg_color="transparent")
+        button_frame.pack(fill="x", pady=(10, 0))
+
+        def activate_account():
+            license_key = license_key_entry.get().strip()
+            if not license_key:
+                messagebox.showerror("Error", f"Please enter a {account_type} license key.")
+                return
+
+            # Validate against expected keys
+            expected_key = VALID_LICENSE_KEYS.get(account_type)
+            if license_key != expected_key:
+                messagebox.showerror("Error", f"Invalid license key for {account_type} account.")
+                return
+
+            # Create license data and activate
+            license_data = {
+                "account_type": account_type,
+                "license_key": license_key,
+                "activation_date": datetime.now().isoformat(),
+                "is_active": True
+            }
+
+            # Save license data using InvoiceApp method
+            temp_app = InvoiceApp.__new__(InvoiceApp)  # Create temp instance
+            temp_app.save_license_data(license_data)
+
+            messagebox.showinfo(f"{title_text} Activated",
+                              f"{title_text} activated successfully!\n\nLicense Key: {license_key}\n\nWelcome to TCG Tech Invoice Generator {title_text}!")
+
+            activation_window.destroy()
+            self.deiconify()  # Show main login window again
+
+        def back_to_previous():
+            activation_window.destroy()
+            # Show the professional window again
+            self.open_professional_window()
+
+        ct.CTkButton(button_frame, text=button_text,
+                    command=activate_account,
+                    height=45,
+                    fg_color=color,
+                    hover_color=color.replace("#", "#").replace("0", "3").replace("5", "6").replace("6", "9").replace("9", "b"),  # Darker shade
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="left", expand=True, padx=(0, 5))
+
+        ct.CTkButton(button_frame, text=" Back",
+                    command=back_to_previous,
+                    height=45,
+                    fg_color="#64748b",
+                    hover_color="#475569",
+                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", expand=True, padx=(5, 0))
+
+    def proceed_to_main_app(self):
+        """Close login screen and proceed to main application"""
+        self.destroy()
+
+
 class InvoiceApp(ct.CTk):
     def __init__(self):
         super().__init__()
@@ -242,15 +666,10 @@ class InvoiceApp(ct.CTk):
         header_content.pack(fill="x", padx=12, pady=8)
         
         # Drag handle with three lines
-        drag_label = ct.CTkLabel(header_content, text="≡ " + container_name.upper(),
+        drag_label = ct.CTkLabel(header_content, text=container_name.upper(),
                                 font=ct.CTkFont(size=11, weight="bold"),
                                 text_color="white")
         drag_label.pack(side="left", expand=True, anchor="w")
-        
-        # Container ID badge
-        ct.CTkLabel(header_content, text=f"[{container_id}]",
-                   font=ct.CTkFont(size=8),
-                   text_color=("#bfdbfe", "#93c5fd")).pack(side="right", padx=(10, 0))
         
         # Context menu on double-click
         def on_double_click(event):
@@ -374,6 +793,216 @@ class InvoiceApp(ct.CTk):
         with open(PROFILES_FILE, 'w') as f:
             json.dump(self.profiles, f, indent=4)
 
+    # --- License Management Methods ---
+    def load_license_data(self):
+        """Load license data from file"""
+        if os.path.exists(LICENSE_FILE):
+            try:
+                with open(LICENSE_FILE, 'r') as f:
+                    return json.load(f)
+            except:
+                return {}
+        return {}
+
+    def save_license_data(self, data):
+        """Save license data to file"""
+        with open(LICENSE_FILE, 'w') as f:
+            json.dump(data, f, indent=4)
+        
+    def update_license_keys_file(self, license_data):
+        """Update the license keys text file with all license information"""
+        keys_file_path = os.path.join(DB_FOLDER, "license_keys.txt")
+        
+        try:
+            with open(keys_file_path, 'w') as f:
+                f.write("TCG TECH INVOICE GENERATOR - LICENSE KEYS\n")
+                f.write("=" * 50 + "\n\n")
+                
+                # Write all valid license keys
+                f.write("VALID LICENSE KEYS:\n")
+                f.write("-" * 20 + "\n")
+                current_year = str(datetime.now().year)
+                f.write(f"Current Year: {current_year}\n\n")
+                for account_type, key in VALID_LICENSE_KEYS.items():
+                    f.write(f"{account_type.title()} Account: {key}\n")
+                
+                f.write("\n")
+                
+                # Write current active license info
+                if license_data and license_data.get("is_active", False):
+                    f.write("CURRENT ACTIVE LICENSE:\n")
+                    f.write("-" * 25 + "\n")
+                    f.write(f"Account Type: {license_data.get('account_type', 'Unknown').title()}\n")
+                    f.write(f"License Key: {license_data.get('license_key', 'N/A')}\n")
+                    f.write(f"Activation Date: {license_data.get('activation_date', 'N/A')}\n")
+                    
+                    # Calculate expiration info
+                    if license_data.get('activation_date'):
+                        try:
+                            activation_date = datetime.fromisoformat(license_data['activation_date'])
+                            current_date = datetime.now()
+                            days_since_activation = (current_date - activation_date).days
+                            
+                            account_type = license_data.get('account_type', '')
+                            if account_type == 'subscription':
+                                days_remaining = max(0, 365 - days_since_activation)
+                                expiration_date = activation_date.replace(year=activation_date.year + 1)
+                                f.write(f"Expiration Date: {expiration_date.strftime('%Y-%m-%d')}\n")
+                                f.write(f"Days Remaining: {days_remaining}\n")
+                            elif account_type == 'demo':
+                                days_remaining = max(0, 15 - days_since_activation)
+                                expiration_date = activation_date.replace(day=activation_date.day + 15)
+                                f.write(f"Expiration Date: {expiration_date.strftime('%Y-%m-%d')}\n")
+                                f.write(f"Days Remaining: {days_remaining}\n")
+                            elif account_type == 'permanent':
+                                f.write("Expiration: Never\n")
+                                f.write("Days Remaining: Unlimited\n")
+                        except:
+                            f.write("Expiration Info: Error calculating\n")
+                    
+                    f.write(f"Status: Active\n")
+                else:
+                    f.write("CURRENT LICENSE STATUS: No Active License\n")
+                
+                f.write("\n")
+                f.write("LICENSE POLICY:\n")
+                f.write("-" * 15 + "\n")
+                f.write("- Demo Account: 15-day trial period\n")
+                f.write("- Subscription Account: 365-day annual license\n")
+                f.write("- Permanent Account: Lifetime license\n")
+                f.write("- All licenses require valid activation keys\n")
+                
+        except Exception as e:
+            print(f"Error updating license keys file: {e}")
+
+    def validate_license_key(self, license_key, account_type):
+        """Validate license key against expected value and ensure it contains current year"""
+        expected_key = VALID_LICENSE_KEYS.get(account_type)
+        
+        # Check if the key matches exactly
+        if license_key != expected_key:
+            return False
+        
+        # Additionally check that the key contains the current year
+        # This ensures old keys from previous years won't work
+        current_year = str(datetime.now().year)
+        if current_year not in license_key:
+            return False
+        
+        return True
+
+    def activate_license(self, license_key, account_type):
+        """Activate license and save activation data"""
+        if not self.validate_license_key(license_key, account_type):
+            return False, "Invalid license key"
+
+        # Create license data
+        license_data = {
+            "account_type": account_type,
+            "license_key": license_key,
+            "activation_date": datetime.now().isoformat(),
+            "is_active": True
+        }
+
+        self.save_license_data(license_data)
+        return True, f"{account_type.title()} account activated successfully!"
+
+    def check_license_status(self):
+        """
+        Check license status and return:
+        - (True, None) if valid
+        - (False, "expired") if subscription expired
+        - (False, "invalid") if no valid license
+        """
+        license_data = self.load_license_data()
+
+        if not license_data or not license_data.get("is_active", False):
+            return False, "invalid"
+
+        account_type = license_data.get("account_type", "")
+        activation_date_str = license_data.get("activation_date", "")
+
+        if not activation_date_str:
+            return False, "invalid"
+
+        try:
+            activation_date = datetime.fromisoformat(activation_date_str)
+            current_date = datetime.now()
+            days_since_activation = (current_date - activation_date).days
+
+            if account_type == "permanent":
+                return True, None
+            elif account_type == "subscription":
+                if days_since_activation >= 365:
+                    return False, "expired"
+                elif days_since_activation >= 363:  # 2 days before expiration
+                    return True, "expiring_soon"
+                else:
+                    return True, None
+            elif account_type == "demo":
+                if days_since_activation >= 16:  # Block after 16 days
+                    return False, "expired"
+                elif days_since_activation >= 14:  # Warning at 14 days
+                    return True, "demo_expiring"
+                else:
+                    return True, None
+            else:
+                return False, "invalid"
+
+        except (ValueError, TypeError):
+            return False, "invalid"
+
+    def get_license_info(self):
+        """Get current license information"""
+        license_data = self.load_license_data()
+        if not license_data:
+            return None
+
+        account_type = license_data.get("account_type", "unknown")
+        activation_date_str = license_data.get("activation_date", "")
+
+        if activation_date_str:
+            try:
+                activation_date = datetime.fromisoformat(activation_date_str)
+                days_remaining = None
+
+                if account_type == "subscription":
+                    current_date = datetime.now()
+                    days_since_activation = (current_date - activation_date).days
+                    days_remaining = max(0, 365 - days_since_activation)
+                elif account_type == "demo":
+                    current_date = datetime.now()
+                    days_since_activation = (current_date - activation_date).days
+                    days_remaining = max(0, 15 - days_since_activation)
+
+                return {
+                    "account_type": account_type,
+                    "activation_date": activation_date,
+                    "days_remaining": days_remaining
+                }
+            except:
+                pass
+
+        return None
+
+    def show_subscription_warning(self):
+        """Show subscription or demo account expiring warning"""
+        license_info = self.get_license_info()
+        if not license_info or license_info["days_remaining"] is None:
+            return
+
+        account_type = license_info["account_type"]
+        days_remaining = license_info["days_remaining"]
+
+        if account_type == "subscription":
+            if days_remaining <= 2:
+                message = f"⚠️ WARNING: Your subscription expires in {days_remaining} day{'s' if days_remaining != 1 else ''}!\n\nPlease renew your license to continue using the application."
+                messagebox.showwarning("Subscription Expiring", message)
+        elif account_type == "demo":
+            if days_remaining <= 1:  # Warning at 14 days (15-14=1 day remaining)
+                message = "⚠️ WARNING: Your demo account license has been going to expire!\n\nYou have limited time remaining. Please upgrade to a full account."
+                messagebox.showwarning("Demo Account Expiring", message)
+
     def setup_sidebar(self):
         # Modern gradient-like sidebar with shadow effect
         self.sidebar = ct.CTkFrame(self, width=300, corner_radius=0, 
@@ -472,7 +1101,7 @@ class InvoiceApp(ct.CTk):
 
         # Search input
         self.search_entry = ct.CTkEntry(self.sidebar, 
-                                       placeholder_text="Search by ID or Client Name...",
+                                       placeholder_text="≡ 💡 Search by ID or Client Name...",
                                        height=35,
                                        corner_radius=10,
                                        border_width=2,
@@ -523,7 +1152,7 @@ class InvoiceApp(ct.CTk):
         
         ct.CTkLabel(card_header, text="", 
                    font=ct.CTkFont(size=24)).pack(side="left", padx=(0, 10))
-        ct.CTkLabel(card_header, text="Business Information", 
+        ct.CTkLabel(card_header, text="", 
                    font=ct.CTkFont(size=20, weight="bold"),
                    text_color=("#1e293b", "#f1f5f9")).pack(side="left")
 
@@ -552,21 +1181,21 @@ class InvoiceApp(ct.CTk):
 
         self.biz_name_entry = ct.CTkEntry(info_frame, width=350, height=45,
                                           font=ct.CTkFont(size=18, weight="bold"),
-                                          placeholder_text="Business Name",
+                                          placeholder_text="≡ Business Name",
                                           corner_radius=12,
                                           border_width=2,
                                           border_color=("#cbd5e1", "#475569"))
         self.biz_name_entry.pack(anchor="w", pady=(0, 10))
 
         self.biz_addr_entry = ct.CTkEntry(info_frame, width=350, height=40,
-                                          placeholder_text="Business Address",
+                                          placeholder_text="≡ Business Address",
                                           corner_radius=10,
                                           border_width=2,
                                           border_color=("#cbd5e1", "#475569"))
         self.biz_addr_entry.pack(anchor="w", pady=(0, 10))
 
         self.biz_email_entry = ct.CTkEntry(info_frame, width=350, height=40,
-                                           placeholder_text="Business Email",
+                                           placeholder_text="≡ Business Email",
                                            corner_radius=10,
                                            border_width=2,
                                            border_color=("#cbd5e1", "#475569"))
@@ -583,7 +1212,7 @@ class InvoiceApp(ct.CTk):
         phone_container.pack(anchor="w", fill="x", pady=(0, 10))
         
         self.biz_phone_entry = ct.CTkEntry(phone_container, width=350, height=40,
-                                           placeholder_text="Business Phone",
+                                           placeholder_text="≡ Business Phone",
                                            corner_radius=10,
                                            border_width=2,
                                            border_color=("#cbd5e1", "#475569"))
@@ -601,7 +1230,7 @@ class InvoiceApp(ct.CTk):
         gst_container.pack(anchor="w", fill="x", pady=(0, 10))
         
         self.biz_gst_entry = ct.CTkEntry(gst_container, width=350, height=40,
-                                         placeholder_text="GST No (Optional)",
+                                         placeholder_text="≡ GST No (Optional)",
                                          corner_radius=10,
                                          border_width=2,
                                          border_color=("#cbd5e1", "#475569"))
@@ -615,7 +1244,7 @@ class InvoiceApp(ct.CTk):
         self.gst_warning_label.pack(side="left", padx=(10, 0))
 
         self.biz_watermark_entry = ct.CTkEntry(info_frame, width=350, height=40,
-                                               placeholder_text="Watermark Text (Optional)",
+                                               placeholder_text="≡ Watermark Text (Optional)",
                                                corner_radius=10,
                                                border_width=2,
                                                border_color=("#cbd5e1", "#475569"))
@@ -641,15 +1270,8 @@ class InvoiceApp(ct.CTk):
                                          font=ct.CTkFont(size=13, weight="bold"))
         self.save_biz_btn.pack(pady=(0, 8))
         
-        # Layout Customizer Button
-        ct.CTkButton(right_frame, text="⚙️ Customize Layout", 
-                    command=self.open_layout_customizer,
-                    width=250, height=45,
-                    fg_color=("#8b5cf6", "#7c3aed"),
-                    hover_color=("#7c3aed", "#6d28d9"),
-                    corner_radius=12,
-                    font=ct.CTkFont(size=13, weight="bold")).pack(pady=(0, 8))
-
+        # Layout Customizer Button - REMOVED
+        
         # --- Divider ---
         ct.CTkFrame(self.main_frame, height=3, 
                    fg_color=("#e2e8f0", "#334155"),
@@ -1325,310 +1947,6 @@ class InvoiceApp(ct.CTk):
             )
             
             messagebox.showinfo("Saved", f"Details saved for {name}")
-
-    def open_layout_customizer(self):
-        """Open the advanced layout customizer dialog with drag-and-drop, delete, and rename"""
-        customizer = ct.CTkToplevel(self)
-        customizer.title("Advanced Invoice Layout Customizer")
-        customizer.geometry("1200x700")
-        customizer.transient(self)
-        customizer.grab_set()
-        
-        # Get current layout settings or use defaults
-        current_layout = self.profiles[self.current_biz_id].get("layout", self.get_default_layout())
-        
-        # Header
-        header = ct.CTkFrame(customizer, fg_color=("#1e40af", "#1e3a8a"), height=60)
-        header.pack(fill="x", padx=0, pady=0)
-        header.pack_propagate(False)
-        
-        ct.CTkLabel(header, text="⚙️ Advanced Layout Customizer - Drag, Edit, Delete", 
-                   font=ct.CTkFont(size=18, weight="bold"),
-                   text_color="white").pack(pady=15)
-        
-        # Main container - split into left (editor) and right (preview)
-        main_container = ct.CTkFrame(customizer, fg_color="transparent")
-        main_container.pack(fill="both", expand=True, padx=15, pady=15)
-        
-        # ===== LEFT SIDE: Editor with drag-and-drop =====
-        left_frame = ct.CTkFrame(main_container, fg_color=("#f8fafc", "#1e293b"),
-                                corner_radius=10, border_width=2,
-                                border_color=("#e2e8f0", "#334155"))
-        left_frame.pack(side="left", fill="both", expand=True, padx=(0, 10))
-        
-        editor_title = ct.CTkLabel(left_frame, text="📝 Field Editor", 
-                                  font=ct.CTkFont(size=14, weight="bold"),
-                                  text_color=("#1e40af", "#60a5fa"))
-        editor_title.pack(pady=10, padx=10)
-        
-        # Scrollable editor area
-        editor_scroll = ct.CTkScrollableFrame(left_frame, fg_color="transparent")
-        editor_scroll.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-        
-        # Store field data with UI elements
-        self.layout_fields_data = {}
-        
-        # Define all fields
-        all_fields = [
-            ("biz_name", "Business Name"),
-            ("biz_address", "Business Address"),
-            ("biz_email", "Business Email"),
-            ("biz_phone", "Business Phone"),
-            ("biz_gst", "GST Number"),
-            ("biz_logo", "Business Logo"),
-            ("client_name", "Client Name"),
-            ("client_email", "Client Email"),
-            ("client_phone", "Client Phone"),
-            ("client_address", "Client Address"),
-            ("invoice_number", "Invoice Number"),
-            ("invoice_date", "Invoice Date"),
-            ("due_date", "Due Date"),
-            ("pending_status", "Pending Status"),
-            ("items_table", "Items Table"),
-            ("subtotal", "Subtotal"),
-            ("discount", "Discount"),
-            ("tax", "Tax/GST"),
-            ("grand_total", "Grand Total"),
-            ("watermark", "Watermark"),
-        ]
-        
-        # Create field editors with drag support
-        for field_id, default_label in all_fields:
-            field_settings = current_layout.get(field_id, {"visible": True, "position": "default", "label": default_label})
-            self.create_advanced_field_editor(editor_scroll, field_id, field_settings, current_layout)
-        
-        # ===== RIGHT SIDE: Live Preview =====
-        right_frame = ct.CTkFrame(main_container, fg_color=("#f8fafc", "#1e293b"),
-                                 corner_radius=10, border_width=2,
-                                 border_color=("#e2e8f0", "#334155"))
-        right_frame.pack(side="right", fill="both", expand=True, padx=(10, 0))
-        
-        preview_title = ct.CTkLabel(right_frame, text="👁️ Live Preview", 
-                                   font=ct.CTkFont(size=14, weight="bold"),
-                                   text_color=("#1e40af", "#60a5fa"))
-        preview_title.pack(pady=10, padx=10)
-        
-        self.preview_frame = ct.CTkScrollableFrame(right_frame, fg_color=("#ffffff", "#1e293b"))
-        self.preview_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
-        
-        # Function to update preview
-        def update_preview():
-            # Clear preview
-            for widget in self.preview_frame.winfo_children():
-                widget.destroy()
-            
-            # Regenerate preview based on current field data
-            for field_id in sorted(self.layout_fields_data.keys(), 
-                                  key=lambda x: self.layout_fields_data[x].get('order', 0)):
-                field_data = self.layout_fields_data[field_id]
-                if field_data['visible'].get():
-                    label_text = field_data['label_entry'].get()
-                    preview_field = ct.CTkFrame(self.preview_frame, 
-                                               fg_color=("#e2e8f0", "#334155"),
-                                               corner_radius=5)
-                    preview_field.pack(fill="x", pady=3, padx=5)
-                    
-                    ct.CTkLabel(preview_field, text=f"📋 {label_text}",
-                               font=ct.CTkFont(size=10),
-                               text_color=("#1e293b", "#f1f5f9")).pack(anchor="w", padx=8, pady=4)
-        
-        self.preview_update = update_preview
-        
-        # ===== BOTTOM Buttons =====
-        button_frame = ct.CTkFrame(customizer, fg_color="transparent")
-        button_frame.pack(fill="x", padx=20, pady=20)
-        
-        def save_layout():
-            # Collect all settings
-            new_layout = {}
-            for field_id, field_data in self.layout_fields_data.items():
-                new_layout[field_id] = {
-                    "visible": field_data["visible"].get(),
-                    "position": field_data["position"].get(),
-                    "label": field_data["label_entry"].get(),
-                    "order": field_data.get("order", 0)
-                }
-            
-            # Save to profile
-            self.profiles[self.current_biz_id]["layout"] = new_layout
-            self.save_profiles()
-            
-            messagebox.showinfo("Success", "Layout saved! Changes will apply to new invoices.")
-            customizer.destroy()
-            # Refresh the main UI to show layout changes
-            self.refresh_theme()
-        
-        def reset_layout():
-            if messagebox.askyesno("Reset Layout", "Reset to default layout?"):
-                self.profiles[self.current_biz_id]["layout"] = self.get_default_layout()
-                self.save_profiles()
-                messagebox.showinfo("Reset", "Layout reset to default!")
-                customizer.destroy()
-                self.refresh_theme()
-                self.open_layout_customizer()
-        
-        ct.CTkButton(button_frame, text="💾 Save & Apply", 
-                    command=save_layout,
-                    width=200, height=45,
-                    fg_color=("#059669", "#047857"),
-                    hover_color=("#047857", "#065f46"),
-                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
-        
-        ct.CTkButton(button_frame, text="🔄 Reset to Default", 
-                    command=reset_layout,
-                    width=200, height=45,
-                    fg_color=("#dc2626", "#b91c1c"),
-                    hover_color=("#b91c1c", "#991b1b"),
-                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
-        
-        ct.CTkButton(button_frame, text="Cancel", 
-                    command=customizer.destroy,
-                    width=150, height=45,
-                    fg_color=("#64748b", "#475569"),
-                    hover_color=("#475569", "#334155"),
-                    font=ct.CTkFont(size=14, weight="bold")).pack(side="right", padx=5)
-        
-        # Initial preview
-        update_preview()
-    
-    def create_advanced_field_editor(self, parent, field_id, field_settings, current_layout):
-        """Create an advanced field editor with visibility, label edit, delete, and rename"""
-        default_label = field_settings.get("label", field_id.replace("_", " ").title())
-        
-        # Main field container with hover effect
-        field_container = ct.CTkFrame(parent, fg_color=("#ffffff", "#2d3748"),
-                                     corner_radius=8, border_width=1,
-                                     border_color=("#cbd5e1", "#475569"))
-        field_container.pack(fill="x", pady=5, padx=0)
-        
-        # Field header (draggable area)
-        header = ct.CTkFrame(field_container, fg_color=("#3b82f6", "#2563eb"),
-                           corner_radius=6)
-        header.pack(fill="x", padx=4, pady=4)
-        
-        header_content = ct.CTkFrame(header, fg_color="transparent")
-        header_content.pack(fill="x", padx=10, pady=8)
-        
-        # Drag handle
-        ct.CTkLabel(header_content, text="≡ " + default_label.upper(),
-                   font=ct.CTkFont(size=11, weight="bold"),
-                   text_color="white").pack(side="left", expand=True, anchor="w")
-        
-        # Field ID badge
-        ct.CTkLabel(header_content, text=f"[{field_id}]",
-                   font=ct.CTkFont(size=9),
-                   text_color=("#bfdbfe", "#93c5fd")).pack(side="right", padx=(10, 0))
-        
-        # Field controls
-        controls = ct.CTkFrame(field_container, fg_color="transparent")
-        controls.pack(fill="x", padx=10, pady=8)
-        
-        # Visibility checkbox
-        visible_var = ct.BooleanVar(value=field_settings.get("visible", True))
-        
-        def on_visibility_change():
-            self.preview_update()
-        
-        visibility_check = ct.CTkCheckBox(controls, text="Visible", 
-                                         variable=visible_var,
-                                         command=on_visibility_change,
-                                         font=ct.CTkFont(size=10),
-                                         checkbox_width=18, checkbox_height=18)
-        visibility_check.pack(side="left", padx=(0, 15))
-        
-        # Label rename
-        label_entry = ct.CTkEntry(controls, width=150, height=32,
-                                 placeholder_text="Field Label",
-                                 corner_radius=6, border_width=1,
-                                 font=ct.CTkFont(size=10))
-        label_entry.insert(0, default_label)
-        label_entry.pack(side="left", padx=5)
-        
-        # Bind label change to update preview
-        label_entry.bind("<KeyRelease>", lambda e: self.preview_update())
-        
-        # Position dropdown
-        position_var = ct.StringVar(value=field_settings.get("position", "default"))
-        position_menu = ct.CTkOptionMenu(controls, variable=position_var,
-                                        values=["default", "top", "left", "right", "bottom", "hidden"],
-                                        width=100, height=32,
-                                        font=ct.CTkFont(size=10),
-                                        dropdown_font=ct.CTkFont(size=10))
-        position_menu.pack(side="left", padx=5)
-        
-        # Delete button
-        def delete_field():
-            if messagebox.askyesno("Delete Field", f"Remove '{default_label}' from layout?"):
-                field_container.destroy()
-                if field_id in self.layout_fields_data:
-                    del self.layout_fields_data[field_id]
-                self.preview_update()
-        
-        ct.CTkButton(controls, text="🗑️ Delete", 
-                    command=delete_field,
-                    width=80, height=32,
-                    fg_color=("#ef4444", "#dc2626"),
-                    hover_color=("#dc2626", "#b91c1c"),
-                    font=ct.CTkFont(size=10, weight="bold")).pack(side="left", padx=5)
-        
-        # Rename button
-        def rename_field():
-            rename_dialog = ct.CTkInputDialog(text="Enter new label name:", title="Rename Field")
-            new_name = rename_dialog.get_input()
-            if new_name:
-                label_entry.delete(0, 'end')
-                label_entry.insert(0, new_name)
-                # Update header
-                header_label = header_content.winfo_children()[0]
-                header_label.configure(text="≡ " + new_name.upper())
-                self.preview_update()
-        
-        ct.CTkButton(controls, text="✏️ Rename", 
-                    command=rename_field,
-                    width=80, height=32,
-                    fg_color=("#8b5cf6", "#7c3aed"),
-                    hover_color=("#7c3aed", "#6d28d9"),
-                    font=ct.CTkFont(size=10, weight="bold")).pack(side="left", padx=5)
-        
-        # Store field data
-        self.layout_fields_data[field_id] = {
-            "visible": visible_var,
-            "position": position_var,
-            "label_entry": label_entry,
-            "container": field_container,
-            "order": 0
-        }
-        
-        self.preview_update()
-    
-    def create_layout_section(self, parent, section_title, fields, field_widgets):
-        """Legacy method - no longer used, kept for compatibility"""
-        pass
-    
-    def get_default_layout(self):
-        """Get default layout configuration"""
-        return {
-            "biz_name": {"visible": True, "position": "default", "label": "Business Name"},
-            "biz_address": {"visible": True, "position": "default", "label": "Business Address"},
-            "biz_email": {"visible": True, "position": "default", "label": "Business Email"},
-            "biz_phone": {"visible": True, "position": "default", "label": "Business Phone"},
-            "biz_gst": {"visible": True, "position": "default", "label": "GST Number"},
-            "biz_logo": {"visible": True, "position": "default", "label": "Business Logo"},
-            "client_name": {"visible": True, "position": "default", "label": "Client Name"},
-            "client_email": {"visible": True, "position": "default", "label": "Client Email"},
-            "client_phone": {"visible": True, "position": "default", "label": "Client Phone"},
-            "client_address": {"visible": True, "position": "default", "label": "Client Address"},
-            "invoice_number": {"visible": True, "position": "default", "label": "Invoice Number"},
-            "invoice_date": {"visible": True, "position": "default", "label": "Invoice Date"},
-            "due_date": {"visible": True, "position": "default", "label": "Due Date"},
-            "pending_status": {"visible": True, "position": "default", "label": "Pending Status"},
-            "items_table": {"visible": True, "position": "default", "label": "Items Table"},
-            "subtotal": {"visible": True, "position": "default", "label": "Subtotal"},
-            "discount": {"visible": True, "position": "default", "label": "Discount"},
-            "tax": {"visible": True, "position": "default", "label": "Tax/GST"},
-            "grand_total": {"visible": True, "position": "default", "label": "Grand Total"},
-            "watermark": {"visible": True, "position": "default", "label": "Watermark"},
-        }
 
     # --- Core Invoice Logic ---
 
@@ -3346,7 +3664,7 @@ class InvoiceApp(ct.CTk):
 
 
 if __name__ == "__main__":
-    # Create a temporary root window for splash screen
+    # Create a temporary root window for splash screen and login
     root = ct.CTk()
     root.withdraw()  # Hide the main window
     
@@ -3356,6 +3674,43 @@ if __name__ == "__main__":
     
     # Wait for splash screen to close
     root.wait_window(splash)
+    
+    # Check license status before proceeding
+    # Create a temporary InvoiceApp instance just to check license
+    temp_app = InvoiceApp.__new__(InvoiceApp)  # Create instance without calling __init__
+    is_valid, status = temp_app.check_license_status()
+    
+    if not is_valid:
+        if status == "expired":
+            messagebox.showerror("License Expired", 
+                               "Your subscription has expired!\n\nPlease renew your license to continue using the application.")
+            root.destroy()
+            exit(1)
+        elif status == "invalid":
+            # No valid license, show login screen
+            login = LoginScreen(root)
+            login.focus_force()
+            root.wait_window(login)
+            
+            # After login, check license again
+            is_valid, status = temp_app.check_license_status()
+            if not is_valid:
+                messagebox.showerror("License Error", "Failed to activate license. Application will exit.")
+                root.destroy()
+                exit(1)
+    
+    # Show subscription warning if expiring soon
+    if status == "expiring_soon":
+        license_info = temp_app.get_license_info()
+        if license_info and license_info["days_remaining"] is not None:
+            days_remaining = license_info["days_remaining"]
+            messagebox.showwarning("Subscription Expiring Soon", 
+                                 f"⚠️ Your subscription expires in {days_remaining} day{'s' if days_remaining != 1 else ''}!\n\nPlease renew your license soon to continue using the application.")
+    
+    # Show demo account warning if expiring soon
+    if status == "demo_expiring":
+        messagebox.showwarning("Demo Account Expiring", 
+                             "⚠️ WARNING: Your demo account license has been going to expire!\n\nYou have limited time remaining. Please upgrade to a full account.")
     
     # Destroy temporary root and create actual app
     root.destroy()
