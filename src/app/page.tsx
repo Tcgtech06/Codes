@@ -21,9 +21,9 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { books } from '@/data/books';
 import { useVisitorStats } from '@/hooks/useVisitorStats';
 import StatCard from '@/components/StatCard';
+import { booksAPI, categoriesAPI } from '@/lib/api';
 
 const categories = [
   { name: 'Yarn', icon: Layers, color: 'bg-blue-100 text-blue-600' },
@@ -58,9 +58,28 @@ export default function Home() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [books, setBooks] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   
   // Visitor statistics
   const { stats, loading: statsLoading } = useVisitorStats();
+
+  // Fetch books and categories
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [booksRes, categoriesRes] = await Promise.all([
+          booksAPI.getAll(),
+          categoriesAPI.getAll()
+        ]);
+        setBooks(booksRes.books || []);
+        setCategories(categoriesRes.categories || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
