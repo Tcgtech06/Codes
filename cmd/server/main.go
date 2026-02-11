@@ -1,6 +1,10 @@
 package main
 
 import (
+	"fmt"
+	"knitinfo-backend/pkg/database"
+	"knitinfo-backend/pkg/models"
+	"knitinfo-backend/pkg/repository"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,6 +15,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/xuri/excelize/v2"
 )
 
 type LoginRequest struct {
@@ -38,99 +43,51 @@ type JWTClaims struct {
 }
 
 var (
-	jwtSecret    string
-	adminUser    string
-	adminPass    string
-	tokenExpiry  = 36 * time.Hour
+	jwtSecret   string
+	adminUser   string
+	adminPass   string
+	tokenExpiry = 365 * 24 * time.Hour
+
+	// Repositories
+	companyRepo      *repository.CompanyRepository
+	priorityRepo     *repository.PriorityRepository
+	submissionRepo   *repository.SubmissionRepository
+	contactRepo      *repository.ContactRepository
+	bookRepo         *repository.BookRepository
+	orderRepo        *repository.OrderRepository
+	categoryRepo     *repository.CategoryRepository
+	settingsRepo     *repository.SettingsRepository
+	analyticsRepo    *repository.AnalyticsRepository
+	excelRepo        *repository.ExcelUploadRepository
+	notificationRepo *repository.NotificationRepository
+	monitoringRepo   *repository.MonitoringRepository
 )
-
-type Company struct {
-	ID           string    `json:"id"`
-	CompanyName  string    `json:"companyName"`
-	ContactPerson string   `json:"contactPerson"`
-	Email        string    `json:"email"`
-	Phone        string    `json:"phone"`
-	Website      string    `json:"website,omitempty"`
-	Address      string    `json:"address"`
-	Category     string    `json:"category"`
-	Description  string    `json:"description"`
-	Products     []string  `json:"products"`
-	Certifications string `json:"certifications,omitempty"`
-	GSTNumber    string    `json:"gstNumber,omitempty"`
-	Status       string    `json:"status"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-type Priority struct {
-	ID           string    `json:"id"`
-	CompanyID    string    `json:"companyId"`
-	CompanyName  string    `json:"companyName"`
-	Category     string    `json:"category"`
-	Position     int       `json:"position"`
-	PriorityType string    `json:"priorityType"`
-	Duration     int       `json:"duration,omitempty"`
-	DurationType string    `json:"durationType,omitempty"`
-	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
-	Status       string    `json:"status"`
-	CreatedAt    time.Time `json:"createdAt"`
-	CreatedBy    string    `json:"createdBy"`
-}
-
-type FormSubmission struct {
-	ID          string                 `json:"id"`
-	Type        string                 `json:"type"`
-	FormData    map[string]interface{} `json:"formData"`
-	Attachments []string               `json:"attachments,omitempty"`
-	Status      string                 `json:"status"`
-	SubmittedAt time.Time              `json:"submittedAt"`
-	ReviewedAt  *time.Time             `json:"reviewedAt,omitempty"`
-	ReviewedBy  string                 `json:"reviewedBy,omitempty"`
-	ReviewNotes string                 `json:"reviewNotes,omitempty"`
-}
-
-type ContactMessage struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Email     string    `json:"email"`
-	Message   string    `json:"message"`
-	CreatedAt time.Time `json:"createdAt"`
-}
-
-// In-memory storage (replace with database in production)
-var (
-	companies    []Company
-	priorities   []Priority
-	submissions  []FormSubmission
-	contacts     []ContactMessage
-	counterID    int
-)
-
-func init() {
-	// Sample data
-	companies = []Company{
-		{
-			ID: "1", CompanyName: "ABC Textiles Ltd", ContactPerson: "John Doe",
-			Email: "john@abctextiles.com", Phone: "+91 9876543210",
-			Address: "123 Industrial Area, Tirupur, Tamil Nadu", Category: "Yarn",
-			Description: "Leading yarn manufacturer", Products: []string{"Cotton Yarn", "Polyester Yarn"},
-			Status: "active", CreatedAt: time.Now(), UpdatedAt: time.Now(),
-		},
-		{
-			ID: "2", CompanyName: "Global Yarn Suppliers", ContactPerson: "Jane Smith",
-			Email: "jane@globalyarn.com", Phone: "+91 9876543212",
-			Address: "789 Export Zone, Chennai, Tamil Nadu", Category: "Yarn",
-			Description: "Premium yarn suppliers", Products: []string{"Organic Cotton", "Recycled Yarn"},
-			Status: "active", CreatedAt: time.Now(), UpdatedAt: time.Now(),
-		},
-	}
-	counterID = 3
-}
 
 func main() {
 	if err := godotenv.Load(); err != nil {
 		// .env file not found, using defaults
 	}
+
+	// Initialize database
+	db, err := database.NewSupabaseConnection()
+	if err != nil {
+		panic("Failed to connect to database: " + err.Error())
+	}
+	defer db.Close()
+
+	// Initialize repositories
+	companyRepo = repository.NewCompanyRepository(db.DB)
+	priorityRepo = repository.NewPriorityRepository(db.DB)
+	submissionRepo = repository.NewSubmissionRepository(db.DB)
+	contactRepo = repository.NewContactRepository(db.DB)
+	bookRepo = repository.NewBookRepository(db.DB)
+	orderRepo = repository.NewOrderRepository(db.DB)
+	categoryRepo = repository.NewCategoryRepository(db.DB)
+	settingsRepo = repository.NewSettingsRepository(db.DB)
+	analyticsRepo = repository.NewAnalyticsRepository(db.DB)
+	excelRepo = repository.NewExcelUploadRepository(db.DB)
+	notificationRepo = repository.NewNotificationRepository(db.DB)
+	monitoringRepo = repository.NewMonitoringRepository(db.DB)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -166,7 +123,7 @@ func main() {
 
 	// API routes
 	api := e.Group("/api/v1")
-	
+
 	// Public routes
 	api.GET("/companies", getCompanies)
 	api.GET("/companies/:id", getCompany)
@@ -177,7 +134,11 @@ func main() {
 	api.POST("/submissions", createSubmission)
 	api.POST("/contact", submitContact)
 	api.GET("/categories", getCategories)
-	
+	api.GET("/books", getBooks)
+	api.GET("/books/:id", getBook)
+	api.POST("/orders", createOrder)
+	api.GET("/settings/:key", getSettings)
+
 	// Protected routes (require JWT)
 	protected := api.Group("")
 	protected.Use(jwtMiddleware())
@@ -191,6 +152,17 @@ func main() {
 	protected.GET("/submissions/type/:type", getSubmissionsByType)
 	protected.PUT("/submissions/:id/status", updateSubmissionStatus)
 	protected.GET("/contacts", getContacts)
+	protected.POST("/books", createBook)
+	protected.GET("/orders", getOrders)
+	protected.GET("/dashboard/stats", getDashboardStats)
+	protected.POST("/excel/upload", uploadExcel)
+	protected.POST("/excel/parse", parseExcelFile)
+	protected.GET("/excel/history", getExcelHistory)
+	protected.POST("/submissions/:id/approve", approveSubmission)
+	protected.GET("/analytics/trends", getSubmissionTrends)
+	protected.GET("/companies/export", exportCompanies)
+	protected.GET("/monitoring/errors", getErrorMetrics)
+	protected.GET("/monitoring/slow-queries", getSlowQueries)
 
 	e.Logger.Fatal(e.Start(":" + port))
 }
@@ -206,12 +178,10 @@ func login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 	}
 
-	// Validate credentials
 	if req.Username != adminUser || req.Password != adminPass {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid credentials"})
 	}
 
-	// Create JWT token
 	claims := &JWTClaims{
 		UserID:   "1",
 		Username: req.Username,
@@ -272,7 +242,6 @@ func verifyToken(c echo.Context) error {
 	})
 }
 
-// JWT Middleware
 func jwtMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
@@ -299,7 +268,6 @@ func jwtMiddleware() echo.MiddlewareFunc {
 				return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token claims"})
 			}
 
-			// Store user info in context
 			c.Set("user", User{
 				ID:       claims.UserID,
 				Username: claims.Username,
@@ -315,68 +283,47 @@ func jwtMiddleware() echo.MiddlewareFunc {
 func getCompanies(c echo.Context) error {
 	category := c.QueryParam("category")
 	status := c.QueryParam("status")
-	limitStr := c.QueryParam("limit")
-	
-	filteredCompanies := companies
-	
-	if category != "" {
-		var filtered []Company
-		for _, comp := range companies {
-			if strings.EqualFold(comp.Category, category) {
-				filtered = append(filtered, comp)
-			}
-		}
-		filteredCompanies = filtered
-	}
-	
-	if status != "" {
-		var filtered []Company
-		for _, comp := range filteredCompanies {
-			if comp.Status == status {
-				filtered = append(filtered, comp)
-			}
-		}
-		filteredCompanies = filtered
-	}
-	
-	if limitStr != "" {
-		if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
-			if len(filteredCompanies) > limit {
-				filteredCompanies = filteredCompanies[:limit]
-			}
+	limit := 0
+	if l := c.QueryParam("limit"); l != "" {
+		if _, err := fmt.Sscanf(l, "%d", &limit); err != nil {
+			limit = 0
 		}
 	}
-	
+
+	companies, err := companyRepo.GetAll(category, status, limit)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"companies": filteredCompanies,
-		"total": len(filteredCompanies),
+		"companies": companies,
+		"total":     len(companies),
 	})
 }
 
 func getCompany(c echo.Context) error {
 	id := c.Param("id")
-	for _, comp := range companies {
-		if comp.ID == id {
-			return c.JSON(http.StatusOK, comp)
-		}
+	company, err := companyRepo.GetByID(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Company not found"})
+	if company == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Company not found"})
+	}
+	return c.JSON(http.StatusOK, company)
 }
 
 func createCompany(c echo.Context) error {
-	var company Company
+	var company models.Company
 	if err := c.Bind(&company); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	counterID++
-	company.ID = strconv.Itoa(counterID)
+
 	company.Status = "active"
-	company.CreatedAt = time.Now()
-	company.UpdatedAt = time.Now()
-	
-	companies = append(companies, company)
-	
+	if err := companyRepo.Create(&company); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"message": "Company created successfully",
 		"company": company,
@@ -385,223 +332,161 @@ func createCompany(c echo.Context) error {
 
 func updateCompany(c echo.Context) error {
 	id := c.Param("id")
-	var updates Company
-	if err := c.Bind(&updates); err != nil {
+	var company models.Company
+	if err := c.Bind(&company); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	for i, comp := range companies {
-		if comp.ID == id {
-			updates.ID = id
-			updates.CreatedAt = comp.CreatedAt
-			updates.UpdatedAt = time.Now()
-			companies[i] = updates
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"message": "Company updated successfully",
-				"company": updates,
-			})
+
+	if err := companyRepo.Update(id, &company); err != nil {
+		if err.Error() == "company not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Company not found"})
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Company updated successfully",
+		"company": company,
+	})
 }
 
 func deleteCompany(c echo.Context) error {
 	id := c.Param("id")
-	for i, comp := range companies {
-		if comp.ID == id {
-			companies = append(companies[:i], companies[i+1:]...)
-			return c.JSON(http.StatusOK, map[string]string{"message": "Company deleted successfully"})
+	if err := companyRepo.Delete(id); err != nil {
+		if err.Error() == "company not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Company not found"})
+	return c.JSON(http.StatusOK, map[string]string{"message": "Company deleted successfully"})
 }
 
 func searchCompanies(c echo.Context) error {
-	query := strings.ToLower(c.QueryParam("q"))
+	query := c.QueryParam("q")
 	category := c.QueryParam("category")
-	
-	var results []Company
-	for _, comp := range companies {
-		if comp.Status != "active" {
-			continue
-		}
-		
-		if category != "" && !strings.EqualFold(comp.Category, category) {
-			continue
-		}
-		
-		if query == "" || 
-		   strings.Contains(strings.ToLower(comp.CompanyName), query) ||
-		   strings.Contains(strings.ToLower(comp.Description), query) ||
-		   strings.Contains(strings.ToLower(comp.Address), query) {
-			results = append(results, comp)
-		}
+
+	companies, err := companyRepo.Search(query, category)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	return c.JSON(http.StatusOK, results)
+
+	return c.JSON(http.StatusOK, companies)
 }
 
 func getCompaniesByCategory(c echo.Context) error {
 	category := c.Param("category")
-	var results []Company
-	
-	for _, comp := range companies {
-		if strings.EqualFold(comp.Category, category) && comp.Status == "active" {
-			results = append(results, comp)
-		}
+	companies, err := companyRepo.GetByCategory(category)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	return c.JSON(http.StatusOK, results)
+	return c.JSON(http.StatusOK, companies)
 }
 
 // Priority handlers
 func getPriorities(c echo.Context) error {
 	category := c.QueryParam("category")
-	var filtered []Priority
-	
-	for _, priority := range priorities {
-		if priority.Status != "active" {
-			continue
-		}
-		
-		// Check if expired
-		if priority.ExpiresAt != nil && time.Now().After(*priority.ExpiresAt) {
-			continue
-		}
-		
-		if category == "" || strings.EqualFold(priority.Category, category) {
-			filtered = append(filtered, priority)
-		}
+	priorities, err := priorityRepo.GetAll(category)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	return c.JSON(http.StatusOK, filtered)
+	return c.JSON(http.StatusOK, priorities)
 }
 
 func getPrioritiesByCategory(c echo.Context) error {
 	category := c.Param("category")
-	var results []Priority
-	
-	for _, priority := range priorities {
-		if strings.EqualFold(priority.Category, category) && priority.Status == "active" {
-			// Check if not expired
-			if priority.ExpiresAt == nil || time.Now().Before(*priority.ExpiresAt) {
-				results = append(results, priority)
-			}
-		}
+	priorities, err := priorityRepo.GetByCategory(category)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	return c.JSON(http.StatusOK, results)
+	return c.JSON(http.StatusOK, priorities)
 }
 
 func createPriority(c echo.Context) error {
-	var priority Priority
+	var priority models.Priority
 	if err := c.Bind(&priority); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	counterID++
-	priority.ID = strconv.Itoa(counterID)
+
 	priority.Status = "active"
-	priority.CreatedAt = time.Now()
-	
-	// Set expiration if temporary
-	if priority.PriorityType == "temporary" && priority.Duration > 0 {
-		var expiresAt time.Time
-		switch priority.DurationType {
-		case "days":
-			expiresAt = time.Now().AddDate(0, 0, priority.Duration)
-		case "months":
-			expiresAt = time.Now().AddDate(0, priority.Duration, 0)
-		case "years":
-			expiresAt = time.Now().AddDate(priority.Duration, 0, 0)
-		}
-		priority.ExpiresAt = &expiresAt
+	user := c.Get("user").(User)
+	priority.CreatedBy = user.Username
+
+	if err := priorityRepo.Create(&priority); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	priorities = append(priorities, priority)
-	
+
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message": "Priority created successfully",
+		"message":  "Priority created successfully",
 		"priority": priority,
 	})
 }
 
 func updatePriority(c echo.Context) error {
 	id := c.Param("id")
-	var updates Priority
-	if err := c.Bind(&updates); err != nil {
+	var priority models.Priority
+	if err := c.Bind(&priority); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	for i, priority := range priorities {
-		if priority.ID == id {
-			updates.ID = id
-			updates.CreatedAt = priority.CreatedAt
-			priorities[i] = updates
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"message": "Priority updated successfully",
-				"priority": updates,
-			})
+
+	if err := priorityRepo.Update(id, &priority); err != nil {
+		if err.Error() == "priority not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Priority not found"})
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message":  "Priority updated successfully",
+		"priority": priority,
+	})
 }
 
 func deletePriority(c echo.Context) error {
 	id := c.Param("id")
-	for i, priority := range priorities {
-		if priority.ID == id {
-			priorities = append(priorities[:i], priorities[i+1:]...)
-			return c.JSON(http.StatusOK, map[string]string{"message": "Priority deleted successfully"})
+	if err := priorityRepo.Delete(id); err != nil {
+		if err.Error() == "priority not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Priority not found"})
+	return c.JSON(http.StatusOK, map[string]string{"message": "Priority deleted successfully"})
 }
 
 // Form submission handlers
 func getSubmissions(c echo.Context) error {
 	submissionType := c.QueryParam("type")
 	status := c.QueryParam("status")
-	
-	var filtered []FormSubmission
-	for _, submission := range submissions {
-		if (submissionType == "" || submission.Type == submissionType) &&
-		   (status == "" || submission.Status == status) {
-			filtered = append(filtered, submission)
-		}
+
+	submissions, err := submissionRepo.GetAll(submissionType, status)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	return c.JSON(http.StatusOK, filtered)
+
+	return c.JSON(http.StatusOK, submissions)
 }
 
 func getSubmissionsByType(c echo.Context) error {
 	submissionType := c.Param("type")
-	var results []FormSubmission
-	
-	for _, submission := range submissions {
-		if submission.Type == submissionType {
-			results = append(results, submission)
-		}
+	submissions, err := submissionRepo.GetByType(submissionType)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
-	return c.JSON(http.StatusOK, results)
+	return c.JSON(http.StatusOK, submissions)
 }
 
 func createSubmission(c echo.Context) error {
-	var submission FormSubmission
+	var submission models.FormSubmission
 	if err := c.Bind(&submission); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	counterID++
-	submission.ID = strconv.Itoa(counterID)
+
 	submission.Status = "pending"
-	submission.SubmittedAt = time.Now()
-	
-	submissions = append(submissions, submission)
-	
+	if err := submissionRepo.Create(&submission); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message": "Submission created successfully",
+		"message":    "Submission created successfully",
 		"submission": submission,
 	})
 }
@@ -613,72 +498,432 @@ func updateSubmissionStatus(c echo.Context) error {
 		ReviewNotes string `json:"reviewNotes,omitempty"`
 		ReviewedBy  string `json:"reviewedBy,omitempty"`
 	}
-	
+
 	if err := c.Bind(&statusUpdate); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	for i, submission := range submissions {
-		if submission.ID == id {
-			now := time.Now()
-			submissions[i].Status = statusUpdate.Status
-			submissions[i].ReviewedAt = &now
-			submissions[i].ReviewedBy = statusUpdate.ReviewedBy
-			submissions[i].ReviewNotes = statusUpdate.ReviewNotes
-			
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"message": "Submission status updated successfully",
-				"submission": submissions[i],
-			})
-		}
+
+	user := c.Get("user").(User)
+	if statusUpdate.ReviewedBy == "" {
+		statusUpdate.ReviewedBy = user.Username
 	}
-	return c.JSON(http.StatusNotFound, map[string]string{"error": "Submission not found"})
+
+	if err := submissionRepo.UpdateStatus(id, statusUpdate.Status, statusUpdate.ReviewedBy, statusUpdate.ReviewNotes); err != nil {
+		if err.Error() == "submission not found" {
+			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	submission, _ := submissionRepo.GetByID(id)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message":    "Submission status updated successfully",
+		"submission": submission,
+	})
 }
 
 // Contact handlers
 func submitContact(c echo.Context) error {
-	var contact ContactMessage
+	var contact models.ContactMessage
 	if err := c.Bind(&contact); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
-	
-	counterID++
-	contact.ID = strconv.Itoa(counterID)
-	contact.CreatedAt = time.Now()
-	
-	contacts = append(contacts, contact)
-	
+
+	if err := contactRepo.Create(&contact); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	return c.JSON(http.StatusOK, map[string]string{"message": "Contact form submitted successfully"})
 }
 
 func getContacts(c echo.Context) error {
+	contacts, err := contactRepo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
 	return c.JSON(http.StatusOK, contacts)
 }
 
 // Categories handler
 func getCategories(c echo.Context) error {
-	categories := []map[string]interface{}{
-		{"name": "Yarn", "slug": "yarn", "count": getCompanyCountByCategory("Yarn")},
-		{"name": "Fabric Suppliers", "slug": "fabric-suppliers", "count": getCompanyCountByCategory("Fabric Suppliers")},
-		{"name": "Knitting", "slug": "knitting", "count": getCompanyCountByCategory("Knitting")},
-		{"name": "Buying Agents", "slug": "buying-agents", "count": getCompanyCountByCategory("Buying Agents")},
-		{"name": "Printing", "slug": "printing", "count": getCompanyCountByCategory("Printing")},
-		{"name": "Threads", "slug": "threads", "count": getCompanyCountByCategory("Threads")},
-		{"name": "Trims & Accessories", "slug": "trims-accessories", "count": getCompanyCountByCategory("Trims & Accessories")},
-		{"name": "Dyes & Chemicals", "slug": "dyes-chemicals", "count": getCompanyCountByCategory("Dyes & Chemicals")},
-		{"name": "Machineries", "slug": "machineries", "count": getCompanyCountByCategory("Machineries")},
-		{"name": "Machine Spares", "slug": "machine-spares", "count": getCompanyCountByCategory("Machine Spares")},
+	categories, err := categoryRepo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	
+
+	// Add company counts
+	for i := range categories {
+		count, _ := companyRepo.CountByCategory(categories[i].Name)
+		categories[i].Count = count
+	}
+
 	return c.JSON(http.StatusOK, categories)
 }
 
-func getCompanyCountByCategory(category string) int {
-	count := 0
-	for _, comp := range companies {
-		if strings.EqualFold(comp.Category, category) && comp.Status == "active" {
-			count++
+// Book handlers
+func getBooks(c echo.Context) error {
+	books, err := bookRepo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, books)
+}
+
+func getBook(c echo.Context) error {
+	id := c.Param("id")
+	book, err := bookRepo.GetByID(id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Book not found"})
+	}
+	return c.JSON(http.StatusOK, book)
+}
+
+func createBook(c echo.Context) error {
+	var book models.Book
+	if err := c.Bind(&book); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	book.Status = "active"
+	if err := bookRepo.Create(&book); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Book created successfully",
+		"book":    book,
+	})
+}
+
+// Order handlers
+func createOrder(c echo.Context) error {
+	var order models.Order
+	if err := c.Bind(&order); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	order.Status = "pending"
+
+	// Update book stock
+	if err := bookRepo.UpdateStock(order.BookID, order.Quantity); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	if err := orderRepo.Create(&order); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Order created successfully",
+		"order":   order,
+	})
+}
+
+func getOrders(c echo.Context) error {
+	orders, err := orderRepo.GetAll()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, orders)
+}
+
+// Settings handler
+func getSettings(c echo.Context) error {
+	key := c.Param("key")
+	settings, err := settingsRepo.GetByKey(key)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	if settings == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Settings not found"})
+	}
+	return c.JSON(http.StatusOK, settings.Value)
+}
+
+// Dashboard analytics handler
+func getDashboardStats(c echo.Context) error {
+	stats, err := analyticsRepo.GetDashboardStats()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, stats)
+}
+
+// Excel upload handlers
+func uploadExcel(c echo.Context) error {
+	var req struct {
+		FileName string `json:"fileName"`
+		FileURL  string `json:"fileUrl"`
+		Category string `json:"category"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	user := c.Get("user").(User)
+	upload := &repository.ExcelUpload{
+		FileName:   req.FileName,
+		FileURL:    req.FileURL,
+		Category:   req.Category,
+		UploadedBy: user.Username,
+		Status:     "processing",
+	}
+
+	if err := excelRepo.Create(upload); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message":  "Upload started",
+		"uploadId": upload.ID,
+	})
+}
+
+func getExcelHistory(c echo.Context) error {
+	uploads, err := excelRepo.GetHistory()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, uploads)
+}
+
+// Submission approval handler
+func approveSubmission(c echo.Context) error {
+	id := c.Param("id")
+	submission, err := submissionRepo.GetByID(id)
+	if err != nil || submission == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Submission not found"})
+	}
+
+	if submission.Type == "add-data" {
+		// Create company from submission
+		company := &models.Company{
+			CompanyName:   getStringFromMap(submission.FormData, "companyName"),
+			ContactPerson: getStringFromMap(submission.FormData, "contactPerson"),
+			Email:         getStringFromMap(submission.FormData, "email"),
+			Phone:         getStringFromMap(submission.FormData, "phone"),
+			Address:       getStringFromMap(submission.FormData, "address"),
+			Category:      getStringFromMap(submission.FormData, "category"),
+			Description:   getStringFromMap(submission.FormData, "description"),
+			Status:        "active",
+		}
+
+		if err := companyRepo.Create(company); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		}
 	}
-	return count
+
+	user := c.Get("user").(User)
+	if err := submissionRepo.UpdateStatus(id, "approved", user.Username, "Approved and processed"); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Submission approved"})
+}
+
+func getStringFromMap(m map[string]interface{}, key string) string {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok {
+			return str
+		}
+	}
+	return ""
+}
+
+// Analytics handlers
+func getSubmissionTrends(c echo.Context) error {
+	months := 12
+	if m := c.QueryParam("months"); m != "" {
+		if parsed, err := strconv.Atoi(m); err == nil {
+			months = parsed
+		}
+	}
+
+	trends, err := analyticsRepo.GetSubmissionTrends(months)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, trends)
+}
+
+// Export handler
+func exportCompanies(c echo.Context) error {
+	category := c.QueryParam("category")
+	status := c.QueryParam("status")
+
+	companies, err := companyRepo.GetAll(category, status, 0)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	c.Response().Header().Set("Content-Type", "text/csv")
+	c.Response().Header().Set("Content-Disposition", "attachment; filename=companies.csv")
+
+	// CSV header
+	c.Response().Write([]byte("Company Name,Contact Person,Email,Phone,Category,Address\n"))
+
+	// CSV rows
+	for _, company := range companies {
+		line := fmt.Sprintf("%s,%s,%s,%s,%s,%s\n",
+			company.CompanyName, company.ContactPerson, company.Email,
+			company.Phone, company.Category, company.Address)
+		c.Response().Write([]byte(line))
+	}
+
+	return nil
+}
+
+// Monitoring handlers
+func getErrorMetrics(c echo.Context) error {
+	hours := 24
+	if h := c.QueryParam("hours"); h != "" {
+		if parsed, err := strconv.Atoi(h); err == nil {
+			hours = parsed
+		}
+	}
+
+	metrics, err := monitoringRepo.GetErrorMetrics(hours)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, metrics)
+}
+
+func getSlowQueries(c echo.Context) error {
+	threshold := 1000 // 1 second
+	if t := c.QueryParam("threshold"); t != "" {
+		if parsed, err := strconv.Atoi(t); err == nil {
+			threshold = parsed
+		}
+	}
+
+	queries, err := monitoringRepo.GetSlowQueries(threshold)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+	return c.JSON(http.StatusOK, queries)
+}
+
+// Excel parsing handler
+// Parses Excel file with fixed structure:
+// Column 1: Serial Number
+// Column 2: Company Name
+// Column 3: Address
+// Column 4: Phone Number
+// Column 5: Email
+// Column 6: Products
+// Data starts from row 2 (row 1 contains headers)
+func parseExcelFile(c echo.Context) error {
+	// Get the uploaded file
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
+			Success: false,
+			Errors:  []string{"No file uploaded or invalid file format"},
+		})
+	}
+
+	// Open the uploaded file
+	src, err := file.Open()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, models.ExcelParseResponse{
+			Success: false,
+			Errors:  []string{"Failed to open uploaded file"},
+		})
+	}
+	defer src.Close()
+
+	// Parse the Excel file
+	xlsx, err := excelize.OpenReader(src)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
+			Success: false,
+			Errors:  []string{"Failed to parse Excel file. Please ensure it's a valid .xlsx file"},
+		})
+	}
+	defer xlsx.Close()
+
+	// Get the first sheet name
+	sheetName := xlsx.GetSheetName(0)
+	if sheetName == "" {
+		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
+			Success: false,
+			Errors:  []string{"No sheets found in the Excel file"},
+		})
+	}
+
+	// Get all rows from the first sheet
+	rows, err := xlsx.GetRows(sheetName)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, models.ExcelParseResponse{
+			Success: false,
+			Errors:  []string{"Failed to read rows from Excel file"},
+		})
+	}
+
+	// Check if file has data (at least header row + 1 data row)
+	if len(rows) < 2 {
+		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
+			Success: false,
+			Errors:  []string{"Excel file is empty or contains only headers"},
+		})
+	}
+
+	var companies []models.ExcelCompanyData
+	var parseErrors []string
+
+	// Process data rows (skip header row at index 0)
+	for rowIndex := 1; rowIndex < len(rows); rowIndex++ {
+		row := rows[rowIndex]
+
+		// Skip empty rows
+		if len(row) == 0 {
+			continue
+		}
+
+		// Check if row has all 6 columns
+		// Pad with empty strings if fewer columns
+		for len(row) < 6 {
+			row = append(row, "")
+		}
+
+		// Parse serial number
+		serialNum := 0
+		if row[0] != "" {
+			if parsed, err := strconv.Atoi(strings.TrimSpace(row[0])); err == nil {
+				serialNum = parsed
+			} else {
+				// Try to use row index as serial number if parsing fails
+				serialNum = rowIndex
+			}
+		} else {
+			serialNum = rowIndex
+		}
+
+		// Extract and clean data
+		companyData := models.ExcelCompanyData{
+			SerialNumber: serialNum,
+			CompanyName:  strings.TrimSpace(row[1]),
+			Address:      strings.TrimSpace(row[2]),
+			PhoneNumber:  strings.TrimSpace(row[3]),
+			Email:        strings.TrimSpace(row[4]),
+			Products:     strings.TrimSpace(row[5]),
+		}
+
+		// Validate: at least company name should be present
+		if companyData.CompanyName == "" {
+			parseErrors = append(parseErrors, fmt.Sprintf("Row %d: Missing company name, skipped", rowIndex+1))
+			continue
+		}
+
+		companies = append(companies, companyData)
+	}
+
+	// Return parsed data
+	return c.JSON(http.StatusOK, models.ExcelParseResponse{
+		Success:      true,
+		TotalRecords: len(companies),
+		Data:         companies,
+		Errors:       parseErrors,
+	})
 }
