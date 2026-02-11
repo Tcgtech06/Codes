@@ -1,0 +1,390 @@
+{
+	"info": {
+		"name": "KnitInfo Backend API - Complete Testing",
+		"description": "Complete API collection for testing KnitInfo backend with Supabase",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": ["{{baseUrl}}"],
+					"path": ["health"]
+				},
+				"description": "Check if server is running"
+			}
+		},
+		{
+			"name": "2. Login (Get Token)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();",
+							"pm.collectionVariables.set(\"token\", jsonData.token);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"KnitInfo2024@Admin\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/login",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "auth", "login"]
+				},
+				"description": "Login to get JWT token (automatically saves to collection variable)"
+			}
+		},
+		{
+			"name": "3. Verify Token",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"token\": \"{{token}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/auth/verify",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "auth", "verify"]
+				},
+				"description": "Verify if token is valid"
+			}
+		},
+		{
+			"name": "4. Get All Categories",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/categories",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "categories"]
+				},
+				"description": "Get all categories (public endpoint)"
+			}
+		},
+		{
+			"name": "5. Get All Companies",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies"]
+				},
+				"description": "Get all companies (public endpoint)"
+			}
+		},
+		{
+			"name": "6. Parse Excel File ⭐",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": [],
+							"description": "Select your Excel file (.xlsx)"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/excel/parse",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "excel", "parse"]
+				},
+				"description": "Upload and parse Excel file with company data\n\nExpected Excel Format:\nColumn 1: Serial Number\nColumn 2: Company Name\nColumn 3: Address\nColumn 4: Phone Number\nColumn 5: Email\nColumn 6: Products"
+			}
+		},
+		{
+			"name": "7. Create Company",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"companyName\": \"Test Company Ltd\",\n  \"contactPerson\": \"John Doe\",\n  \"email\": \"john@testcompany.com\",\n  \"phone\": \"+91 9876543210\",\n  \"address\": \"123 Test Street, Mumbai\",\n  \"category\": \"Yarn\",\n  \"description\": \"Test company for API testing\",\n  \"products\": [\"Cotton Yarn\", \"Polyester Yarn\"]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies"]
+				},
+				"description": "Create a new company (requires authentication)"
+			}
+		},
+		{
+			"name": "8. Get Company by ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies/:id",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies", ":id"],
+					"variable": [
+						{
+							"key": "id",
+							"value": "PASTE_COMPANY_ID_HERE"
+						}
+					]
+				},
+				"description": "Get company details by ID"
+			}
+		},
+		{
+			"name": "9. Search Companies",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies/search?q=yarn&category=Yarn",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies", "search"],
+					"query": [
+						{
+							"key": "q",
+							"value": "yarn"
+						},
+						{
+							"key": "category",
+							"value": "Yarn"
+						}
+					]
+				},
+				"description": "Search companies by keyword and category"
+			}
+		},
+		{
+			"name": "10. Get Companies by Category",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies/category/Yarn",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies", "category", "Yarn"]
+				},
+				"description": "Get all companies in a specific category"
+			}
+		},
+		{
+			"name": "11. Update Company",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"companyName\": \"Updated Company Name\",\n  \"contactPerson\": \"Jane Smith\",\n  \"email\": \"jane@updated.com\",\n  \"phone\": \"+91 9876543211\",\n  \"address\": \"456 Updated Street\",\n  \"category\": \"Yarn\",\n  \"description\": \"Updated description\",\n  \"products\": [\"Updated Product\"]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies/:id",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies", ":id"],
+					"variable": [
+						{
+							"key": "id",
+							"value": "PASTE_COMPANY_ID_HERE"
+						}
+					]
+				},
+				"description": "Update company details (requires authentication)"
+			}
+		},
+		{
+			"name": "12. Delete Company",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies/:id",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies", ":id"],
+					"variable": [
+						{
+							"key": "id",
+							"value": "PASTE_COMPANY_ID_HERE"
+						}
+					]
+				},
+				"description": "Delete a company (requires authentication)"
+			}
+		},
+		{
+			"name": "13. Get Excel Upload History",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/excel/history",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "excel", "history"]
+				},
+				"description": "Get history of Excel file uploads"
+			}
+		},
+		{
+			"name": "14. Get Dashboard Stats",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/dashboard/stats",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "dashboard", "stats"]
+				},
+				"description": "Get dashboard statistics"
+			}
+		},
+		{
+			"name": "15. Export Companies (CSV)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/companies/export?category=Yarn",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "companies", "export"],
+					"query": [
+						{
+							"key": "category",
+							"value": "Yarn"
+						}
+					]
+				},
+				"description": "Export companies as CSV file"
+			}
+		},
+		{
+			"name": "16. Get All Priorities",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/priorities",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "priorities"]
+				},
+				"description": "Get all priority listings"
+			}
+		},
+		{
+			"name": "17. Submit Contact Form",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"message\": \"This is a test contact message\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/contact",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "contact"]
+				},
+				"description": "Submit contact form (public endpoint)"
+			}
+		},
+		{
+			"name": "18. Get All Books",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/books",
+					"host": ["{{baseUrl}}"],
+					"path": ["api", "v1", "books"]
+				},
+				"description": "Get all books"
+			}
+		}
+	]
+}

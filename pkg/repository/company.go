@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"knitinfo-backend/pkg/models"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type CompanyRepository struct {
@@ -164,16 +162,16 @@ func (r *CompanyRepository) Search(query, category string) ([]models.Company, er
 
 func (r *CompanyRepository) GetByCategory(category string) ([]models.Company, error) {
 	var companies []models.Company
-	err := r.db.Select(&companies, 
-		"SELECT * FROM companies WHERE LOWER(category) = LOWER($1) AND status = 'active' ORDER BY created_at DESC", 
+	err := r.db.Select(&companies,
+		"SELECT * FROM companies WHERE LOWER(category) = LOWER($1) AND status = 'active' ORDER BY created_at DESC",
 		category)
 	return companies, err
 }
 
 func (r *CompanyRepository) CountByCategory(category string) (int, error) {
 	var count int
-	err := r.db.Get(&count, 
-		"SELECT COUNT(*) FROM companies WHERE LOWER(category) = LOWER($1) AND status = 'active'", 
+	err := r.db.Get(&count,
+		"SELECT COUNT(*) FROM companies WHERE LOWER(category) = LOWER($1) AND status = 'active'",
 		category)
 	return count, err
 }
