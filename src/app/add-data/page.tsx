@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Send, CheckCircle, Upload, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFormSubmissions } from '../../hooks/useLocalStorage';
+import { submissionsAPI, categoriesAPI } from '@/lib/api';
 
 export default function AddDataPage() {
   const router = useRouter();
-  const { addSubmission } = useFormSubmissions();
+  const [categories, setCategories] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     companyName: '',
     contactPerson: '',
@@ -25,6 +25,18 @@ export default function AddDataPage() {
   const [visitingCard, setVisitingCard] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await categoriesAPI.getAll();
+        setCategories(res.categories.map((c: any) => c.name));
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const categories = [
     'Yarn', 'Fabric Suppliers', 'Knitting', 'Buying Agents', 'Printing',
@@ -53,25 +65,27 @@ export default function AddDataPage() {
     setIsSubmitting(true);
     
     try {
-      // Prepare submission data
       const submissionData = {
-        type: 'add-data' as const,
+        type: 'add-data',
         formData: {
-          ...formData,
-          visitingCardName: visitingCard?.name || '',
-          filesCount: selectedFiles.length,
-          submittedAt: new Date().toISOString()
+          companyName: formData.companyName,
+          contactPerson: formData.contactPerson,
+          email: formData.email,
+          phone: formData.phone,
+          website: formData.website,
+          address: formData.address,
+          category: formData.category,
+          description: formData.description,
+          products: formData.products,
+          certifications: formData.certifications,
+          gstNumber: formData.gstNumber,
         },
-        attachments: [], // File uploads will be implemented later
-        status: 'pending' as const
+        attachments: [] // File uploads will be implemented later
       };
       
-      // Submit to localStorage
-      addSubmission(submissionData);
-      
+      await submissionsAPI.create(submissionData);
       setSubmitStatus('success');
       
-      // Reset form after success
       setTimeout(() => {
         setFormData({
           companyName: '', contactPerson: '', email: '', phone: '',

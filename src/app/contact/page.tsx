@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { contactAPI } from '@/lib/api';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -8,6 +9,8 @@ export default function Contact() {
     email: '',
     message: ''
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -17,24 +20,29 @@ export default function Contact() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     
-    // Create WhatsApp message
-    const whatsappMessage = `*New Contact Form Submission*%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Message:* ${formData.message}`;
-    
-    // WhatsApp number
-    const phoneNumber = '919943632229';
-    
-    // Open WhatsApp with pre-filled message
-    window.open(`https://wa.me/${phoneNumber}?text=${whatsappMessage}`, '_blank');
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      message: ''
-    });
+    try {
+      // Submit to API
+      await contactAPI.submit(formData);
+      setSuccess(true);
+      
+      // Create WhatsApp message
+      const whatsappMessage = `*New Contact Form Submission*%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Message:* ${formData.message}`;
+      const phoneNumber = '919943632229';
+      window.open(`https://wa.me/${phoneNumber}?text=${whatsappMessage}`, '_blank');
+      
+      // Reset form
+      setFormData({ name: '', email: '', message: '' });
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      alert('Failed to submit. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -131,9 +139,16 @@ export default function Contact() {
                   required
                 ></textarea>
               </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                Send via WhatsApp
+              <button 
+                type="submit" 
+                disabled={submitting}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? 'Sending...' : success ? 'Sent!' : 'Send via WhatsApp'}
               </button>
+              {success && (
+                <p className="text-green-600 text-sm text-center">Message sent successfully!</p>
+              )}
             </form>
           </div>
         </div>
