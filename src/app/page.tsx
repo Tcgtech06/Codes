@@ -1,13 +1,13 @@
 'use client';
 
-import { 
-  Scissors, 
-  Layers, 
-  Shirt, 
-  Users, 
-  Printer, 
-  Droplet, 
-  Settings, 
+import {
+  Scissors,
+  Layers,
+  Shirt,
+  Users,
+  Printer,
+  Droplet,
+  Settings,
   Wrench,
   BookOpen,
   ChevronLeft,
@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Building2
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
@@ -31,7 +32,7 @@ const categories = [
   { name: 'Knitting', icon: Shirt, color: 'bg-purple-100 text-purple-600' },
   { name: 'Buying Agents', icon: Users, color: 'bg-orange-100 text-orange-600' },
   { name: 'Printing', icon: Printer, color: 'bg-yellow-100 text-yellow-600' },
-  { name: 'Threads', icon: Layers, color: 'bg-pink-100 text-pink-600' }, 
+  { name: 'Threads', icon: Layers, color: 'bg-pink-100 text-pink-600' },
   { name: 'Trims & Accessories', icon: Scissors, color: 'bg-red-100 text-red-600' },
   { name: 'Dyes & Chemicals', icon: Droplet, color: 'bg-indigo-100 text-indigo-600' },
   { name: 'Machineries', icon: Settings, color: 'bg-teal-100 text-teal-600' },
@@ -39,9 +40,9 @@ const categories = [
 ];
 
 const stories = [
-  { title: 'Knit Info Launched by EX.M.L.A', date: 'April-2007' },
-  { title: 'Knit Info Office Opened By Tripur Garments Head', date: 'May-2008' },
-  { title: 'Meeting Honourable Dhayanithi Maran Sir M.P', date: 'June-2009' },
+  { title: 'Knit Info Launched by EX.M.L.A', date: 'April-2007', image: '/s1.jpg' },
+  { title: 'Knit Info Office Opened By Tripur Garments Head', date: 'May-2008', image: '/s2.jpg' },
+  { title: 'Meeting Honourable Dhayanithi Maran Sir M.P', date: 'June-2009', image: '/s3.jpg' },
 ];
 
 const slides = [
@@ -52,13 +53,29 @@ const slides = [
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [animationStep, setAnimationStep] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
-  
+
+  // Handle loop restart
+  useEffect(() => {
+    if (animationStep === -1) {
+      // Wait for instant reset (or use timeout if we animated the reset)
+      // With duration: 0 in the reset, we can switch back to 0 immediately? 
+      // No, if duration is 0, it happens instantly.
+      // But if we set state -1, then immediately 0, it might batch and skip -1 visual.
+      // Framer Motion usually handles this, but a small timeout is safer.
+      const timer = setTimeout(() => {
+        setAnimationStep(0);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [animationStep]);
+
   // Visitor statistics
   const { stats, loading: statsLoading } = useVisitorStats();
 
@@ -73,13 +90,13 @@ export default function Home() {
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
+
       if (currentScrollY > lastScrollY && currentScrollY > 50) {
         setIsNavVisible(false);
       } else {
         setIsNavVisible(true);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -104,7 +121,7 @@ export default function Home() {
   const handleTouchMove = (e: React.TouchEvent) => {
     const currentTouch = e.targetTouches[0].clientX;
     setTouchEnd(currentTouch);
-    
+
     if (touchStart !== null) {
       const distance = Math.abs(touchStart - currentTouch);
       if (distance > 5) {
@@ -115,10 +132,10 @@ export default function Home() {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd || !isSwiping) return;
-    
+
     const distance = touchStart - touchEnd;
     const minSwipeDistance = 50;
-    
+
     if (distance > minSwipeDistance) {
       // Swiped left - next slide
       nextSlide();
@@ -126,7 +143,7 @@ export default function Home() {
       // Swiped right - previous slide
       prevSlide();
     }
-    
+
     setTouchStart(null);
     setTouchEnd(null);
     setIsSwiping(false);
@@ -139,14 +156,13 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-12 pb-12">
       {/* Profile Slide Panel */}
-      <div className={`md:hidden fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-60 transform transition-transform duration-300 ease-in-out profile-menu ${
-        showProfileMenu ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div className={`md:hidden fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-60 transform transition-transform duration-300 ease-in-out profile-menu ${showProfileMenu ? 'translate-x-0' : '-translate-x-full'
+        }`}>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold text-gray-900">Menu</h2>
-            <button 
+            <button
               onClick={() => setShowProfileMenu(false)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
@@ -169,7 +185,7 @@ export default function Home() {
 
           {/* Menu Items */}
           <div className="space-y-4">
-            <Link 
+            <Link
               href="/advertise"
               onClick={() => setShowProfileMenu(false)}
               className="w-full p-4 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-4 group"
@@ -183,7 +199,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link 
+            <Link
               href="/add-data"
               onClick={() => setShowProfileMenu(false)}
               className="w-full p-4 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-4 group"
@@ -197,7 +213,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link 
+            <Link
               href="/collaborate"
               onClick={() => setShowProfileMenu(false)}
               className="w-full p-4 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-4 group"
@@ -216,9 +232,9 @@ export default function Home() {
           <div className="absolute bottom-6 left-6 right-6">
             <div className="text-center text-sm">
               <p className="text-gray-600 mb-1">Powered By</p>
-              <a 
-                href="https://tcgtech.in" 
-                target="_blank" 
+              <a
+                href="https://tcgtech.in"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-lg hover:opacity-80 transition-opacity"
               >
@@ -234,19 +250,18 @@ export default function Home() {
 
       {/* Overlay */}
       {showProfileMenu && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden transition-opacity duration-300" 
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden transition-opacity duration-300"
           onClick={() => setShowProfileMenu(false)}
         ></div>
       )}
 
       {/* Logo for Mobile View */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-white shadow-md px-4 py-3 transition-transform duration-300 ${
-        isNavVisible ? 'translate-y-0' : '-translate-y-full'
-      }`}>
+      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-white shadow-md px-4 py-3 transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={toggleProfileMenu}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
             >
@@ -258,11 +273,11 @@ export default function Home() {
             </button>
           </div>
           <Link href="/" className="flex items-center">
-            <Image 
-              src="/logo.jpg" 
-              alt="Logo" 
-              width={120} 
-              height={50} 
+            <Image
+              src="/logo.jpg"
+              alt="Logo"
+              width={120}
+              height={50}
               className="h-10 w-auto object-contain"
               priority
             />
@@ -274,7 +289,7 @@ export default function Home() {
       <div className="md:hidden h-[58px]"></div>
 
       {/* Hero Section with Slideshow */}
-      <section 
+      <section
         className="relative h-[300px] md:h-[400px] overflow-hidden select-none"
         style={{ touchAction: 'pan-y pinch-zoom' }}
         onTouchStart={handleTouchStart}
@@ -284,9 +299,8 @@ export default function Home() {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
           >
             <Image
               src={slide.src}
@@ -346,7 +360,7 @@ export default function Home() {
               <Link key={index} href={`/books/${book.id}`}>
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer">
                   <div className={`h-48 ${book.color} flex items-center justify-center p-6 text-white`}>
-                     <BookOpen size={64} opacity={0.8} />
+                    <BookOpen size={64} opacity={0.8} />
                   </div>
                   <div className="p-6 flex-grow flex flex-col">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
@@ -384,7 +398,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">Global Connectivity</h3>
               <p className="text-gray-600 leading-relaxed">
-                To create the world's most comprehensive textile industry network, connecting suppliers, manufacturers, and buyers across continents seamlessly.
+                To create the world&apos;s most comprehensive textile industry network, connecting suppliers, manufacturers, and buyers across continents seamlessly.
               </p>
             </div>
 
@@ -449,7 +463,7 @@ export default function Home() {
             <div className="max-w-4xl mx-auto">
               <h3 className="text-2xl md:text-3xl font-bold mb-4">Our Commitment</h3>
               <p className="text-lg md:text-xl leading-relaxed opacity-95">
-                We envision a future where every textile business, regardless of size or location, has equal access to opportunities, resources, and global markets. Through KnitInfo, we're not just building a directory – we're creating a movement that transforms how the textile industry connects, collaborates, and grows together.
+                We envision a future where every textile business, regardless of size or location, has equal access to opportunities, resources, and global markets. Through KnitInfo, we&apos;re not just building a directory – we&apos;re creating a movement that transforms how the textile industry connects, collaborates, and grows together.
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm md:text-base">
                 <span className="px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">Innovation</span>
@@ -463,30 +477,118 @@ export default function Home() {
       </section>
 
       {/* Stories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <h2 className="text-2xl font-bold text-gray-900 mb-8">Our Stories</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-           {stories.map((story, index) => (
-             <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
-               <span className="text-xs font-bold text-blue-600 uppercase tracking-wide">{story.date}</span>
-               <h3 className="text-lg font-medium text-gray-900 mt-2">{story.title}</h3>
-             </div>
-           ))}
+      {/* Stories Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl py-12 shadow-2xl mb-12 flex flex-col items-center">
+        <h2 className="text-3xl font-bold text-white mb-8">Our Stories</h2>
+        <div className="flex flex-col w-full max-w-2xl items-center">
+          {stories.map((story, index) => {
+            // Calculate step indices
+            // Story 0: step 0
+            // Tube 0: step 1
+            // Story 1: step 2
+            // Tube 1: step 3
+            // Story 2: step 4
+            const storyStep = index * 2;
+            const tubeStep = index * 2 + 1;
+
+            return (
+              <div key={index} className="flex flex-col w-full items-center">
+                <div className="relative bg-white rounded-xl shadow-lg border-2 border-yellow-200 overflow-hidden group w-full flex flex-col md:flex-row min-h-[200px] z-10">
+                  {/* Liquid Filling Animation Overlay */}
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-b from-yellow-300/60 to-yellow-400/60 z-0"
+                    initial={{ height: "0%" }}
+                    animate={{
+                      height: animationStep === -1 ? "0%" :
+                        animationStep > storyStep ? "100%" :
+                          animationStep === storyStep ? "100%" : "0%"
+                    }}
+                    transition={{
+                      duration: animationStep === -1 ? 0 :
+                        animationStep === storyStep ? 3 : 0.5,
+                      ease: "linear"
+                    }}
+                    onAnimationComplete={() => {
+                      if (animationStep === storyStep) {
+                        if (index === stories.length - 1) {
+                          // Reset to -1 to drain all
+                          setAnimationStep(-1);
+                        } else {
+                          setAnimationStep(prev => prev + 1);
+                        }
+                      }
+                    }}
+                    style={{ top: 0, bottom: 'auto', width: '100%' }} // Fill top to bottom
+                  />
+
+                  {/* Content Container */}
+                  <div className="relative z-10 p-6 flex flex-col gap-4 w-full h-full items-center">
+                    <div className="relative w-full h-48 rounded-lg overflow-hidden shrink-0 bg-gray-50 border border-gray-100">
+                      <Image
+                        src={story.image}
+                        alt={story.title}
+                        fill
+                        className="object-contain"
+                      />
+                    </div>
+
+                    <div className="flex flex-col flex-grow justify-center text-center">
+                      <span className="text-sm font-bold text-yellow-600 uppercase tracking-wide mb-2 inline-block">
+                        {story.date}
+                      </span>
+                      <h3 className="text-xl font-bold text-gray-900 leading-snug">
+                        {story.title}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {/* Border Accent */}
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-400 z-20"></div>
+                </div>
+
+                {/* Connecting Tube */}
+                {index < stories.length - 1 && (
+                  <div className="relative w-4 h-16 bg-gray-700/30 rounded-full my-[-4px] overflow-hidden z-0">
+                    <motion.div
+                      className="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 shadow-[0_0_15px_rgba(250,204,21,0.9)]"
+                      initial={{ height: "0%" }}
+                      animate={{
+                        height: animationStep === -1 ? "0%" :
+                          animationStep > tubeStep ? "100%" :
+                            animationStep === tubeStep ? "100%" : "0%"
+                      }}
+                      transition={{
+                        duration: animationStep === -1 ? 0 :
+                          animationStep === tubeStep ? 1 : 0,
+                        ease: "linear"
+                      }}
+                      onAnimationComplete={() => {
+                        if (animationStep === tubeStep) {
+                          setAnimationStep(prev => prev + 1);
+                        }
+                      }}
+                      style={{ top: 0 }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
-      
+
       {/* Live Visitor Statistics Section */}
       <section className="bg-gradient-to-br from-[#1e3a8a] via-blue-700 to-indigo-900 text-white py-12 mx-4 sm:mx-6 lg:mx-8 rounded-3xl mb-8 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-900/20"></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
-        
+
         <div className="relative z-10 max-w-6xl mx-auto px-6">
           <div className="text-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold mb-4">Live Platform Statistics</h2>
             <p className="text-blue-200 text-lg">Real-time insights into our growing textile community</p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Live Visitors */}
             <StatCard
