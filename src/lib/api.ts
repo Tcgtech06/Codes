@@ -14,9 +14,9 @@ async function apiCall<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getAuthToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string>),
   };
 
   if (token && !endpoint.includes('/auth/login')) {
@@ -53,7 +53,15 @@ export const authAPI = {
 
 // Categories API
 export const categoriesAPI = {
-  getAll: () => apiCall<{ categories: any[] }>('/categories'),
+  getAll: async () => {
+    const data = await apiCall<any[]>('/categories');
+    // Backend returns array directly, wrap it and add IDs
+    const categoriesWithIds = data.map((cat, index) => ({
+      ...cat,
+      id: cat.slug || `cat-${index}`,
+    }));
+    return { categories: categoriesWithIds };
+  },
 };
 
 // Companies API
@@ -68,8 +76,11 @@ export const companiesAPI = {
 
   getById: (id: string) => apiCall<any>(`/companies/${id}`),
 
-  getByCategory: (category: string) =>
-    apiCall<{ companies: any[] }>(`/companies/category/${category}`),
+  getByCategory: async (category: string) => {
+    const data = await apiCall<any[]>(`/companies/category/${category}`);
+    // Backend returns array directly, wrap it for consistency
+    return { companies: data };
+  },
 
   search: (q: string, category?: string) => {
     const query = new URLSearchParams({ q });

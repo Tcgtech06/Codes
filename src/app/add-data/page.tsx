@@ -33,15 +33,15 @@ export default function AddDataPage() {
         setCategories(res.categories.map((c: any) => c.name));
       } catch (error) {
         console.error('Error fetching categories:', error);
+        // Fallback to hardcoded categories if API fails
+        setCategories([
+          'Yarn', 'Fabric Suppliers', 'Knitting', 'Buying Agents', 'Printing',
+          'Threads', 'Trims & Accessories', 'Dyes & Chemicals', 'Machineries', 'Machine Spares'
+        ]);
       }
     };
     fetchCategories();
   }, []);
-
-  const categories = [
-    'Yarn', 'Fabric Suppliers', 'Knitting', 'Buying Agents', 'Printing',
-    'Threads', 'Trims & Accessories', 'Dyes & Chemicals', 'Machineries', 'Machine Spares'
-  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({

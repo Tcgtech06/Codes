@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"knitinfo-backend/pkg/database"
 	"knitinfo-backend/pkg/models"
 	"knitinfo-backend/pkg/repository"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/xuri/excelize/v2"
 )
 
 type LoginRequest struct {
@@ -46,18 +43,18 @@ var (
 	jwtSecret   string
 	adminUser   string
 	adminPass   string
-	tokenExpiry = 365 * 24 * time.Hour
+	tokenExpiry = 36 * time.Hour
 
 	// Repositories
-	companyRepo      *repository.CompanyRepository
-	priorityRepo     *repository.PriorityRepository
-	submissionRepo   *repository.SubmissionRepository
-	contactRepo      *repository.ContactRepository
-	bookRepo         *repository.BookRepository
-	orderRepo        *repository.OrderRepository
-	categoryRepo     *repository.CategoryRepository
-	settingsRepo     *repository.SettingsRepository
-	analyticsRepo    *repository.AnalyticsRepository
+	companyRepo    *repository.CompanyRepository
+	priorityRepo   *repository.PriorityRepository
+	submissionRepo *repository.SubmissionRepository
+	contactRepo    *repository.ContactRepository
+	bookRepo       *repository.BookRepository
+	orderRepo      *repository.OrderRepository
+	categoryRepo   *repository.CategoryRepository
+	settingsRepo   *repository.SettingsRepository
+	analyticsRepo  *repository.AnalyticsRepository
 	excelRepo        *repository.ExcelUploadRepository
 	notificationRepo *repository.NotificationRepository
 	monitoringRepo   *repository.MonitoringRepository
@@ -110,16 +107,7 @@ func main() {
 
 	e := echo.New()
 
-	// CORS configuration - allow frontend domains
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{
-			"http://localhost:3000",
-			"https://*.netlify.app",
-			"https://knitinfo.netlify.app",
-		},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowHeaders: []string{"*"},
-	}))
+	e.Use(middleware.CORS())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -165,7 +153,6 @@ func main() {
 	protected.GET("/orders", getOrders)
 	protected.GET("/dashboard/stats", getDashboardStats)
 	protected.POST("/excel/upload", uploadExcel)
-	protected.POST("/excel/parse", parseExcelFile)
 	protected.GET("/excel/history", getExcelHistory)
 	protected.POST("/submissions/:id/approve", approveSubmission)
 	protected.GET("/analytics/trends", getSubmissionTrends)
@@ -683,7 +670,7 @@ func uploadExcel(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message":  "Upload started",
+		"message": "Upload started",
 		"uploadId": upload.ID,
 	})
 }
@@ -811,128 +798,4 @@ func getSlowQueries(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 	return c.JSON(http.StatusOK, queries)
-}
-
-// Excel parsing handler
-// Parses Excel file with fixed structure:
-// Column 1: Serial Number
-// Column 2: Company Name
-// Column 3: Address
-// Column 4: Phone Number
-// Column 5: Email
-// Column 6: Products
-// Data starts from row 2 (row 1 contains headers)
-func parseExcelFile(c echo.Context) error {
-	// Get the uploaded file
-	file, err := c.FormFile("file")
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
-			Success: false,
-			Errors:  []string{"No file uploaded or invalid file format"},
-		})
-	}
-
-	// Open the uploaded file
-	src, err := file.Open()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, models.ExcelParseResponse{
-			Success: false,
-			Errors:  []string{"Failed to open uploaded file"},
-		})
-	}
-	defer src.Close()
-
-	// Parse the Excel file
-	xlsx, err := excelize.OpenReader(src)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
-			Success: false,
-			Errors:  []string{"Failed to parse Excel file. Please ensure it's a valid .xlsx file"},
-		})
-	}
-	defer xlsx.Close()
-
-	// Get the first sheet name
-	sheetName := xlsx.GetSheetName(0)
-	if sheetName == "" {
-		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
-			Success: false,
-			Errors:  []string{"No sheets found in the Excel file"},
-		})
-	}
-
-	// Get all rows from the first sheet
-	rows, err := xlsx.GetRows(sheetName)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, models.ExcelParseResponse{
-			Success: false,
-			Errors:  []string{"Failed to read rows from Excel file"},
-		})
-	}
-
-	// Check if file has data (at least header row + 1 data row)
-	if len(rows) < 2 {
-		return c.JSON(http.StatusBadRequest, models.ExcelParseResponse{
-			Success: false,
-			Errors:  []string{"Excel file is empty or contains only headers"},
-		})
-	}
-
-	var companies []models.ExcelCompanyData
-	var parseErrors []string
-
-	// Process data rows (skip header row at index 0)
-	for rowIndex := 1; rowIndex < len(rows); rowIndex++ {
-		row := rows[rowIndex]
-
-		// Skip empty rows
-		if len(row) == 0 {
-			continue
-		}
-
-		// Check if row has all 6 columns
-		// Pad with empty strings if fewer columns
-		for len(row) < 6 {
-			row = append(row, "")
-		}
-
-		// Parse serial number
-		serialNum := 0
-		if row[0] != "" {
-			if parsed, err := strconv.Atoi(strings.TrimSpace(row[0])); err == nil {
-				serialNum = parsed
-			} else {
-				// Try to use row index as serial number if parsing fails
-				serialNum = rowIndex
-			}
-		} else {
-			serialNum = rowIndex
-		}
-
-		// Extract and clean data
-		companyData := models.ExcelCompanyData{
-			SerialNumber: serialNum,
-			CompanyName:  strings.TrimSpace(row[1]),
-			Address:      strings.TrimSpace(row[2]),
-			PhoneNumber:  strings.TrimSpace(row[3]),
-			Email:        strings.TrimSpace(row[4]),
-			Products:     strings.TrimSpace(row[5]),
-		}
-
-		// Validate: at least company name should be present
-		if companyData.CompanyName == "" {
-			parseErrors = append(parseErrors, fmt.Sprintf("Row %d: Missing company name, skipped", rowIndex+1))
-			continue
-		}
-
-		companies = append(companies, companyData)
-	}
-
-	// Return parsed data
-	return c.JSON(http.StatusOK, models.ExcelParseResponse{
-		Success:      true,
-		TotalRecords: len(companies),
-		Data:         companies,
-		Errors:       parseErrors,
-	})
 }

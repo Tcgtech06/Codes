@@ -82,17 +82,22 @@ export default function Home() {
   const { stats, loading: statsLoading } = useVisitorStats();
 
   // Fetch books and categories
+  // Fetch categories from API, use static books data
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [booksRes, categoriesRes] = await Promise.all([
-          booksAPI.getAll(),
-          categoriesAPI.getAll()
-        ]);
-        setBooks(booksRes.books || []);
+        const categoriesRes = await categoriesAPI.getAll();
         setCategories(categoriesRes.categories || []);
+        
+        // Use static books data from local file
+        const { books: staticBooks } = await import('@/data/books');
+        setBooks(staticBooks);
       } catch (error) {
         console.error('Error fetching data:', error);
+        // Fallback to static books if API fails
+        import('@/data/books').then(({ books: staticBooks }) => {
+          setBooks(staticBooks);
+        });
       }
     };
     fetchData();

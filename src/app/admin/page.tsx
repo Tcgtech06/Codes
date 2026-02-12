@@ -18,16 +18,22 @@ function AdminLogin() {
     setIsLoading(true);
     setError('');
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    if (password === ADMIN_PASSWORD) {
+    try {
+      // Authenticate with backend API
+      const { authAPI } = await import('@/lib/api');
+      const response = await authAPI.login('admin', password);
+      
+      // Store auth token and admin flag
+      localStorage.setItem('authToken', response.token);
       localStorage.setItem('adminAuthenticated', 'true');
+      
       router.push('/admin/dashboard');
-    } else {
+    } catch (error: any) {
+      console.error('Login error:', error);
       setError('Invalid password. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (

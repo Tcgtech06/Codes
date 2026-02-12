@@ -100,7 +100,7 @@ export default function Catalogue() {
                 </div>
               </Link>
             );
-          })}}
+          })}
         </div>
       </div>
     </div>
