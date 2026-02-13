@@ -18,7 +18,26 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 404 });
     }
 
-    return NextResponse.json({ company: data });
+    // Convert snake_case to camelCase for frontend
+    const company = {
+      id: data.id,
+      companyName: data.company_name,
+      contactPerson: data.contact_person,
+      email: data.email,
+      phone: data.phone,
+      website: data.website,
+      address: data.address,
+      category: data.category,
+      description: data.description,
+      products: data.products,
+      certifications: data.certifications,
+      gstNumber: data.gst_number,
+      status: data.status,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+
+    return NextResponse.json({ company });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

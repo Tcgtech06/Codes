@@ -26,7 +26,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ companies: data || [] });
+    // Convert snake_case to camelCase for frontend
+    const companies = (data || []).map(company => ({
+      id: company.id,
+      companyName: company.company_name,
+      contactPerson: company.contact_person,
+      email: company.email,
+      phone: company.phone,
+      website: company.website,
+      address: company.address,
+      category: company.category,
+      description: company.description,
+      products: company.products,
+      certifications: company.certifications,
+      gstNumber: company.gst_number,
+      status: company.status,
+      createdAt: company.created_at,
+      updatedAt: company.updated_at
+    }));
+
+    return NextResponse.json({ companies });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -36,9 +55,25 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // Convert camelCase to snake_case for Supabase
+    const companyData = {
+      company_name: body.companyName || body.company_name,
+      category: body.category,
+      contact_person: body.contactPerson || body.contact_person || '', // Empty string instead of null
+      phone: body.phone || '',
+      address: body.address || '',
+      email: body.email || '',
+      website: body.website || '',
+      description: body.description || '',
+      products: body.products || [],
+      gst_number: body.gstNumber || body.gst_number || '',
+      certifications: body.certifications || '',
+      status: body.status || 'active'
+    };
+
     const { data, error } = await supabase
       .from('companies')
-      .insert([body])
+      .insert([companyData])
       .select()
       .single();
 
@@ -46,7 +81,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ company: data }, { status: 201 });
+    // Convert snake_case to camelCase for frontend
+    const company = {
+      id: data.id,
+      companyName: data.company_name,
+      contactPerson: data.contact_person,
+      email: data.email,
+      phone: data.phone,
+      website: data.website,
+      address: data.address,
+      category: data.category,
+      description: data.description,
+      products: data.products,
+      certifications: data.certifications,
+      gstNumber: data.gst_number,
+      status: data.status,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    };
+
+    return NextResponse.json({ company }, { status: 201 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && npm run build:api",
-    "build:api": "tsc --project tsconfig.api.json",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },

@@ -73,15 +73,16 @@ export async function POST(request: NextRequest) {
       companies.push({
         company_name: companyName,
         category: category,
-        contact_person: contactPerson || null,
-        phone: cleanPhone || null,
-        address: address || null,
-        email: email || null,
-        website: website || null,
+        contact_person: contactPerson || '',
+        phone: cleanPhone || '',
+        address: address || '',
+        email: email || '',
+        website: website || '',
+        description: '',
         products: products ? (Array.isArray(products) ? products : [products]) : [],
-        gst_number: gstNumber || null,
-        status: 'active',
-        created_at: new Date().toISOString()
+        gst_number: gstNumber || '',
+        certifications: '',
+        status: 'active'
       });
     }
 
@@ -122,9 +123,3 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
