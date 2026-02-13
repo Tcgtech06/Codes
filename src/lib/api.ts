@@ -54,13 +54,8 @@ export const authAPI = {
 // Categories API
 export const categoriesAPI = {
   getAll: async () => {
-    const data = await apiCall<any[]>('/categories');
-    // Backend returns array directly, wrap it and add IDs
-    const categoriesWithIds = data.map((cat, index) => ({
-      ...cat,
-      id: cat.slug || `cat-${index}`,
-    }));
-    return { categories: categoriesWithIds };
+    const response = await apiCall<{ categories: any[] }>('/categories');
+    return response;
   },
 };
 
@@ -77,9 +72,8 @@ export const companiesAPI = {
   getById: (id: string) => apiCall<any>(`/companies/${id}`),
 
   getByCategory: async (category: string) => {
-    const data = await apiCall<any[]>(`/companies/category/${category}`);
-    // Backend returns array directly, wrap it for consistency
-    return { companies: data };
+    const response = await apiCall<{ companies: any[] }>(`/companies/category/${category}`);
+    return response;
   },
 
   search: (q: string, category?: string) => {
