@@ -34,12 +34,33 @@ export async function POST(request: NextRequest) {
       const row: any = jsonData[i];
       
       // Map column names (handle different formats)
-      const companyName = row['COMPANY NAME'] || row['Company Name'] || row['company_name'] || '';
-      const address = row['ADDRESS'] || row['Address'] || row['address'] || '';
-      const phone = row['PHONE NUMBER'] || row['Phone Number'] || row['phone'] || '';
-      const email = row['E-MAIL ID'] || row['Email'] || row['email'] || '';
-      const contactPerson = row['CONTACT PERSON'] || row['Contact Person'] || row['contact_person'] || '';
-      const products = row['PRODUCTS'] || row['Products'] || row['products'] || '';
+      // Column A: Company Name
+      const companyName = row['COMPANY NAME'] || row['Company Name'] || row['company_name'] || 
+                         row['CompanyName'] || row['A'] || '';
+      
+      // Column B: Contact Person  
+      const contactPerson = row['CONTACT PERSON'] || row['Contact Person'] || row['contact_person'] || 
+                           row['ContactPerson'] || row['B'] || '';
+      
+      // Column C: Phone Number
+      const phone = row['PHONE NUMBER'] || row['Phone Number'] || row['phone'] || 
+                   row['PhoneNumber'] || row['C'] || '';
+      
+      // Column D: Address
+      const address = row['ADDRESS'] || row['Address'] || row['address'] || row['D'] || '';
+      
+      // Column E: Email
+      const email = row['E-MAIL ID'] || row['Email'] || row['email'] || row['E'] || '';
+      
+      // Column F: Website
+      const website = row['WEBSITE'] || row['Website'] || row['website'] || row['F'] || '';
+      
+      // Column G: Products/Services
+      const products = row['PRODUCTS'] || row['Products'] || row['products'] || 
+                      row['SERVICES'] || row['Services'] || row['G'] || '';
+      
+      // Column H: GST Number
+      const gstNumber = row['GST NUMBER'] || row['GST No'] || row['gst_number'] || row['H'] || '';
 
       if (!companyName) {
         errors.push(`Row ${i + 2}: Company name is required`);
@@ -52,11 +73,13 @@ export async function POST(request: NextRequest) {
       companies.push({
         company_name: companyName,
         category: category,
-        address: address || null,
-        phone: cleanPhone || null,
-        email: email || null,
         contact_person: contactPerson || null,
-        products: products ? [products] : [],
+        phone: cleanPhone || null,
+        address: address || null,
+        email: email || null,
+        website: website || null,
+        products: products ? (Array.isArray(products) ? products : [products]) : [],
+        gst_number: gstNumber || null,
         status: 'active',
         created_at: new Date().toISOString()
       });
@@ -76,6 +99,7 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (error) {
+      console.error('Supabase error:', error);
       return NextResponse.json({
         success: false,
         errors: [error.message]
@@ -91,6 +115,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    console.error('Excel parse error:', error);
     return NextResponse.json({
       success: false,
       errors: [error.message]
