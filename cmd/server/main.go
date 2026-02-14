@@ -111,14 +111,22 @@ func main() {
 	e := echo.New()
 
 	// CORS configuration - allow frontend domains
+	allowedOrigins := []string{
+		"http://localhost:3000",
+		"https://knitinfo.netlify.app",
+	}
+	
+	// Add custom frontend URL from environment if provided
+	if frontendURL := os.Getenv("FRONTEND_URL"); frontendURL != "" {
+		allowedOrigins = append(allowedOrigins, frontendURL)
+	}
+	
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{
-			"http://localhost:3000",
-			"https://*.netlify.app",
-			"https://knitinfo.netlify.app",
-		},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowHeaders: []string{"*"},
+		AllowOrigins:     allowedOrigins,
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 	}))
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())

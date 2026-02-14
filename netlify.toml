@@ -3,9 +3,19 @@
   publish = "out"
 
 [build.environment]
+  # IMPORTANT: Update this with your actual backend URL after deploying the Go backend
+  # Example: "https://your-app.railway.app/api/v1" or "https://your-app.onrender.com/api/v1"
   NEXT_PUBLIC_API_URL = "https://your-backend-url.railway.app/api/v1"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Headers for security and CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
