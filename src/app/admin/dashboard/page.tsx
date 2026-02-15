@@ -317,6 +317,10 @@ export default function AdminDashboard() {
         console.warn('Products will be empty for all companies.');
       }
 
+      // Check available columns
+      console.log('📋 Available Excel columns:', Object.keys(firstRow || {}));
+      console.log('📋 First row sample data:', firstRow);
+
       // Process each row and create companies
       const companiesAPI = (await import('@/lib/api')).companiesAPI;
       let successCount = 0;
@@ -334,6 +338,10 @@ export default function AdminDashboard() {
             return '';
           };
 
+          // Debug: Log all keys in the row
+          const rowKeys = Object.keys(row as object);
+          console.log('Row keys:', rowKeys);
+
           // Clean phone number - remove extra spaces and limit length
           const cleanPhone = (phone: string) => {
             return phone.replace(/\s+/g, ' ').substring(0, 50);
@@ -342,7 +350,7 @@ export default function AdminDashboard() {
           const companyData = {
             companyName: getValue(['COMPANY NAME', 'Company Name', 'companyName', 'COMPANY_NAME', 'NAME']),
             contactPerson: getValue(['CONTACT PERSON', 'Contact Person', 'contactPerson', 'CONTACT']),
-            email: getValue(['E-MAIL ID', 'EMAIL ID', 'Email', 'email', 'EMAIL']),
+            email: getValue(['E-MAIL ID', 'EMAIL ID', 'Email', 'email', 'EMAIL', 'MAIL ID']),
             phone: cleanPhone(getValue(['PHONE NUMBER', 'Phone Number', 'phone', 'PHONE', 'NUMBER'])),
             address: getValue(['ADDRESS', 'Address', 'address']),
             category: selectedCategory,
@@ -355,13 +363,21 @@ export default function AdminDashboard() {
               console.log('Products parsed:', productsStr, '→', productArray);
               return productArray;
             })(),
-            website: getValue(['WEBSITE', 'Website', 'website']),
+            website: (() => {
+              // Try all possible website column names
+              const websiteValue = getValue(['WEBSITE', 'Website', 'website', 'WEB SITE', 'URL', 'Web Site', 'web site']);
+              console.log('🌐 Website raw value:', websiteValue, 'from row:', (row as any)['WEBSITE']);
+              return websiteValue;
+            })(),
             certifications: getValue(['CERTIFICATIONS', 'Certifications', 'certifications']),
             gstNumber: getValue(['GST NUMBER', 'GST Number', 'gstNumber', 'GST']).substring(0, 50),
             status: 'active'
           };
 
-          console.log('Processing company:', companyData.companyName, 'Products:', companyData.products);
+          console.log('Processing company:', companyData.companyName);
+          console.log('  - Email:', companyData.email);
+          console.log('  - Website:', companyData.website);
+          console.log('  - Products:', companyData.products);
 
           // Only create if company name exists
           if (companyData.companyName && companyData.companyName.trim()) {
@@ -1029,9 +1045,9 @@ export default function AdminDashboard() {
 
       {/* Priority Modal */}
       {showPriorityModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col my-8">
+            <div className="p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">
                   {editingPriority ? 'Edit Company Priority' : 'Set Company Priority'}
@@ -1056,7 +1072,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Company Name *
@@ -1071,17 +1087,18 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Category *
                 </label>
                 <select
                   value={priorityForm.category}
                   onChange={(e) => setPriorityForm({...priorityForm, category: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none text-gray-900 bg-white font-medium"
+                  style={{ color: priorityForm.category ? '#111827' : '#6b7280' }}
                 >
-                  <option value="" className="text-gray-500">Select Category</option>
+                  <option value="" disabled>Select Category</option>
                   {categories.map((category) => (
-                    <option key={category} value={category} className="text-gray-900">
+                    <option key={category} value={category} style={{ color: '#111827' }}>
                       {category}
                     </option>
                   ))}
@@ -1195,9 +1212,9 @@ export default function AdminDashboard() {
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col my-8">
+            <div className="p-6 border-b border-gray-200 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">Upload Excel File</h2>
                 <button
@@ -1209,20 +1226,21 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
               {/* Category Selection */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Select Category
                 </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 bg-white"
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none text-gray-900 bg-white font-medium"
+                  style={{ color: selectedCategory ? '#111827' : '#6b7280' }}
                 >
-                  <option value="" className="text-gray-500">Choose a category...</option>
+                  <option value="" disabled>Choose a category...</option>
                   {categories.map((category) => (
-                    <option key={category} value={category} className="text-gray-900">
+                    <option key={category} value={category} style={{ color: '#111827' }}>
                       {category}
                     </option>
                   ))}
@@ -1316,14 +1334,22 @@ export default function AdminDashboard() {
               {/* Instructions */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="font-semibold text-gray-900 mb-2">Excel Format Requirements:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Column A: Company Name</li>
-                  <li>• Column B: Contact Person</li>
-                  <li>• Column C: Phone Number</li>
-                  <li>• Column D: Email Address</li>
-                  <li>• Column E: Address</li>
-                  <li>• Column F: Description</li>
+                <p className="text-xs text-gray-500 mb-3">Use these exact column headers in your Excel file:</p>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• <strong>COMPANY NAME</strong> (required)</li>
+                  <li>• <strong>CONTACT PERSON</strong> (optional)</li>
+                  <li>• <strong>PHONE NUMBER</strong> (required)</li>
+                  <li>• <strong>E-MAIL ID</strong> (required)</li>
+                  <li>• <strong>ADDRESS</strong> (required)</li>
+                  <li>• <strong>WEBSITE</strong> (optional) - Will display as clickable link</li>
+                  <li>• <strong>PRODUCTS</strong> (optional) - Comma-separated list</li>
+                  <li>• <strong>DESCRIPTION</strong> (optional)</li>
+                  <li>• <strong>CERTIFICATIONS</strong> (optional)</li>
+                  <li>• <strong>GST NUMBER</strong> (optional)</li>
                 </ul>
+                <p className="text-xs text-yellow-700 mt-3 bg-yellow-50 p-2 rounded">
+                  ⚠️ If WEBSITE or PRODUCTS columns are missing, those fields will be empty for all companies!
+                </p>
               </div>
             </div>
           </div>

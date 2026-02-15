@@ -9,7 +9,9 @@ import {
   Globe, 
   Star,
   Search,
-  ArrowLeft
+  ArrowLeft,
+  Filter,
+  X
 } from 'lucide-react';
 import Link from 'next/link';
 import { companiesAPI } from '@/lib/api';
@@ -23,6 +25,8 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFilter, setShowFilter] = useState(false);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -45,11 +49,30 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
     fetchCompanies();
   }, [categoryName]);
 
-  const filteredCompanies = companies.filter(company =>
-    company.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    company.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    company.products?.some((p: string) => p.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Close filter dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showFilter && !target.closest('.filter-container')) {
+        setShowFilter(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showFilter]);
+
+  const filteredCompanies = companies
+    .filter(company =>
+      company.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      company.products?.some((p: string) => p.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
 
   if (loading) {
     return (
@@ -88,15 +111,78 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
 
         {/* Search Bar */}
         <div className="mb-6">
-          <div className="relative">
-            <Search className="hidden sm:block absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              placeholder="Search companies, products..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 sm:pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
-            />
+          <div className="relative flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <input
+                type="text"
+                placeholder="Search companies, products..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+              />
+            </div>
+            
+            {/* Filter Button */}
+            <div className="relative filter-container">
+              <button
+                onClick={() => setShowFilter(!showFilter)}
+                className={`p-3 border-2 rounded-lg transition-colors ${
+                  showFilter 
+                    ? 'bg-blue-600 border-blue-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500'
+                }`}
+              >
+                <Filter size={20} />
+              </button>
+              
+              {/* Filter Dropdown */}
+              {showFilter && (
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-gray-900">Sort By</h3>
+                      <button
+                        onClick={() => setShowFilter(false)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          setSortOrder('newest');
+                          setShowFilter(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                          sortOrder === 'newest'
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        New Companies
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setSortOrder('oldest');
+                          setShowFilter(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                          sortOrder === 'oldest'
+                            ? 'bg-blue-50 text-blue-700 font-medium'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        Old Companies
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -183,8 +269,8 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
                       href={`tel:${company.phone}`}
                       className="flex items-center text-gray-900 hover:text-blue-600 transition-colors font-medium"
                     >
-                      <Phone size={16} className="mr-2" />
-                      <span className="text-sm">{company.phone}</span>
+                      <Phone size={16} className="mr-2 flex-shrink-0" />
+                      <span className="text-sm truncate">{company.phone}</span>
                     </a>
                   )}
                   {company.email && (
@@ -192,19 +278,8 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
                       href={`mailto:${company.email}`}
                       className="flex items-center text-gray-900 hover:text-blue-600 transition-colors font-medium"
                     >
-                      <Mail size={16} className="mr-2" />
-                      <span className="text-sm">{company.email}</span>
-                    </a>
-                  )}
-                  {company.website && (
-                    <a
-                      href={company.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center text-gray-900 hover:text-blue-600 transition-colors font-medium"
-                    >
-                      <Globe size={16} className="mr-2" />
-                      <span className="text-sm">Visit Website</span>
+                      <Mail size={16} className="mr-2 flex-shrink-0" />
+                      <span className="text-sm truncate">{company.email}</span>
                     </a>
                   )}
                   {company.address && (
@@ -212,6 +287,17 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
                       <MapPin size={16} className="mr-2 mt-1 flex-shrink-0" />
                       <span className="text-sm font-medium">{company.address}</span>
                     </div>
+                  )}
+                  {company.website && (
+                    <a
+                      href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center text-gray-900 hover:text-blue-600 transition-colors font-medium"
+                    >
+                      <Globe size={16} className="mr-2 flex-shrink-0" />
+                      <span className="text-sm truncate">{company.website}</span>
+                    </a>
                   )}
                 </div>
               </div>
