@@ -8,7 +8,12 @@ import {
   Printer, 
   Droplet, 
   Settings, 
-  Wrench
+  Wrench,
+  Wind,
+  FlaskConical,
+  Zap,
+  Package,
+  Wrench as Spanner
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
@@ -16,15 +21,19 @@ import { categoriesAPI } from '@/lib/api';
 
 const iconMap: any = {
   'Yarn': Layers,
-  'Fabric': Scissors,
-  'Knitting': Shirt,
+  'Fabric Suppliers': Shirt,
+  'Fabric': Shirt,
+  'Knitting': Zap,
   'Buying Agents': Users,
   'Printing': Printer,
-  'Threads': Layers,
-  'Trims': Scissors,
-  'Dyes': Droplet,
+  'Threads': Wind,
+  'Trims & Accessories': Package,
+  'Trims': Package,
+  'Dyes & Chemicals': FlaskConical,
+  'Dyes': FlaskConical,
   'Machineries': Settings,
-  'Spares': Wrench,
+  'Machine Spares': Spanner,
+  'Spares': Spanner,
 };
 
 const colorMap: any = {

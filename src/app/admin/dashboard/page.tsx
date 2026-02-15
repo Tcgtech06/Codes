@@ -255,7 +255,42 @@ export default function AdminDashboard() {
     setUploadMessage('Uploading and processing file...');
 
     try {
-      // Read Excel file
+      // Step 1: Delete all existing companies in this category
+      console.log(`Step 1: Deleting existing companies in ${selectedCategory} category...`);
+      setUploadMessage(`Deleting existing ${selectedCategory} companies...`);
+      
+      const supabase = (await import('@/lib/supabase')).default;
+      const { data: existingCompanies, error: fetchError } = await supabase
+        .from('companies')
+        .select('id, company_name')
+        .eq('category', selectedCategory);
+
+      if (fetchError) {
+        console.error('Error fetching existing companies:', fetchError);
+        throw new Error(`Failed to fetch existing companies: ${fetchError.message}`);
+      }
+
+      const existingCount = existingCompanies?.length || 0;
+      console.log(`Found ${existingCount} existing companies to delete`);
+
+      if (existingCount > 0) {
+        const { error: deleteError } = await supabase
+          .from('companies')
+          .delete()
+          .eq('category', selectedCategory);
+
+        if (deleteError) {
+          console.error('Error deleting existing companies:', deleteError);
+          throw new Error(`Failed to delete existing companies: ${deleteError.message}`);
+        }
+
+        console.log(`✅ Deleted ${existingCount} existing companies`);
+      }
+
+      // Step 2: Read and process Excel file
+      console.log('Step 2: Reading Excel file...');
+      setUploadMessage('Reading Excel file...');
+      
       const XLSX = await import('xlsx');
       const data = await selectedFile.arrayBuffer();
       const workbook = XLSX.read(data, { type: 'array' });
@@ -382,7 +417,11 @@ export default function AdminDashboard() {
 
       console.log('Upload complete:', { successCount, errorCount, errors });
 
-      let message = `Successfully uploaded ${selectedFile.name} to ${selectedCategory} category. ${successCount} records processed successfully`;
+      let message = `Successfully replaced ${selectedCategory} data! `;
+      if (existingCount > 0) {
+        message += `Deleted ${existingCount} old companies. `;
+      }
+      message += `Added ${successCount} new companies`;
       if (errorCount > 0) {
         message += `, ${errorCount} errors`;
       }
@@ -1256,10 +1295,23 @@ export default function AdminDashboard() {
                 ) : (
                   <>
                     <Upload size={20} />
-                    <span>Upload to {selectedCategory || 'Category'}</span>
+                    <span>Replace {selectedCategory || 'Category'} Data</span>
                   </>
                 )}
               </button>
+
+              {/* Warning Notice */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={20} className="text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-900 mb-1">⚠️ Important Notice</h4>
+                    <p className="text-sm text-yellow-800">
+                      Uploading will <strong>DELETE ALL existing companies</strong> in the selected category and replace them with the new Excel data. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
               {/* Instructions */}
               <div className="bg-gray-50 rounded-lg p-4">

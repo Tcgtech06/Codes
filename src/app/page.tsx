@@ -16,7 +16,13 @@ import {
   Bell,
   Eye,
   TrendingUp,
-  Building2
+  Building2,
+  Wind,
+  Palette,
+  Zap,
+  Package,
+  Wrench as Spanner,
+  FlaskConical
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
@@ -28,15 +34,15 @@ import { booksAPI, categoriesAPI } from '@/lib/api';
 
 const categories = [
   { name: 'Yarn', icon: Layers, color: 'bg-blue-100 text-blue-600' },
-  { name: 'Fabric Suppliers', icon: Scissors, color: 'bg-green-100 text-green-600' },
-  { name: 'Knitting', icon: Shirt, color: 'bg-purple-100 text-purple-600' },
+  { name: 'Fabric Suppliers', icon: Shirt, color: 'bg-green-100 text-green-600' },
+  { name: 'Knitting', icon: Zap, color: 'bg-purple-100 text-purple-600' },
   { name: 'Buying Agents', icon: Users, color: 'bg-orange-100 text-orange-600' },
   { name: 'Printing', icon: Printer, color: 'bg-yellow-100 text-yellow-600' },
-  { name: 'Threads', icon: Layers, color: 'bg-pink-100 text-pink-600' },
-  { name: 'Trims & Accessories', icon: Scissors, color: 'bg-red-100 text-red-600' },
-  { name: 'Dyes & Chemicals', icon: Droplet, color: 'bg-indigo-100 text-indigo-600' },
+  { name: 'Threads', icon: Wind, color: 'bg-pink-100 text-pink-600' },
+  { name: 'Trims & Accessories', icon: Package, color: 'bg-red-100 text-red-600' },
+  { name: 'Dyes & Chemicals', icon: FlaskConical, color: 'bg-indigo-100 text-indigo-600' },
   { name: 'Machineries', icon: Settings, color: 'bg-teal-100 text-teal-600' },
-  { name: 'Machine Spares', icon: Wrench, color: 'bg-gray-100 text-gray-600' },
+  { name: 'Machine Spares', icon: Spanner, color: 'bg-gray-100 text-gray-600' },
 ];
 
 const stories = [
