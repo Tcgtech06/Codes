@@ -265,6 +265,22 @@ export default function AdminDashboard() {
 
       console.log('Excel data loaded:', jsonData.length, 'rows');
       console.log('First row sample:', jsonData[0]);
+      console.log('Available columns:', Object.keys(jsonData[0] || {}));
+
+      // Check if products column exists
+      const firstRow = jsonData[0] as any;
+      const hasProductsColumn = firstRow && (
+        'PRODUCTS' in firstRow || 
+        'Products' in firstRow || 
+        'products' in firstRow || 
+        'PRODUCT' in firstRow
+      );
+      
+      if (!hasProductsColumn) {
+        console.warn('⚠️ WARNING: No PRODUCTS column found in Excel file!');
+        console.warn('Available columns:', Object.keys(firstRow || {}));
+        console.warn('Products will be empty for all companies.');
+      }
 
       // Process each row and create companies
       const companiesAPI = (await import('@/lib/api')).companiesAPI;
@@ -297,8 +313,12 @@ export default function AdminDashboard() {
             category: selectedCategory,
             description: getValue(['DESCRIPTION', 'Description', 'description']),
             products: (() => {
-              const productsStr = getValue(['PRODUCTS', 'Products', 'products']);
-              return productsStr ? productsStr.split(',').map((p: string) => p.trim()) : [];
+              const productsStr = getValue(['PRODUCTS', 'Products', 'products', 'PRODUCT']);
+              if (!productsStr) return [];
+              // Split by comma and clean up each product
+              const productArray = productsStr.split(',').map((p: string) => p.trim()).filter((p: string) => p.length > 0);
+              console.log('Products parsed:', productsStr, '→', productArray);
+              return productArray;
             })(),
             website: getValue(['WEBSITE', 'Website', 'website']),
             certifications: getValue(['CERTIFICATIONS', 'Certifications', 'certifications']),
@@ -306,13 +326,50 @@ export default function AdminDashboard() {
             status: 'active'
           };
 
-          console.log('Processing company:', companyData.companyName, 'Phone:', companyData.phone);
+          console.log('Processing company:', companyData.companyName, 'Products:', companyData.products);
 
           // Only create if company name exists
           if (companyData.companyName && companyData.companyName.trim()) {
-            const result = await companiesAPI.create(companyData);
-            console.log('Company created:', result);
-            successCount++;
+            try {
+              const result = await companiesAPI.create(companyData);
+              console.log('Company created:', result);
+              successCount++;
+            } catch (apiError: any) {
+              console.error('API error, trying direct Supabase insert:', apiError);
+              
+              // Fallback: Direct Supabase insert
+              try {
+                const supabase = (await import('@/lib/supabase')).default;
+                const { data, error: supabaseError } = await supabase
+                  .from('companies')
+                  .insert([{
+                    company_name: companyData.companyName,
+                    contact_person: companyData.contactPerson || '',
+                    email: companyData.email || '',
+                    phone: companyData.phone || '',
+                    address: companyData.address || '',
+                    category: companyData.category,
+                    description: companyData.description || '',
+                    products: companyData.products || [],
+                    website: companyData.website || '',
+                    certifications: companyData.certifications || '',
+                    gst_number: companyData.gstNumber || '',
+                    status: companyData.status || 'active'
+                  }])
+                  .select();
+                
+                if (supabaseError) {
+                  throw supabaseError;
+                }
+                
+                console.log('Company created via Supabase:', data);
+                successCount++;
+              } catch (supabaseError: any) {
+                console.error('Supabase error:', supabaseError);
+                errors.push(`${companyData.companyName}: ${supabaseError.message}`);
+                errorCount++;
+              }
+            }
           } else {
             console.warn('Skipping row - no company name. Available keys:', Object.keys(row as object));
           }
@@ -325,8 +382,16 @@ export default function AdminDashboard() {
 
       console.log('Upload complete:', { successCount, errorCount, errors });
 
+      let message = `Successfully uploaded ${selectedFile.name} to ${selectedCategory} category. ${successCount} records processed successfully`;
+      if (errorCount > 0) {
+        message += `, ${errorCount} errors`;
+      }
+      if (!hasProductsColumn) {
+        message += `. ⚠️ Note: No PRODUCTS column found in Excel - products will be empty.`;
+      }
+
       setUploadStatus('success');
-      setUploadMessage(`Successfully uploaded ${selectedFile.name} to ${selectedCategory} category. ${successCount} records processed successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}.`);
+      setUploadMessage(message);
       
       // Reset form after success
       setTimeout(() => {
@@ -603,59 +668,59 @@ export default function AdminDashboard() {
               </div>
             ) : (
               addDataSubmissions.map((submission, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm p-6">
+                <div key={index} className="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-700">
                         <Calendar size={14} className="inline mr-1" />
                         {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
                       {submission.category}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Users size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Contact:</span>
-                      <span className="font-medium">{submission.contactPerson}</span>
+                      <Users size={16} className="text-gray-600" />
+                      <span className="text-gray-700">Contact:</span>
+                      <span className="font-medium text-gray-900">{submission.contactPerson}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Phone:</span>
-                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-600 hover:underline">{submission.phone}</a>
+                      <Phone size={16} className="text-gray-600" />
+                      <span className="text-gray-700">Phone:</span>
+                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-700 hover:underline">{submission.phone}</a>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Email:</span>
-                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-600 hover:underline">{submission.email}</a>
+                      <Mail size={16} className="text-gray-600" />
+                      <span className="text-gray-700">Email:</span>
+                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-700 hover:underline">{submission.email}</a>
                     </div>
                     {submission.gstNumber && (
                       <div className="flex items-center gap-2">
-                        <FileText size={16} className="text-gray-400" />
-                        <span className="text-gray-600">GST:</span>
-                        <span className="font-medium">{submission.gstNumber}</span>
+                        <FileText size={16} className="text-gray-600" />
+                        <span className="text-gray-700">GST:</span>
+                        <span className="font-medium text-gray-900">{submission.gstNumber}</span>
                       </div>
                     )}
                   </div>
                   
-                  <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="mt-4 pt-4 border-t border-gray-300">
                     <div className="flex items-start gap-2 mb-2">
-                      <MapPin size={16} className="text-gray-400 mt-0.5" />
-                      <p className="text-sm text-gray-700">{submission.address}</p>
+                      <MapPin size={16} className="text-gray-600 mt-0.5" />
+                      <p className="text-sm text-gray-800 font-medium">{submission.address}</p>
                     </div>
-                    <p className="text-sm text-gray-700 mt-2">{submission.description}</p>
+                    <p className="text-sm text-gray-800 mt-2">{submission.description}</p>
                     {submission.products && (
                       <div className="mt-2">
-                        <span className="text-sm font-medium text-gray-700">Products: </span>
-                        <span className="text-sm text-gray-600">{submission.products}</span>
+                        <span className="text-sm font-bold text-gray-900">Products: </span>
+                        <span className="text-sm text-gray-800">{submission.products}</span>
                       </div>
                     )}
                     {submission.visitingCardName && (
-                      <div className="mt-2 text-sm text-gray-600">
+                      <div className="mt-2 text-sm text-gray-800">
                         <FileText size={14} className="inline mr-1" />
                         Visiting Card: {submission.visitingCardName}
                       </div>
@@ -682,7 +747,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               advertiseSubmissions.map((submission, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm p-6">
+                <div key={index} className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
@@ -750,7 +815,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               collaborateSubmissions.map((submission, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm p-6">
+                <div key={index} className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{submission.organizationName}</h3>
@@ -851,7 +916,7 @@ export default function AdminDashboard() {
                       : null;
                     
                     return (
-                    <div key={priority.id} className={`bg-white rounded-xl shadow-sm p-6 ${isExpired ? 'opacity-60' : ''}`}>
+                    <div key={priority.id} className={`bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow ${isExpired ? 'opacity-60' : ''}`}>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
@@ -961,7 +1026,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={priorityForm.companyName}
                   onChange={(e) => setPriorityForm({...priorityForm, companyName: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 placeholder-gray-500"
                   placeholder="Enter company name"
                 />
               </div>
@@ -973,11 +1038,11 @@ export default function AdminDashboard() {
                 <select
                   value={priorityForm.category}
                   onChange={(e) => setPriorityForm({...priorityForm, category: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 bg-white"
                 >
-                  <option value="">Select Category</option>
+                  <option value="" className="text-gray-500">Select Category</option>
                   {categories.map((category) => (
-                    <option key={category} value={category}>
+                    <option key={category} value={category} className="text-gray-900">
                       {category}
                     </option>
                   ))}
@@ -994,7 +1059,7 @@ export default function AdminDashboard() {
                   max="100"
                   value={priorityForm.position}
                   onChange={(e) => setPriorityForm({...priorityForm, position: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 placeholder-gray-500"
                   placeholder="Enter position (1 = highest priority)"
                 />
               </div>
@@ -1114,11 +1179,11 @@ export default function AdminDashboard() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 bg-white"
                 >
-                  <option value="">Choose a category...</option>
+                  <option value="" className="text-gray-500">Choose a category...</option>
                   {categories.map((category) => (
-                    <option key={category} value={category}>
+                    <option key={category} value={category} className="text-gray-900">
                       {category}
                     </option>
                   ))}

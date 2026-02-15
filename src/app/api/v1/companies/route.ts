@@ -71,6 +71,8 @@ export async function POST(request: NextRequest) {
       status: body.status || 'active'
     };
 
+    console.log('Creating company with products:', companyData.company_name, 'Products:', companyData.products);
+
     const { data, error } = await supabase
       .from('companies')
       .insert([companyData])
@@ -78,8 +80,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    console.log('Company created successfully. Products in DB:', data.products);
 
     // Convert snake_case to camelCase for frontend
     const company = {
@@ -102,6 +107,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ company }, { status: 201 });
   } catch (error: any) {
+    console.error('POST error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

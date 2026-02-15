@@ -21,36 +21,38 @@ export const useVisitorStats = () => {
     // Load statistics
     loadStats();
     
-    // Set up real-time updates
-    const interval = setInterval(updateLiveVisitors, 30000); // Update every 30 seconds
+    // Set up real-time updates - ONLY update state, don't modify localStorage frequently
+    const interval = setInterval(() => {
+      // Just update the display, don't write to localStorage
+      updateLiveVisitorsDisplay();
+    }, 30000); // Update every 30 seconds
     
     return () => {
       clearInterval(interval);
       // Clean up visitor session
       cleanupVisitorSession();
     };
-  }, []);
+  }, []); // Empty dependency array - run only once
 
   const initializeVisitorTracking = () => {
     try {
       // Check if this is a new session
       const sessionId = sessionStorage.getItem('visitor_session_id');
-      const lastActivity = localStorage.getItem('last_activity');
       
       if (!sessionId) {
         // New session - generate unique ID
         const newSessionId = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         sessionStorage.setItem('visitor_session_id', newSessionId);
         
-        // Increment total visitors
+        // Increment total visitors ONLY ONCE per session
         incrementTotalVisitors();
+        
+        // Add to live visitors ONLY ONCE
+        addToLiveVisitors();
       }
       
-      // Update last activity
-      localStorage.setItem('last_activity', Date.now().toString());
-      
-      // Add to live visitors
-      addToLiveVisitors();
+      // Update last activity in sessionStorage instead of localStorage to avoid triggers
+      sessionStorage.setItem('last_activity', Date.now().toString());
       
     } catch (error) {
       console.error('Error initializing visitor tracking:', error);
@@ -125,6 +127,27 @@ export const useVisitorStats = () => {
       }));
     } catch (error) {
       console.error('Error updating live visitors:', error);
+    }
+  };
+
+  // New function that only updates display without writing to localStorage
+  const updateLiveVisitorsDisplay = () => {
+    try {
+      const liveVisitors = JSON.parse(localStorage.getItem('live_visitors') || '[]');
+      const now = Date.now();
+      
+      // Remove expired sessions
+      const activeVisitors = liveVisitors.filter((visitor: any) => 
+        now - visitor.lastActivity < 5 * 60 * 1000
+      );
+      
+      // Only update state, don't write to localStorage
+      setStats(prev => ({
+        ...prev,
+        liveVisitors: Math.max(activeVisitors.length, 5) // Minimum 5 visitors
+      }));
+    } catch (error) {
+      console.error('Error updating live visitors display:', error);
     }
   };
 

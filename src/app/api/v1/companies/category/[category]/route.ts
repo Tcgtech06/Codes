@@ -8,6 +8,8 @@ export async function GET(
   try {
     const { category } = await params;
     
+    console.log('Fetching companies for category:', category);
+    
     const { data, error } = await supabase
       .from('companies')
       .select('*')
@@ -15,8 +17,11 @@ export async function GET(
       .order('created_at', { ascending: false });
 
     if (error) {
+      console.error('Supabase fetch error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+
+    console.log(`Found ${data?.length || 0} companies. Sample products:`, data?.[0]?.products);
 
     // Convert snake_case to camelCase for frontend
     const companies = (data || []).map(company => ({
@@ -37,8 +42,11 @@ export async function GET(
       updatedAt: company.updated_at
     }));
 
+    console.log('Returning companies with products. First company products:', companies[0]?.products);
+
     return NextResponse.json({ companies });
   } catch (error: any) {
+    console.error('GET error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
