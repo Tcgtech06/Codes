@@ -254,21 +254,93 @@ export default function AdminDashboard() {
     setUploadStatus('uploading');
     setUploadMessage('Uploading and processing file...');
 
-    // Simulate file upload and processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      // Read Excel file
+      const XLSX = await import('xlsx');
+      const data = await selectedFile.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-    // Simulate success
-    setUploadStatus('success');
-    setUploadMessage(`Successfully uploaded ${selectedFile.name} to ${selectedCategory} category. ${Math.floor(Math.random() * 100) + 50} records processed.`);
-    
-    // Reset form after success
-    setTimeout(() => {
-      setSelectedFile(null);
-      setSelectedCategory('');
-      setUploadStatus('idle');
-      setUploadMessage('');
-      setShowUploadModal(false);
-    }, 3000);
+      console.log('Excel data loaded:', jsonData.length, 'rows');
+      console.log('First row sample:', jsonData[0]);
+
+      // Process each row and create companies
+      const companiesAPI = (await import('@/lib/api')).companiesAPI;
+      let successCount = 0;
+      let errorCount = 0;
+      const errors: string[] = [];
+
+      for (const row of jsonData) {
+        try {
+          // Helper function to get value from multiple possible column names
+          const getValue = (keys: string[]) => {
+            for (const key of keys) {
+              const value = (row as any)[key];
+              if (value !== undefined && value !== null && value !== '') return String(value).trim();
+            }
+            return '';
+          };
+
+          // Clean phone number - remove extra spaces and limit length
+          const cleanPhone = (phone: string) => {
+            return phone.replace(/\s+/g, ' ').substring(0, 50);
+          };
+
+          const companyData = {
+            companyName: getValue(['COMPANY NAME', 'Company Name', 'companyName', 'COMPANY_NAME', 'NAME']),
+            contactPerson: getValue(['CONTACT PERSON', 'Contact Person', 'contactPerson', 'CONTACT']),
+            email: getValue(['E-MAIL ID', 'EMAIL ID', 'Email', 'email', 'EMAIL']),
+            phone: cleanPhone(getValue(['PHONE NUMBER', 'Phone Number', 'phone', 'PHONE', 'NUMBER'])),
+            address: getValue(['ADDRESS', 'Address', 'address']),
+            category: selectedCategory,
+            description: getValue(['DESCRIPTION', 'Description', 'description']),
+            products: (() => {
+              const productsStr = getValue(['PRODUCTS', 'Products', 'products']);
+              return productsStr ? productsStr.split(',').map((p: string) => p.trim()) : [];
+            })(),
+            website: getValue(['WEBSITE', 'Website', 'website']),
+            certifications: getValue(['CERTIFICATIONS', 'Certifications', 'certifications']),
+            gstNumber: getValue(['GST NUMBER', 'GST Number', 'gstNumber', 'GST']).substring(0, 50),
+            status: 'active'
+          };
+
+          console.log('Processing company:', companyData.companyName, 'Phone:', companyData.phone);
+
+          // Only create if company name exists
+          if (companyData.companyName && companyData.companyName.trim()) {
+            const result = await companiesAPI.create(companyData);
+            console.log('Company created:', result);
+            successCount++;
+          } else {
+            console.warn('Skipping row - no company name. Available keys:', Object.keys(row as object));
+          }
+        } catch (error: any) {
+          console.error('Error creating company:', error);
+          errors.push(error.message || 'Unknown error');
+          errorCount++;
+        }
+      }
+
+      console.log('Upload complete:', { successCount, errorCount, errors });
+
+      setUploadStatus('success');
+      setUploadMessage(`Successfully uploaded ${selectedFile.name} to ${selectedCategory} category. ${successCount} records processed successfully${errorCount > 0 ? `, ${errorCount} errors` : ''}.`);
+      
+      // Reset form after success
+      setTimeout(() => {
+        setSelectedFile(null);
+        setSelectedCategory('');
+        setUploadStatus('idle');
+        setUploadMessage('');
+        setShowUploadModal(false);
+      }, 3000);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadMessage(`Upload failed: ${error.message || 'Unknown error'}`);
+    }
   };
 
   if (!isAuthenticated) {

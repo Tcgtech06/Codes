@@ -22,9 +22,9 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { books } from '@/data/books';
 import { useVisitorStats } from '@/hooks/useVisitorStats';
 import StatCard from '@/components/StatCard';
+import { booksAPI, categoriesAPI } from '@/lib/api';
 
 const categories = [
   { name: 'Yarn', icon: Layers, color: 'bg-blue-100 text-blue-600' },
@@ -60,6 +60,8 @@ export default function Home() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [books, setBooks] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
 
   // Handle loop restart
   useEffect(() => {
@@ -78,6 +80,28 @@ export default function Home() {
 
   // Visitor statistics
   const { stats, loading: statsLoading } = useVisitorStats();
+
+  // Fetch books and categories
+  // Fetch categories from API, use static books data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const categoriesRes = await categoriesAPI.getAll();
+        setCategories(categoriesRes.categories || []);
+        
+        // Use static books data from local file
+        const { books: staticBooks } = await import('@/data/books');
+        setBooks(staticBooks);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        // Fallback to static books if API fails
+        import('@/data/books').then(({ books: staticBooks }) => {
+          setBooks(staticBooks);
+        });
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {

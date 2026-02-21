@@ -1,0 +1,24 @@
+name: knitinfo-backend
+services:
+  - name: api
+    type: web
+    build:
+      type: buildpack
+      buildpack:
+        builder: heroku/buildpacks:20
+    instance:
+      type: nano
+    ports:
+      - port: 8080
+        protocol: http
+    env:
+      - key: PORT
+        value: "8080"
+    routes:
+      - path: /
+        port: 8080
+    regions:
+      - sin
+    scaling:
+      min: 1
+      max: 1

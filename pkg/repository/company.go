@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"knitinfo-backend/pkg/models"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
 )
 
 type CompanyRepository struct {

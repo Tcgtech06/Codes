@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: knitinfo-backend
+    runtime: go
+    branch: frontend_development
+    buildCommand: go build -o main cmd/server/main.go
+    startCommand: ./main
+    envVars:
+      - key: SUPABASE_DB_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: PORT
+        value: 8080
