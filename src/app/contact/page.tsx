@@ -55,7 +55,7 @@ export default function Contact() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {/* Contact Info */}
           <div>
-            <h2 className="text-xl font-semibold mb-6">Get in Touch</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
             <div className="space-y-6">
               <a 
                 href="https://www.google.com/maps/search/123+Textile+Street,+Yarn+City,+NY" 
@@ -102,7 +102,7 @@ export default function Contact() {
           
           {/* Contact Form */}
           <div className="bg-gray-50 p-8 rounded-xl">
-            <h2 className="text-xl font-semibold mb-6">Send us a Message</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
             <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
