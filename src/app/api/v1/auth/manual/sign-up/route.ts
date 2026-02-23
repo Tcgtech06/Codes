@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json();
+    const { name, email, password, phone } = await request.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
       options: {
         data: {
           full_name: name,
+          phone: phone || '',
         },
       },
     });

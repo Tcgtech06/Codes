@@ -30,6 +30,7 @@ export default function SignInPage() {
     name: '',
     email: '',
     password: '',
+    phone: '',
   });
   const [resetPassword, setResetPassword] = useState('');
 
@@ -113,7 +114,8 @@ export default function SignInPage() {
         const data = await signUpWithEmail(
           manualForm.name.trim(),
           manualForm.email.trim(),
-          manualForm.password
+          manualForm.password,
+          manualForm.phone.trim()
         );
 
         if (data.requiresEmailConfirmation) {
@@ -210,21 +212,39 @@ export default function SignInPage() {
 
         <form onSubmit={handleManualSubmit} className="space-y-4 mb-6">
           {mode === 'sign-up' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input
-                type="text"
-                value={manualForm.name}
-                onChange={(event) =>
-                  setManualForm((prev) => ({
-                    ...prev,
-                    name: event.target.value,
-                  }))
-                }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
-                required
-              />
-            </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={manualForm.name}
+                  onChange={(event) =>
+                    setManualForm((prev) => ({
+                      ...prev,
+                      name: event.target.value,
+                    }))
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  value={manualForm.phone}
+                  onChange={(event) =>
+                    setManualForm((prev) => ({
+                      ...prev,
+                      phone: event.target.value,
+                    }))
+                  }
+                  placeholder="+91 9876543210"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  required
+                />
+              </div>
+            </>
           )}
 
           <div>
