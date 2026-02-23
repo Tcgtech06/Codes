@@ -23,7 +23,17 @@ export function getUserSession(): UserSession | null {
 }
 
 export function isUserSignedIn(): boolean {
-  return getUserSession() !== null;
+  if (getUserSession() !== null) {
+    return true;
+  }
+
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return Object.keys(localStorage).some(
+    (key) => key.startsWith('sb-') && key.endsWith('-auth-token')
+  );
 }
 
 export function setUserSession(session: UserSession): void {

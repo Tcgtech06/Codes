@@ -51,6 +51,93 @@ export async function signInWithGoogle(redirectPath = '/dashboard'): Promise<voi
   }
 }
 
+type ManualAuthResponse = {
+  message: string;
+  session: Session | null;
+  requiresEmailConfirmation?: boolean;
+};
+
+async function applySession(session: Session | null): Promise<void> {
+  if (!session) {
+    return;
+  }
+
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function signUpWithEmail(name: string, email: string, password: string) {
+  const response = await fetch('/api/v1/auth/manual/sign-up', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name, email, password }),
+  });
+
+  const data = (await response.json()) as ManualAuthResponse & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to sign up.');
+  }
+
+  await applySession(data.session);
+  return data;
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  const response = await fetch('/api/v1/auth/manual/sign-in', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = (await response.json()) as ManualAuthResponse & { error?: string };
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to sign in.');
+  }
+
+  await applySession(data.session);
+  return data;
+}
+
+export async function requestPasswordReset(email: string) {
+  const response = await fetch('/api/v1/auth/manual/reset-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = (await response.json()) as { message?: string; error?: string };
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to send reset link.');
+  }
+
+  return data;
+}
+
+export async function completePasswordReset(password: string) {
+  const supabase = getSupabaseBrowserClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    throw error;
+  }
+}
+
 /**
  * Returns current authenticated user from session, or null.
  */

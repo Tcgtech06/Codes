@@ -9,6 +9,7 @@ import {
   subscribeToAuthState,
   mapAuthUser,
 } from '@/lib/auth';
+import { clearUserSession, getUserSession } from '@/lib/userSession';
 
 type User = AuthUser;
 
@@ -34,7 +35,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkSession = async () => {
       try {
         const currentUser = await getCurrentAuthUser();
-        setUser(currentUser);
+        if (currentUser) {
+          setUser(currentUser);
+          return;
+        }
+
+        const manualSession = getUserSession();
+        if (manualSession) {
+          setUser({
+            id: manualSession.email,
+            email: manualSession.email,
+            name: manualSession.name,
+            avatarUrl: '',
+            provider: 'manual',
+            mobileNumber: manualSession.mobileNumber,
+            state: manualSession.state,
+            district: manualSession.district,
+          });
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         console.error('Session check error:', error);
       } finally {
@@ -61,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await signOutUser();
+      clearUserSession();
       setUser(null);
       router.push('/sign-in');
     } catch (error) {
