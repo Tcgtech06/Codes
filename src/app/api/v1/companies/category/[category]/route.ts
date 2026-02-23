@@ -11,14 +11,12 @@ export async function GET(
     
     console.log('Fetching companies for category:', decodedCategory);
     
-    // First, try exact match with is_active check
+    // First, try exact match
     let { data, error } = await supabase
       .from('companies')
       .select('*')
       .eq('category', decodedCategory)
-      .or('is_active.is.null,is_active.eq.true')
-      .order('priority', { ascending: true })
-      .order('name', { ascending: true });
+      .order('company_name', { ascending: true });
     
     // If no results, try case-insensitive match
     if (!error && (!data || data.length === 0)) {
@@ -26,9 +24,7 @@ export async function GET(
         .from('companies')
         .select('*')
         .ilike('category', decodedCategory)
-        .or('is_active.is.null,is_active.eq.true')
-        .order('priority', { ascending: true })
-        .order('name', { ascending: true });
+        .order('company_name', { ascending: true });
       
       data = result.data;
       error = result.error;
@@ -48,7 +44,7 @@ export async function GET(
     // Convert snake_case to camelCase for frontend
     const companies = (data || []).map((company: any) => ({
       id: company.id,
-      companyName: company.name,
+      companyName: company.company_name,
       contactPerson: company.contact_person,
       email: company.email,
       phone: company.phone,
