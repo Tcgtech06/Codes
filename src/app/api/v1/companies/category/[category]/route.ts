@@ -11,13 +11,28 @@ export async function GET(
     
     console.log('Fetching companies for category:', decodedCategory);
     
-    const { data, error } = await supabase
+    // First, try exact match with is_active check
+    let { data, error } = await supabase
       .from('companies')
       .select('*')
       .eq('category', decodedCategory)
-      .eq('is_active', true)
+      .or('is_active.is.null,is_active.eq.true')
       .order('priority', { ascending: true })
       .order('name', { ascending: true });
+    
+    // If no results, try case-insensitive match
+    if (!error && (!data || data.length === 0)) {
+      const result = await supabase
+        .from('companies')
+        .select('*')
+        .ilike('category', decodedCategory)
+        .or('is_active.is.null,is_active.eq.true')
+        .order('priority', { ascending: true })
+        .order('name', { ascending: true });
+      
+      data = result.data;
+      error = result.error;
+    }
 
     if (error) {
       console.error('Supabase fetch error:', error);
