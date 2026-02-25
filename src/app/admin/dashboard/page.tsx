@@ -309,206 +309,39 @@ export default function AdminDashboard() {
     setUploadMessage('Uploading and processing file...');
 
     try {
-      // Step 1: Delete all existing companies in this category
-      console.log(`Step 1: Deleting existing companies in ${selectedCategory} category...`);
-      setUploadMessage(`Deleting existing ${selectedCategory} companies...`);
-      
-      const supabase = (await import('@/lib/supabase')).default;
-      const { data: existingCompanies, error: fetchError } = await supabase
-        .from('companies')
-        .select('id, company_name')
-        .eq('category', selectedCategory);
-
-      if (fetchError) {
-        console.error('Error fetching existing companies:', fetchError);
-        throw new Error(`Failed to fetch existing companies: ${fetchError.message}`);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Admin session expired. Please login again.');
       }
 
-      const existingCount = existingCompanies?.length || 0;
-      console.log(`Found ${existingCount} existing companies to delete`);
+      const payload = new FormData();
+      payload.append('file', selectedFile);
+      payload.append('category', selectedCategory);
 
-      if (existingCount > 0) {
-        const { error: deleteError } = await supabase
-          .from('companies')
-          .delete()
-          .eq('category', selectedCategory);
+      const response = await fetch('/api/v1/excel/parse', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: payload,
+      });
 
-        if (deleteError) {
-          console.error('Error deleting existing companies:', deleteError);
-          throw new Error(`Failed to delete existing companies: ${deleteError.message}`);
-        }
-
-        console.log(`✅ Deleted ${existingCount} existing companies`);
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        const serverError = Array.isArray(result?.errors)
+          ? result.errors.join(', ')
+          : result?.error || 'Failed to process Excel file';
+        throw new Error(serverError);
       }
 
-      // Step 2: Read and process Excel file
-      console.log('Step 2: Reading Excel file...');
-      setUploadMessage('Reading Excel file...');
-      
-      const XLSX = await import('xlsx');
-      const data = await selectedFile.arrayBuffer();
-      const workbook = XLSX.read(data, { type: 'array' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      const addedCount = Number(result.count || 0);
+      const deletedCount = Number(result.existingDeleted || 0);
+      const parseErrors = Array.isArray(result.errors) ? result.errors : [];
 
-      console.log('Excel data loaded:', jsonData.length, 'rows');
-      console.log('First row sample:', jsonData[0]);
-      console.log('Available columns:', Object.keys(jsonData[0] || {}));
-
-      // Check if products column exists
-      const firstRow = jsonData[0] as any;
-      const hasProductsColumn = firstRow && (
-        'PRODUCTS' in firstRow || 
-        'Products' in firstRow || 
-        'products' in firstRow || 
-        'PRODUCT' in firstRow
-      );
-      
-      if (!hasProductsColumn) {
-        console.warn('⚠️ WARNING: No PRODUCTS column found in Excel file!');
-        console.warn('Available columns:', Object.keys(firstRow || {}));
-        console.warn('Products will be empty for all companies.');
-      }
-
-      // Check available columns
-      console.log('📋 Available Excel columns:', Object.keys(firstRow || {}));
-      console.log('📋 First row sample data:', firstRow);
-
-      // Process each row and create companies
-      const companiesAPI = (await import('@/lib/api')).companiesAPI;
-      let successCount = 0;
-      let errorCount = 0;
-      const errors: string[] = [];
-
-      for (const row of jsonData) {
-        try {
-          // Helper function to get value from multiple possible column names
-          const getValue = (keys: string[]) => {
-            for (const key of keys) {
-              const value = (row as any)[key];
-              if (value !== undefined && value !== null && value !== '') return String(value).trim();
-            }
-            return '';
-          };
-
-          // Debug: Log all keys in the row
-          const rowKeys = Object.keys(row as object);
-          console.log('Row keys:', rowKeys);
-
-          // Clean phone number - remove extra spaces and limit length
-          const cleanPhone = (phone: string) => {
-            return phone.replace(/\s+/g, ' ').substring(0, 50);
-          };
-
-          const companyData = {
-            companyName: getValue(['COMPANY NAME', 'Company Name', 'companyName', 'COMPANY_NAME', 'NAME']),
-            contactPerson: getValue(['CONTACT PERSON', 'Contact Person', 'contactPerson', 'CONTACT']),
-            email: getValue(['E-MAIL ID', 'EMAIL ID', 'Email', 'email', 'EMAIL', 'MAIL ID']),
-            phone: cleanPhone(getValue(['PHONE NUMBER', 'Phone Number', 'phone', 'PHONE', 'NUMBER'])),
-            address: getValue(['ADDRESS', 'Address', 'address']),
-            category: selectedCategory,
-            description: getValue(['DESCRIPTION', 'Description', 'description']),
-            products: (() => {
-              const productsStr = getValue(['PRODUCTS', 'Products', 'products', 'PRODUCT']);
-              if (!productsStr) return [];
-              // Split by comma and clean up each product
-              const productArray = productsStr.split(',').map((p: string) => p.trim()).filter((p: string) => p.length > 0);
-              console.log('Products parsed:', productsStr, '→', productArray);
-              return productArray;
-            })(),
-            website: (() => {
-              // Try all possible website column names
-              const websiteValue = getValue(['WEBSITE', 'Website', 'website', 'WEB SITE', 'URL', 'Web Site', 'web site']);
-              console.log('🌐 Website raw value:', websiteValue, 'from row:', (row as any)['WEBSITE']);
-              return websiteValue;
-            })(),
-            certifications: getValue(['CERTIFICATIONS', 'Certifications', 'certifications']),
-            gstNumber: getValue(['GST NUMBER', 'GST Number', 'gstNumber', 'GST']).substring(0, 50),
-            status: 'active'
-          };
-
-          console.log('Processing company:', companyData.companyName);
-          console.log('  - Email:', companyData.email);
-          console.log('  - Website:', companyData.website);
-          console.log('  - Products:', companyData.products);
-
-          // Only create if company name exists
-          if (companyData.companyName && companyData.companyName.trim()) {
-            try {
-              const result = await companiesAPI.create(companyData);
-              console.log('Company created:', result);
-              successCount++;
-            } catch (apiError: any) {
-              console.error('API error, trying direct Supabase insert:', apiError);
-              
-              // Fallback: Direct Supabase insert
-              try {
-                const supabase = (await import('@/lib/supabase')).default;
-                const { data, error: supabaseError } = await supabase
-                  .from('companies')
-                  .insert([{
-                    company_name: companyData.companyName,
-                    contact_person: companyData.contactPerson || '',
-                    email: companyData.email || '',
-                    phone: companyData.phone || '',
-                    address: companyData.address || '',
-                    category: companyData.category,
-                    description: companyData.description || '',
-                    products: companyData.products || [],
-                    website: companyData.website || '',
-                    certifications: companyData.certifications || '',
-                    gst_number: companyData.gstNumber || '',
-                    status: companyData.status || 'active'
-                  }])
-                  .select();
-                
-                if (supabaseError) {
-                  throw supabaseError;
-                }
-                
-                console.log('Company created via Supabase:', data);
-                successCount++;
-              } catch (supabaseError: any) {
-                console.error('Supabase error:', supabaseError);
-                errors.push(`${companyData.companyName}: ${supabaseError.message}`);
-                errorCount++;
-              }
-            }
-          } else {
-            console.warn('Skipping row - no company name. Available keys:', Object.keys(row as object));
-          }
-        } catch (error: any) {
-          console.error('Error creating company:', error);
-          errors.push(error.message || 'Unknown error');
-          errorCount++;
-        }
-      }
-
-      console.log('Upload complete:', { successCount, errorCount, errors });
-
-      const { count: totalInSupabase, error: verifyError } = await supabase
-        .from('companies')
-        .select('*', { count: 'exact', head: true })
-        .eq('category', selectedCategory);
-
-      if (verifyError) {
-        console.warn('Verification query failed:', verifyError);
-      }
-
-      let message = `Successfully replaced ${selectedCategory} data! `;
-      if (existingCount > 0) {
-        message += `Deleted ${existingCount} old companies. `;
-      }
-      message += `Added ${successCount} new companies`;
-      if (errorCount > 0) {
-        message += `, ${errorCount} errors`;
-      }
-      if (!hasProductsColumn) {
-        message += `. ⚠️ Note: No PRODUCTS column found in Excel - products will be empty.`;
-      }
-      if (typeof totalInSupabase === 'number') {
-        message += ` ✅ Verified ${totalInSupabase} records in Supabase for ${selectedCategory}.`;
+      let message = `Successfully replaced ${selectedCategory} data. `;
+      message += `Deleted ${deletedCount} old companies and added ${addedCount} companies.`;
+      if (parseErrors.length > 0) {
+        message += ` ${parseErrors.length} row issues were skipped.`;
       }
 
       setUploadStatus('success');

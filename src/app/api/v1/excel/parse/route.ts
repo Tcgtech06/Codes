@@ -1,8 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import supabase from '@/lib/supabase';
+import { verifyAdminFromRequest } from '@/lib/serverAuth';
+
+const getValue = (row: Record<string, unknown>, keys: string[]) => {
+  for (const key of keys) {
+    const value = row[key];
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value).trim();
+    }
+  }
+
+  return '';
+};
+
+const normalizeProducts = (value: string): string[] => {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
 
 export async function POST(request: NextRequest) {
+  const auth = verifyAdminFromRequest(request);
+  if (!auth.isValid) {
+    return NextResponse.json({ error: auth.error }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -27,40 +52,20 @@ export async function POST(request: NextRequest) {
     // Convert to JSON
     const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-    const companies = [];
-    const errors = [];
+    const companies = [] as Array<Record<string, unknown>>;
+    const errors: string[] = [];
 
     for (let i = 0; i < jsonData.length; i++) {
-      const row: any = jsonData[i];
-      
-      // Map column names (handle different formats)
-      // Column A: Company Name
-      const companyName = row['COMPANY NAME'] || row['Company Name'] || row['company_name'] || 
-                         row['CompanyName'] || row['A'] || '';
-      
-      // Column B: Contact Person  
-      const contactPerson = row['CONTACT PERSON'] || row['Contact Person'] || row['contact_person'] || 
-                           row['ContactPerson'] || row['B'] || '';
-      
-      // Column C: Phone Number
-      const phone = row['PHONE NUMBER'] || row['Phone Number'] || row['phone'] || 
-                   row['PhoneNumber'] || row['C'] || '';
-      
-      // Column D: Address
-      const address = row['ADDRESS'] || row['Address'] || row['address'] || row['D'] || '';
-      
-      // Column E: Email
-      const email = row['E-MAIL ID'] || row['Email'] || row['email'] || row['E'] || '';
-      
-      // Column F: Website
-      const website = row['WEBSITE'] || row['Website'] || row['website'] || row['F'] || '';
-      
-      // Column G: Products/Services
-      const products = row['PRODUCTS'] || row['Products'] || row['products'] || 
-                      row['SERVICES'] || row['Services'] || row['G'] || '';
-      
-      // Column H: GST Number
-      const gstNumber = row['GST NUMBER'] || row['GST No'] || row['gst_number'] || row['H'] || '';
+      const row = jsonData[i] as Record<string, unknown>;
+
+      const companyName = getValue(row, ['COMPANY NAME', 'Company Name', 'company_name', 'CompanyName', 'A', 'NAME']);
+      const contactPerson = getValue(row, ['CONTACT PERSON', 'Contact Person', 'contact_person', 'ContactPerson', 'B', 'CONTACT']);
+      const phone = getValue(row, ['PHONE NUMBER', 'Phone Number', 'phone', 'PhoneNumber', 'C', 'NUMBER']);
+      const address = getValue(row, ['ADDRESS', 'Address', 'address', 'D']);
+      const email = getValue(row, ['E-MAIL ID', 'EMAIL ID', 'Email', 'email', 'E', 'MAIL ID']);
+      const website = getValue(row, ['WEBSITE', 'Website', 'website', 'F', 'WEB SITE', 'URL']);
+      const productsRaw = getValue(row, ['PRODUCTS', 'Products', 'products', 'SERVICES', 'Services', 'G', 'PRODUCT']);
+      const gstNumber = getValue(row, ['GST NUMBER', 'GST No', 'gst_number', 'H', 'GST']);
 
       if (!companyName) {
         errors.push(`Row ${i + 2}: Company name is required`);
@@ -79,7 +84,7 @@ export async function POST(request: NextRequest) {
         email: email || '',
         website: website || '',
         description: '',
-        products: products ? (Array.isArray(products) ? products : [products]) : [],
+        products: normalizeProducts(productsRaw),
         gst_number: gstNumber || '',
         certifications: '',
         status: 'active'
@@ -91,6 +96,28 @@ export async function POST(request: NextRequest) {
         success: false,
         errors: errors.length > 0 ? errors : ['No valid data found in Excel file']
       }, { status: 400 });
+    }
+
+    const { data: existingCompanies, error: existingError } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('category', category);
+
+    if (existingError) {
+      return NextResponse.json({ success: false, errors: [existingError.message] }, { status: 500 });
+    }
+
+    const existingCount = existingCompanies?.length || 0;
+
+    if (existingCount > 0) {
+      const { error: deleteError } = await supabase
+        .from('companies')
+        .delete()
+        .eq('category', category);
+
+      if (deleteError) {
+        return NextResponse.json({ success: false, errors: [deleteError.message] }, { status: 500 });
+      }
     }
 
     // Insert into Supabase
@@ -109,17 +136,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Successfully processed ${companies.length} companies`,
+      message: `Successfully replaced ${category} data`,
       count: companies.length,
+      existingDeleted: existingCount,
       companies: data,
       errors: errors.length > 0 ? errors : undefined
     });
 
-  } catch (error: any) {
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Excel parse error:', error);
     return NextResponse.json({
       success: false,
-      errors: [error.message]
+      errors: [errorMessage]
     }, { status: 500 });
   }
 }
