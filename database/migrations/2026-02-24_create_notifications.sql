@@ -12,6 +12,11 @@ CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created
 -- Enable Row Level Security
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow authenticated users to read notifications" ON notifications;
+DROP POLICY IF EXISTS "Allow service role to insert notifications" ON notifications;
+DROP POLICY IF EXISTS "Allow authenticated users to delete notifications" ON notifications;
+
 -- Create policy to allow all authenticated users to read notifications
 CREATE POLICY "Allow authenticated users to read notifications"
   ON notifications
