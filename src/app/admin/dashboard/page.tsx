@@ -58,6 +58,7 @@ interface AdvertiseSubmission {
   adType: string;
   budget?: string;
   message?: string;
+  visitingCardName?: string;
   submittedAt: string;
   type: string;
   status: string;
@@ -77,6 +78,7 @@ interface CollaborateSubmission {
   timeline?: string;
   budget?: string;
   experience?: string;
+  visitingCardName?: string;
   submittedAt: string;
   type: string;
   status: string;
@@ -767,6 +769,12 @@ export default function AdminDashboard() {
                       <span className="text-sm text-gray-600">{submission.budget}</span>
                     </div>
                   )}
+                  {submission.visitingCardName && (
+                    <div className="mb-2 text-sm text-gray-700">
+                      <FileText size={14} className="inline mr-1" />
+                      Visiting Card: {submission.visitingCardName}
+                    </div>
+                  )}
                   {submission.message && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <p className="text-sm text-gray-700">{submission.message}</p>
@@ -853,6 +861,12 @@ export default function AdminDashboard() {
                       <div className="mt-3">
                         <h4 className="font-semibold text-gray-900 mb-1">Experience:</h4>
                         <p className="text-sm text-gray-700">{submission.experience}</p>
+                      </div>
+                    )}
+                    {submission.visitingCardName && (
+                      <div className="mt-3 text-sm text-gray-700">
+                        <FileText size={14} className="inline mr-1" />
+                        Visiting Card: {submission.visitingCardName}
                       </div>
                     )}
                   </div>

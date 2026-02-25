@@ -73,6 +73,10 @@ function AddDataContent() {
     setIsSubmitting(true);
     
     try {
+      const attachments = visitingCard
+        ? [{ name: visitingCard.name, type: visitingCard.type, size: visitingCard.size, purpose: 'visiting-card' }]
+        : [];
+
       const submissionData = {
         type: 'add-data',
         formData: {
@@ -87,8 +91,9 @@ function AddDataContent() {
           products: formData.products,
           certifications: formData.certifications,
           gstNumber: formData.gstNumber,
+          visitingCardName: visitingCard?.name || ''
         },
-        attachments: []
+        attachments
       };
       
       await submissionsAPI.create(submissionData);
@@ -242,6 +247,32 @@ function AddDataContent() {
                 placeholder="Describe your company, services, and expertise..."
                 required
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Visiting Card Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleVisitingCardSelect}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+              />
+              {visitingCard && (
+                <p className="mt-2 text-sm text-gray-600">Selected: {visitingCard.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Visiting Card Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleVisitingCardSelect}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+              />
+              {visitingCard && (
+                <p className="text-sm text-gray-600 mt-2">Selected: {visitingCard.name}</p>
+              )}
             </div>
 
             <button

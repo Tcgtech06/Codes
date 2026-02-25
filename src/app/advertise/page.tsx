@@ -20,6 +20,7 @@ export default function AdvertisePage() {
     budget: '',
     message: ''
   });
+  const [visitingCard, setVisitingCard] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -52,14 +53,27 @@ export default function AdvertisePage() {
     });
   };
 
+  const handleVisitingCardSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setVisitingCard(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      const attachments = visitingCard
+        ? [{ name: visitingCard.name, type: visitingCard.type, size: visitingCard.size, purpose: 'visiting-card' }]
+        : [];
+
       await submissionsAPI.create({
         type: 'advertise',
-        formData: { ...formData },
+        formData: {
+          ...formData,
+          visitingCardName: visitingCard?.name || ''
+        },
+        attachments,
       });
 
       setSubmitStatus('success');
@@ -69,6 +83,7 @@ export default function AdvertisePage() {
           companyName: '', contactPerson: '', email: '', phone: '',
           website: '', category: '', adType: '', budget: '', message: ''
         });
+        setVisitingCard(null);
         setSubmitStatus('idle');
       }, 3000);
     } catch (error) {
@@ -226,16 +241,30 @@ export default function AdvertisePage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Website URL</label>
-                <input
-                  type="url"
-                  name="website"
-                  value={formData.website}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
-                  placeholder="https://yourwebsite.com"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Website URL</label>
+                  <input
+                    type="url"
+                    name="website"
+                    value={formData.website}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Visiting Card Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleVisitingCardSelect}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  />
+                  {visitingCard && (
+                    <p className="mt-2 text-sm text-gray-600">Selected: {visitingCard.name}</p>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -7,6 +7,8 @@ import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import SplashScreen from "@/components/SplashScreen";
+import MobileMenu from "@/components/MobileMenu";
+import NotificationIcon from "@/components/NotificationIcon";
 import { AuthProvider } from "@/components/AuthProvider";
 
 const geistSans = Geist({
@@ -70,6 +72,8 @@ export default function RootLayout({
         <AuthProvider>
           {false && isMobile && showSplash && <SplashScreen onFinish={handleSplashFinish} />}
           
+          <MobileMenu />
+          <NotificationIcon />
           <Navbar />
           <div className="hidden md:block h-16"></div>
           <main className="flex-grow pb-16 md:pb-0">

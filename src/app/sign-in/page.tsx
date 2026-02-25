@@ -42,8 +42,8 @@ export default function SignInPage() {
 
   const redirectPath =
     typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search).get('redirect') || '/dashboard'
-      : '/dashboard';
+      ? new URLSearchParams(window.location.search).get('redirect') || '/'
+      : '/';
 
   // Check auth session and redirect authenticated users.
   useEffect(() => {

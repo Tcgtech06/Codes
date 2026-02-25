@@ -8,7 +8,7 @@ type GoogleLoginButtonProps = {
   onError?: (message: string) => void;
 };
 
-export function GoogleLoginButton({ redirectPath = '/dashboard', onError }: GoogleLoginButtonProps) {
+export function GoogleLoginButton({ redirectPath = '/', onError }: GoogleLoginButtonProps) {
   const [loading, setLoading] = useState(false);
 
   /**

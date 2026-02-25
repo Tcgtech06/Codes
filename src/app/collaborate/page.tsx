@@ -11,8 +11,10 @@ export default function CollaboratePage() {
     name: '',
     email: '',
     company: '',
+    gstNumber: '',
     message: ''
   });
+  const [visitingCard, setVisitingCard] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -23,11 +25,20 @@ export default function CollaboratePage() {
     });
   };
 
+  const handleVisitingCardSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setVisitingCard(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      const attachments = visitingCard
+        ? [{ name: visitingCard.name, type: visitingCard.type, size: visitingCard.size, purpose: 'visiting-card' }]
+        : [];
+
       await submissionsAPI.create({
         type: 'collaborate',
         formData: {
@@ -35,18 +46,21 @@ export default function CollaboratePage() {
           contactPerson: formData.name,
           email: formData.email,
           phone: '',
+          gstNumber: formData.gstNumber,
           organizationType: 'Business',
           collaborationType: 'General Partnership',
           projectDescription: formData.message,
           message: formData.message,
+          visitingCardName: visitingCard?.name || ''
         },
-        attachments: [],
+        attachments,
       });
 
       setSubmitStatus('success');
 
       setTimeout(() => {
-        setFormData({ name: '', email: '', company: '', message: '' });
+        setFormData({ name: '', email: '', company: '', gstNumber: '', message: '' });
+        setVisitingCard(null);
         setSubmitStatus('idle');
       }, 3000);
     } catch (error) {
@@ -242,6 +256,18 @@ export default function CollaboratePage() {
               </div>
 
               <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">GST Number</label>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={formData.gstNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  placeholder="Enter GST Number (optional)"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Message *</label>
                 <textarea
                   name="message"
@@ -252,6 +278,19 @@ export default function CollaboratePage() {
                   placeholder="Tell us about your collaboration idea..."
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Visiting Card Image</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleVisitingCardSelect}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                />
+                {visitingCard && (
+                  <p className="mt-2 text-sm text-gray-600">Selected: {visitingCard.name}</p>
+                )}
               </div>
 
               <button
