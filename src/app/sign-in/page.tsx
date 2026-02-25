@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { getAllStates, getDistricts } from 'india-state-district';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
 import {
@@ -11,6 +12,8 @@ import {
   signInWithEmail,
   signUpWithEmail,
 } from '@/lib/auth';
+
+const STATES = getAllStates().slice().sort((a, b) => a.name.localeCompare(b.name));
 
 export default function SignInPage() {
   const router = useRouter();
@@ -31,8 +34,11 @@ export default function SignInPage() {
     email: '',
     password: '',
     phone: '',
+    stateCode: '',
+    district: '',
   });
   const [resetPassword, setResetPassword] = useState('');
+  const districts = manualForm.stateCode ? getDistricts(manualForm.stateCode) : [];
 
   const redirectPath =
     typeof window !== 'undefined'
@@ -111,15 +117,19 @@ export default function SignInPage() {
       }
 
       if (mode === 'sign-up') {
+        const selectedState = STATES.find((state) => state.code === manualForm.stateCode);
+
         const data = await signUpWithEmail(
           manualForm.name.trim(),
           manualForm.email.trim(),
           manualForm.password,
-          manualForm.phone.trim()
+          manualForm.phone.trim(),
+          selectedState?.name ?? '',
+          manualForm.district
         );
 
         if (data.requiresEmailConfirmation) {
-          setSuccess('Account created. Please check your email to confirm your account before signing in.');
+          setSuccess('Account created.');
           setMode('sign-in');
           setManualForm((prev) => ({ ...prev, password: '' }));
           return;
@@ -243,6 +253,50 @@ export default function SignInPage() {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                <select
+                  value={manualForm.stateCode}
+                  onChange={(event) =>
+                    setManualForm((prev) => ({
+                      ...prev,
+                      stateCode: event.target.value,
+                      district: '',
+                    }))
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  required
+                >
+                  <option value="">Select state</option>
+                  {STATES.map((state) => (
+                    <option key={state.code} value={state.code}>
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+                <select
+                  value={manualForm.district}
+                  onChange={(event) =>
+                    setManualForm((prev) => ({
+                      ...prev,
+                      district: event.target.value,
+                    }))
+                  }
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 disabled:bg-gray-100"
+                  disabled={!manualForm.stateCode}
+                  required
+                >
+                  <option value="">{manualForm.stateCode ? 'Select district' : 'Select state first'}</option>
+                  {districts.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
+                </select>
               </div>
             </>
           )}

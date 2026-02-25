@@ -1,7 +1,7 @@
 // React hooks for local storage data management
 // This will be replaced with Supabase hooks later
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   localStorageService, 
   Company, 
@@ -11,8 +11,8 @@ import {
 
 // Hook for managing companies
 export const useCompanies = () => {
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [companies, setCompanies] = useState<Company[]>(() => localStorageService.getCompanies());
+  const [loading, setLoading] = useState(false);
 
   const reload = () => {
     setLoading(true);
@@ -20,10 +20,6 @@ export const useCompanies = () => {
     setCompanies(data);
     setLoading(false);
   };
-
-  useEffect(() => {
-    reload();
-  }, []);
 
   const addCompany = (company: Omit<Company, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newCompany = localStorageService.addCompany(company);
@@ -41,8 +37,8 @@ export const useCompanies = () => {
 
 // Hook for managing priorities
 export const usePriorities = () => {
-  const [priorities, setPriorities] = useState<Priority[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [priorities, setPriorities] = useState<Priority[]>(() => localStorageService.getPriorities());
+  const [loading, setLoading] = useState(false);
 
   const reload = () => {
     setLoading(true);
@@ -50,10 +46,6 @@ export const usePriorities = () => {
     setPriorities(data);
     setLoading(false);
   };
-
-  useEffect(() => {
-    reload();
-  }, []);
 
   const createPriority = (priority: Omit<Priority, 'id' | 'createdAt'>) => {
     const newPriority = localStorageService.addPriority(priority);
@@ -83,8 +75,8 @@ export const usePriorities = () => {
 
 // Hook for managing form submissions
 export const useFormSubmissions = () => {
-  const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [submissions, setSubmissions] = useState<FormSubmission[]>(() => localStorageService.getFormSubmissions());
+  const [loading, setLoading] = useState(false);
 
   const reload = () => {
     setLoading(true);
@@ -92,10 +84,6 @@ export const useFormSubmissions = () => {
     setSubmissions(data);
     setLoading(false);
   };
-
-  useEffect(() => {
-    reload();
-  }, []);
 
   const addSubmission = (submission: Omit<FormSubmission, 'id' | 'submittedAt'>) => {
     const newSubmission = localStorageService.addFormSubmission(submission);

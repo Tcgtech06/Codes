@@ -3,16 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { isUserSignedIn } from '@/lib/userSession';
+import { useAuth } from '@/components/AuthProvider';
 
 const Navbar = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    setSignedIn(isUserSignedIn());
-  }, []);
+  const { user } = useAuth();
+  const signedIn = Boolean(user);
+  const displayName = user?.name?.trim() || user?.email || 'User';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,7 +53,10 @@ const Navbar = () => {
             <Link href="/about" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">About Us</Link>
             <Link href="/contact" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Contact Us</Link>
             {signedIn ? (
-              <Link href="/logout" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Logout</Link>
+              <>
+                <Link href="/dashboard" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">{displayName}</Link>
+                <Link href="/logout" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Logout</Link>
+              </>
             ) : (
               <Link href="/sign-in" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Sign In</Link>
             )}

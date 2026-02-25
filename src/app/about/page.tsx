@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function About() {
   const [activeStory, setActiveStory] = useState(0);
@@ -236,12 +237,12 @@ export default function About() {
               Be part of the next chapter in textile industry innovation
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="/contact" className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-300">
+              <Link href="/contact" className="bg-white text-blue-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition-colors duration-300">
                 Contact Us
-              </a>
-              <a href="/catalogue" className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300">
+              </Link>
+              <Link href="/catalogue" className="border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition-colors duration-300">
                 Explore Catalogue
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   Building2, 
   Mail, 
@@ -23,6 +23,7 @@ interface CategoryPageClientProps {
 }
 
 export default function CategoryPageClient({ categorySlug, categoryName }: CategoryPageClientProps) {
+  void categorySlug;
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,10 +46,13 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
     return [];
   };
 
-  const normalizeCompany = (company: any) => ({
-    ...company,
-    products: normalizeProducts(company.products)
-  });
+  const normalizeCompany = useCallback(
+    (company: any) => ({
+      ...company,
+      products: normalizeProducts(company.products)
+    }),
+    []
+  );
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -69,7 +73,7 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
       }
     };
     fetchCompanies();
-  }, [categoryName]);
+  }, [categoryName, normalizeCompany]);
 
   useEffect(() => {
     const priorities = localStorageService
@@ -97,27 +101,45 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFilter]);
 
-  const filteredCompanies = companies
-    .filter(company =>
+  const filteredCompanies = (() => {
+    const searchedCompanies = companies.filter(company =>
       company.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       normalizeProducts(company.products).some((p: string) => p.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .sort((a, b) => {
-      const priorityA = priorityMap.get(String(a.companyName || '').trim().toLowerCase());
-      const priorityB = priorityMap.get(String(b.companyName || '').trim().toLowerCase());
+    );
 
-      if (priorityA !== undefined && priorityB !== undefined && priorityA !== priorityB) {
-        return priorityA - priorityB;
-      }
-
-      if (priorityA !== undefined) return -1;
-      if (priorityB !== undefined) return 1;
-
+    const sortByDate = (a: any, b: any) => {
       const dateA = new Date(a.createdAt || 0).getTime();
       const dateB = new Date(b.createdAt || 0).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    };
+
+    const prioritizedCompanies = searchedCompanies
+      .map((company) => ({
+        company,
+        priority: priorityMap.get(String(company.companyName || '').trim().toLowerCase()),
+      }))
+      .filter((item) => item.priority !== undefined)
+      .sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return (a.priority as number) - (b.priority as number);
+        }
+
+        return sortByDate(a.company, b.company);
+      });
+
+    const nonPrioritized = searchedCompanies
+      .filter((company) => !priorityMap.has(String(company.companyName || '').trim().toLowerCase()))
+      .sort(sortByDate);
+
+    const arranged = [...nonPrioritized];
+    prioritizedCompanies.forEach(({ company, priority }) => {
+      const targetIndex = Math.max(0, Math.min((priority as number) - 1, arranged.length));
+      arranged.splice(targetIndex, 0, company);
     });
+
+    return arranged;
+  })();
 
   if (loading) {
     return (

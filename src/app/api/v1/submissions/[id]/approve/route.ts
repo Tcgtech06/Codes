@@ -69,14 +69,44 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Submission has incomplete company data' }, { status: 400 });
     }
 
-    const { data: createdCompany, error: companyError } = await supabase
+    let createdCompany: { id: string } | null = null;
+
+    const { data: primaryCompany, error: primaryError } = await supabase
       .from('companies')
       .insert([companyPayload])
       .select('*')
       .single();
 
-    if (companyError) {
-      return NextResponse.json({ error: companyError.message }, { status: 500 });
+    if (!primaryError && primaryCompany) {
+      createdCompany = primaryCompany;
+    } else {
+      const fallbackPayload = {
+        name: companyPayload.company_name,
+        category: companyPayload.category,
+        contact_person: companyPayload.contact_person,
+        phone: companyPayload.phone,
+        address: companyPayload.address,
+        email: companyPayload.email,
+        website: companyPayload.website,
+        description: companyPayload.description,
+        products: normalizeProducts(formData.products).join(', '),
+        gst_number: companyPayload.gst_number,
+        certifications: companyPayload.certifications,
+        is_active: true,
+      };
+
+      const { data: fallbackCompany, error: fallbackError } = await supabase
+        .from('companies')
+        .insert([fallbackPayload])
+        .select('*')
+        .single();
+
+      if (fallbackError || !fallbackCompany) {
+        const details = [primaryError?.message, fallbackError?.message].filter(Boolean).join(' | ');
+        return NextResponse.json({ error: details || 'Failed to create company from submission' }, { status: 500 });
+      }
+
+      createdCompany = fallbackCompany;
     }
 
     const { error: updateError } = await supabase
@@ -94,7 +124,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({
       message: 'Submission approved and company added successfully',
-      companyId: createdCompany.id,
+      companyId: createdCompany?.id,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

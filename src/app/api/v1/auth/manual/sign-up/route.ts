@@ -3,11 +3,18 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, phone } = await request.json();
+    const { name, email, password, phone, state, district } = await request.json();
 
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: 'Name, email, and password are required.' },
+        { status: 400 }
+      );
+    }
+
+    if (!state || !district) {
+      return NextResponse.json(
+        { error: 'State and district are required.' },
         { status: 400 }
       );
     }
@@ -43,6 +50,8 @@ export async function POST(request: NextRequest) {
         data: {
           full_name: name,
           phone: phone || '',
+          state,
+          district,
         },
       },
     });

@@ -73,6 +73,7 @@ interface CollaborateSubmission {
   organizationType: string;
   collaborationType: string;
   projectDescription: string;
+  message?: string;
   timeline?: string;
   budget?: string;
   experience?: string;
@@ -962,14 +963,14 @@ export default function AdminDashboard() {
                 <div key={index} className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="text-xl font-bold text-gray-900">{submission.organizationName}</h3>
+                      <h3 className="text-xl font-bold text-gray-900">{submission.organizationName || 'Collaboration Request'}</h3>
                       <p className="text-sm text-gray-500">
                         <Calendar size={14} className="inline mr-1" />
                         {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
                     <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
-                      {submission.collaborationType}
+                      {submission.collaborationType || 'Collaboration'}
                     </span>
                   </div>
                   
@@ -982,7 +983,11 @@ export default function AdminDashboard() {
                     <div className="flex items-center gap-2">
                       <Phone size={16} className="text-gray-400" />
                       <span className="text-gray-600">Phone:</span>
-                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-600 hover:underline">{submission.phone}</a>
+                      {submission.phone ? (
+                        <a href={`tel:${submission.phone}`} className="font-medium text-blue-600 hover:underline">{submission.phone}</a>
+                      ) : (
+                        <span className="font-medium text-gray-500">Not provided</span>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Mail size={16} className="text-gray-400" />
@@ -990,14 +995,14 @@ export default function AdminDashboard() {
                       <a href={`mailto:${submission.email}`} className="font-medium text-blue-600 hover:underline">{submission.email}</a>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Type:</span>
-                      <span className="font-medium">{submission.organizationType}</span>
+                      <span className="text-gray-600">Company:</span>
+                      <span className="font-medium">{submission.organizationName || 'Not provided'}</span>
                     </div>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-gray-200">
-                    <h4 className="font-semibold text-gray-900 mb-2">Project Description:</h4>
-                    <p className="text-sm text-gray-700 mb-3">{submission.projectDescription}</p>
+                    <h4 className="font-semibold text-gray-900 mb-2">Message:</h4>
+                    <p className="text-sm text-gray-700 mb-3">{submission.message || submission.projectDescription || 'No message provided.'}</p>
                     
                     {submission.timeline && (
                       <div className="mb-2">

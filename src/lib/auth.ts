@@ -73,13 +73,20 @@ async function applySession(session: Session | null): Promise<void> {
   }
 }
 
-export async function signUpWithEmail(name: string, email: string, password: string, phone?: string) {
+export async function signUpWithEmail(
+  name: string,
+  email: string,
+  password: string,
+  phone?: string,
+  state?: string,
+  district?: string
+) {
   const response = await fetch('/api/v1/auth/manual/sign-up', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name, email, password, phone }),
+    body: JSON.stringify({ name, email, password, phone, state, district }),
   });
 
   const data = (await response.json()) as ManualAuthResponse & { error?: string };

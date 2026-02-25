@@ -24,7 +24,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return !sessionStorage.getItem('splashShown');
+  });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -35,12 +38,6 @@ export default function RootLayout({
     
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
-    // Check if splash has been shown in this session
-    const splashShown = sessionStorage.getItem('splashShown');
-    if (splashShown) {
-      setShowSplash(false);
-    }
 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);

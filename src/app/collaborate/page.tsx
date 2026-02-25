@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, Send, CheckCircle, Users, Handshake, Target, Lightbulb } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { submissionsAPI } from '@/lib/api';
 
 export default function CollaboratePage() {
   const router = useRouter();
@@ -27,13 +28,20 @@ export default function CollaboratePage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/v1/admin/collaborations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+      await submissionsAPI.create({
+        type: 'collaborate',
+        formData: {
+          organizationName: formData.company,
+          contactPerson: formData.name,
+          email: formData.email,
+          phone: '',
+          organizationType: 'Business',
+          collaborationType: 'General Partnership',
+          projectDescription: formData.message,
+          message: formData.message,
+        },
+        attachments: [],
       });
-
-      if (!response.ok) throw new Error('Submission failed');
 
       setSubmitStatus('success');
 

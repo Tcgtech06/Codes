@@ -170,7 +170,7 @@ export default function AdvertisePage() {
                 <CheckCircle className="text-green-600" size={20} />
                 <div>
                   <p className="text-green-800 font-medium">Request Submitted Successfully!</p>
-                  <p className="text-green-600 text-sm">We'll contact you within 24 hours with advertising options.</p>
+                  <p className="text-green-600 text-sm">We&apos;ll contact you within 24 hours with advertising options.</p>
                 </div>
               </div>
             )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface VisitorStats {
   liveVisitors: number;
@@ -14,27 +14,7 @@ export const useVisitorStats = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Initialize visitor tracking
-    initializeVisitorTracking();
-    
-    // Load statistics
-    loadStats();
-    
-    // Set up real-time updates - ONLY update state, don't modify localStorage frequently
-    const interval = setInterval(() => {
-      // Just update the display, don't write to localStorage
-      updateLiveVisitorsDisplay();
-    }, 30000); // Update every 30 seconds
-    
-    return () => {
-      clearInterval(interval);
-      // Clean up visitor session
-      cleanupVisitorSession();
-    };
-  }, []); // Empty dependency array - run only once
-
-  const initializeVisitorTracking = () => {
+  const initializeVisitorTracking = useCallback(() => {
     try {
       // Check if this is a new session
       const sessionId = sessionStorage.getItem('visitor_session_id');
@@ -57,7 +37,7 @@ export const useVisitorStats = () => {
     } catch (error) {
       console.error('Error initializing visitor tracking:', error);
     }
-  };
+  }, []);
 
   const incrementTotalVisitors = () => {
     try {
@@ -131,7 +111,7 @@ export const useVisitorStats = () => {
   };
 
   // New function that only updates display without writing to localStorage
-  const updateLiveVisitorsDisplay = () => {
+  const updateLiveVisitorsDisplay = useCallback(() => {
     try {
       const liveVisitors = JSON.parse(localStorage.getItem('live_visitors') || '[]');
       const now = Date.now();
@@ -149,9 +129,9 @@ export const useVisitorStats = () => {
     } catch (error) {
       console.error('Error updating live visitors display:', error);
     }
-  };
+  }, []);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -200,7 +180,7 @@ export const useVisitorStats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const getTotalCompanies = async (): Promise<number> => {
     try {
@@ -234,14 +214,28 @@ export const useVisitorStats = () => {
     }
   };
 
-  const cleanupVisitorSession = () => {
+  const cleanupVisitorSession = useCallback(() => {
     try {
       // Update last activity before leaving
       localStorage.setItem('last_activity', Date.now().toString());
     } catch (error) {
       console.error('Error cleaning up visitor session:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    initializeVisitorTracking();
+    loadStats();
+
+    const interval = setInterval(() => {
+      updateLiveVisitorsDisplay();
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      cleanupVisitorSession();
+    };
+  }, [cleanupVisitorSession, initializeVisitorTracking, loadStats, updateLiveVisitorsDisplay]);
 
   return {
     stats,
