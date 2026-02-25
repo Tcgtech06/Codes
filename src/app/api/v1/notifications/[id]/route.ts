@@ -7,13 +7,15 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
+
     const { error } = await supabase
       .from('notifications')
       .delete()
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (error) throw error;
 
