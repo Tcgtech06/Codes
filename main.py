@@ -2849,7 +2849,7 @@ class InvoiceApp(ct.CTk):
         hex_color = data['biz_color'].lstrip('#')
         r, g, b = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
-        # Logo on left side - only if exists
+        # Logo at absolute top left corner - moderate size
         if data['biz_logo'] and os.path.exists(data['biz_logo']):
             try:
                 logo_path = data['biz_logo']
@@ -2862,7 +2862,8 @@ class InvoiceApp(ct.CTk):
                     jpeg_path = logo_path.replace('.png', '_temp.jpg')
                     img.save(jpeg_path, 'JPEG')
                     logo_path = jpeg_path
-                pdf.image(logo_path, 10, 8, 40)
+                # Size: 50mm width, Position: very top (y=3) and left (x=5)
+                pdf.image(logo_path, 5, 3, 50)
             except Exception as e:
                 print(f"Logo load failed: {e}")
                 # Continue without logo
@@ -3397,15 +3398,16 @@ class InvoiceApp(ct.CTk):
         # Header Table for Logo and Biz Name
         header_table = doc.add_table(rows=1, cols=2)
         header_table.autofit = False
-        header_table.columns[0].width = Inches(2.0)
-        header_table.columns[1].width = Inches(4.0)
+        header_table.columns[0].width = Inches(2.2)
+        header_table.columns[1].width = Inches(3.8)
 
-        # Logo Cell
+        # Logo Cell - Moderate size
         c1 = header_table.rows[0].cells[0]
         p1 = c1.paragraphs[0]
         if data['biz_logo'] and os.path.exists(data['biz_logo']):
             run = p1.add_run()
-            run.add_picture(data['biz_logo'], width=Inches(1.5))
+            # Reduced from 2.2 to 1.8 inches
+            run.add_picture(data['biz_logo'], width=Inches(1.8))
 
         # Biz Info Cell
         c2 = header_table.rows[0].cells[1]
