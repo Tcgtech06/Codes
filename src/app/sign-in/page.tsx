@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { getAllStates, getDistricts } from 'india-state-district';
 import { GoogleLoginButton } from '@/components/auth/GoogleLoginButton';
 import { getSupabaseBrowserClient } from '@/lib/supabaseClient';
@@ -20,12 +20,20 @@ export default function SignInPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [mode, setMode] = useState<'sign-in' | 'sign-up' | 'forgot-password' | 'reset-password'>(() =>
-    typeof window !== 'undefined' && window.location.hash.includes('type=recovery')
-      ? 'reset-password'
-      : 'sign-in'
-  );
+  const [mode, setMode] = useState<'sign-in' | 'sign-up' | 'forgot-password' | 'reset-password'>(() => {
+    if (typeof window !== 'undefined') {
+      if (window.location.hash.includes('type=recovery')) {
+        return 'reset-password';
+      }
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'sign-up') {
+        return 'sign-up';
+      }
+    }
+    return 'sign-in';
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isRecoveryMode, setIsRecoveryMode] = useState(
     typeof window !== 'undefined' && window.location.hash.includes('type=recovery')
   );
@@ -171,8 +179,14 @@ export default function SignInPage() {
           <span className="font-medium">Back</span>
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Sign In</h1>
-        <p className="text-gray-600 mt-1 mb-6">Sign in with email/password or continue with Google.</p>
+        <h1 className="text-2xl font-bold text-gray-900">
+          {mode === 'sign-up' ? 'Sign Up' : 'Login'}
+        </h1>
+        <p className="text-gray-600 mt-1 mb-6">
+          {mode === 'sign-up' 
+            ? 'Create your account with email/password or continue with Google.' 
+            : 'Login with email/password or continue with Google.'}
+        </p>
 
         {!isRecoveryMode && (
           <div className="mb-5 grid grid-cols-2 bg-gray-100 rounded-lg p-1">
@@ -189,7 +203,7 @@ export default function SignInPage() {
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              Sign In
+              Login
             </button>
             <button
               type="button"
@@ -234,7 +248,7 @@ export default function SignInPage() {
                       name: event.target.value,
                     }))
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
                   required
                 />
               </div>
@@ -250,7 +264,7 @@ export default function SignInPage() {
                     }))
                   }
                   placeholder="+91 9876543210"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
                   required
                 />
               </div>
@@ -265,7 +279,7 @@ export default function SignInPage() {
                       district: '',
                     }))
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
                   required
                 >
                   <option value="">Select state</option>
@@ -286,7 +300,7 @@ export default function SignInPage() {
                       district: event.target.value,
                     }))
                   }
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 disabled:bg-gray-100"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30 disabled:bg-gray-100"
                   disabled={!manualForm.stateCode}
                   required
                 >
@@ -312,7 +326,7 @@ export default function SignInPage() {
                   email: event.target.value,
                 }))
               }
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
               required
             />
           </div>
@@ -322,24 +336,33 @@ export default function SignInPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {mode === 'reset-password' ? 'New Password' : 'Password'}
               </label>
-              <input
-                type="password"
-                value={mode === 'reset-password' ? resetPassword : manualForm.password}
-                onChange={(event) => {
-                  if (mode === 'reset-password') {
-                    setResetPassword(event.target.value);
-                    return;
-                  }
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={mode === 'reset-password' ? resetPassword : manualForm.password}
+                  onChange={(event) => {
+                    if (mode === 'reset-password') {
+                      setResetPassword(event.target.value);
+                      return;
+                    }
 
-                  setManualForm((prev) => ({
-                    ...prev,
-                    password: event.target.value,
-                  }));
-                }}
-                minLength={6}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
-                required
-              />
+                    setManualForm((prev) => ({
+                      ...prev,
+                      password: event.target.value,
+                    }));
+                  }}
+                  minLength={6}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#1e3a8a]/30"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
             </div>
           )}
 
@@ -367,7 +390,7 @@ export default function SignInPage() {
               }}
               className="text-sm text-[#1e3a8a] hover:text-[#1e40af]"
             >
-              Back to sign in
+              Back to login
             </button>
           )}
 
@@ -384,7 +407,7 @@ export default function SignInPage() {
                   ? 'Send Reset Link'
                   : mode === 'reset-password'
                     ? 'Update Password'
-                    : 'Sign In'}
+                    : 'Login'}
           </button>
         </form>
 

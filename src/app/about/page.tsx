@@ -104,9 +104,6 @@ export default function About() {
               <span>🔍</span>
               <span>Discover</span>
               <span>•</span>
-              <span>📚</span>
-              <span>Learn</span>
-              <span>•</span>
               <span>🤝</span>
               <span>Connect</span>
               <span>•</span>

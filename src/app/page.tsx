@@ -64,7 +64,6 @@ export default function Home() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
@@ -179,142 +178,10 @@ export default function Home() {
     setIsSwiping(false);
   };
 
-  const toggleProfileMenu = () => {
-    setShowProfileMenu(!showProfileMenu);
-  };
+
 
   return (
     <div className="flex flex-col gap-12 pb-12">
-      {/* Profile Slide Panel */}
-      <div className={`md:hidden fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-60 transform transition-transform duration-300 ease-in-out profile-menu ${showProfileMenu ? 'translate-x-0' : '-translate-x-full'
-        }`}>
-        <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Menu</h2>
-            <button
-              onClick={() => setShowProfileMenu(false)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <span className="text-2xl text-gray-600">×</span>
-            </button>
-          </div>
-
-          {/* Profile Section */}
-          <div className="mb-8 pb-6 border-b border-gray-200">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-[#1e3a8a] rounded-full flex items-center justify-center">
-                <User size={32} className="text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Welcome</h3>
-                <p className="text-gray-600">Textile Professional</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Menu Items */}
-          <div className="space-y-4">
-            <Link
-              href="/advertise"
-              onClick={() => setShowProfileMenu(false)}
-              className="w-full p-4 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-4 group"
-            >
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                <span className="text-2xl">📢</span>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900">Advertise with us</h4>
-                <p className="text-sm text-gray-600">Promote your business</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/add-data"
-              onClick={() => setShowProfileMenu(false)}
-              className="w-full p-4 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-4 group"
-            >
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                <span className="text-2xl">📊</span>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900">Add Your Data</h4>
-                <p className="text-sm text-gray-600">Submit your information</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/collaborate"
-              onClick={() => setShowProfileMenu(false)}
-              className="w-full p-4 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-4 group"
-            >
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                <span className="text-2xl">🤝</span>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900">Collaborate With Us</h4>
-                <p className="text-sm text-gray-600">Partner with our team</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Footer */}
-          <div className="absolute bottom-6 left-6 right-6">
-            <div className="text-center text-sm">
-              <p className="text-gray-600 mb-1">Powered By</p>
-              <a
-                href="https://tcgtech.in"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-semibold text-lg hover:opacity-80 transition-opacity"
-              >
-                <span className="text-red-600">T</span>
-                <span className="text-green-600">C</span>
-                <span className="text-yellow-600">G</span>
-                <span className="text-blue-600"> TECHNOLOGIES</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Overlay */}
-      {showProfileMenu && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 md:hidden transition-opacity duration-300"
-          onClick={() => setShowProfileMenu(false)}
-        ></div>
-      )}
-
-      {/* Logo for Mobile View */}
-      <div className={`md:hidden fixed top-0 left-0 right-0 z-50 bg-white shadow-md px-4 py-3 transition-transform duration-300 ${isNavVisible ? 'translate-y-0' : '-translate-y-full'
-        }`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleProfileMenu}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
-            >
-              <User size={24} className="text-gray-700" />
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-full transition-colors relative">
-              <Bell size={24} className="text-gray-700" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-            </button>
-          </div>
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/logo.jpg"
-              alt="Logo"
-              width={120}
-              height={50}
-              className="h-10 w-auto object-contain"
-              priority
-            />
-          </Link>
-        </div>
-      </div>
-
       {/* Spacer for fixed mobile nav */}
       <div className="md:hidden h-[58px]"></div>
 
