@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, User, LogOut, Megaphone, Database, Handshake, Bell } from 'lucide-react';
+import { X, User, LogOut, Megaphone, Database, Handshake, Bell, Building2, MessageSquare, Megaphone as AdIcon } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
 export default function NotificationIcon() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
   const { user, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -19,8 +21,15 @@ export default function NotificationIcon() {
   // Only show on home page
   const isHomePage = pathname === '/';
 
+  // Mock notifications data - replace with actual API call
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'company', message: 'New company "ABC Textiles" added to the directory', time: '2 hours ago' },
+    { id: 2, type: 'collaboration', message: 'New collaboration request from "XYZ Fabrics"', time: '5 hours ago' },
+    { id: 3, type: 'advertisement', message: 'New advertisement enquiry received', time: '1 day ago' },
+  ]);
+
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || isNotificationOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -28,7 +37,7 @@ export default function NotificationIcon() {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, isNotificationOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +62,37 @@ export default function NotificationIcon() {
     router.push('/');
   };
 
+  const handleNotificationOpen = () => {
+    setIsNotificationOpen(true);
+    // Mark notifications as read when panel opens
+    setHasUnreadNotifications(false);
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    setHasUnreadNotifications(false);
+  };
+
+  const clearNotification = (id: number) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (notifications.length <= 1) {
+      setHasUnreadNotifications(false);
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'company':
+        return <Building2 size={20} className="text-blue-600" />;
+      case 'collaboration':
+        return <MessageSquare size={20} className="text-green-600" />;
+      case 'advertisement':
+        return <AdIcon size={20} className="text-orange-600" />;
+      default:
+        return <Bell size={20} className="text-gray-600" />;
+    }
+  };
+
   if (!isHomePage) return null;
 
   return (
@@ -62,15 +102,21 @@ export default function NotificationIcon() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsOpen(true)}
-            className="p-2 bg-white rounded-lg shadow-sm relative"
+            className="p-2 rounded-lg relative"
           >
             <User size={24} className="text-gray-700" />
           </button>
           
           <button
-            className="p-2 bg-white rounded-lg shadow-sm relative"
+            onClick={handleNotificationOpen}
+            className="p-2 rounded-lg relative"
           >
             <Bell size={24} className="text-gray-700" />
+            {hasUnreadNotifications && notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {notifications.length > 9 ? '9+' : notifications.length}
+              </span>
+            )}
           </button>
         </div>
         
@@ -83,6 +129,7 @@ export default function NotificationIcon() {
         </Link>
       </div>
 
+      {/* Profile Menu Panel */}
       {isOpen && (
         <>
           <div
@@ -203,6 +250,83 @@ export default function NotificationIcon() {
           </div>
         </>
       )}
+
+      {/* Notification Panel - Opens from top to half page */}
+      {isNotificationOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-[75] md:hidden"
+            onClick={() => setIsNotificationOpen(false)}
+          />
+          <div className="fixed top-0 left-0 right-0 h-[50vh] bg-white z-[80] md:hidden shadow-xl flex flex-col rounded-b-3xl animate-slide-down">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-xl font-bold text-gray-900">Notifications</h2>
+              <button onClick={() => setIsNotificationOpen(false)} className="p-2">
+                <X size={24} className="text-gray-700" />
+              </button>
+            </div>
+
+            {/* Clear All Button */}
+            {notifications.length > 0 && (
+              <div className="px-4 py-2 border-b bg-gray-50">
+                <button
+                  onClick={clearAllNotifications}
+                  className="text-sm text-red-600 hover:text-red-700 font-medium"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
+
+            {/* Notifications List */}
+            <div className="flex-1 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-500 px-4">
+                  <Bell size={48} className="mb-4 opacity-50" />
+                  <p className="text-center text-lg">Currently No notifications</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {notifications.map((notification) => (
+                    <div key={notification.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1">
+                          {getNotificationIcon(notification.type)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-gray-900 font-medium">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                        </div>
+                        <button
+                          onClick={() => clearNotification(notification.id)}
+                          className="text-gray-400 hover:text-red-600 transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      <style jsx>{`
+        @keyframes slide-down {
+          from {
+            transform: translateY(-100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out;
+        }
+      `}</style>
     </>
   );
 }
