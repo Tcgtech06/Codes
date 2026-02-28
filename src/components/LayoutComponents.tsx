@@ -1,7 +1,6 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import MobileHeader from './MobileHeader';
 import NotificationIcon from './NotificationIcon';
 
 export function LayoutComponents() {
@@ -14,7 +13,6 @@ export function LayoutComponents() {
   
   return (
     <>
-      <MobileHeader />
       <NotificationIcon />
     </>
   );

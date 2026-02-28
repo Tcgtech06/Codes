@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, User, LogOut, Megaphone, Database, Handshake } from 'lucide-react';
+import { X, User, LogOut, Megaphone, Database, Handshake, Bell } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -57,14 +57,22 @@ export default function NotificationIcon() {
 
   return (
     <>
-      {/* Header bar with Profile Icon and Logo */}
+      {/* Header bar with Profile Icon, Notification Bell, and Logo */}
       <div className={`md:hidden fixed top-0 left-0 right-0 z-[70] bg-white shadow-md px-4 py-3 flex items-center justify-between transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-        <button
-          onClick={() => setIsOpen(true)}
-          className="p-2 bg-white rounded-lg shadow-sm relative"
-        >
-          <User size={24} className="text-gray-700" />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsOpen(true)}
+            className="p-2 bg-white rounded-lg shadow-sm relative"
+          >
+            <User size={24} className="text-gray-700" />
+          </button>
+          
+          <button
+            className="p-2 bg-white rounded-lg shadow-sm relative"
+          >
+            <Bell size={24} className="text-gray-700" />
+          </button>
+        </div>
         
         <Link href="/" className="flex items-center">
           <img
