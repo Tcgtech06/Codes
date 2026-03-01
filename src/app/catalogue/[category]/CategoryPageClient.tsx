@@ -108,6 +108,18 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
       normalizeProducts(company.products).some((p: string) => p.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    // Calculate data completeness score (0-6 based on 6 fields)
+    const getCompletenessScore = (company: any) => {
+      let score = 0;
+      if (company.companyName) score++;
+      if (company.phone) score++;
+      if (company.address) score++;
+      if (company.email) score++;
+      if (company.products && Array.isArray(company.products) && company.products.length > 0) score++;
+      if (company.website) score++;
+      return score;
+    };
+
     const sortByDate = (a: any, b: any) => {
       const dateA = new Date(a.createdAt || 0).getTime();
       const dateB = new Date(b.createdAt || 0).getTime();
@@ -130,7 +142,18 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
 
     const nonPrioritized = searchedCompanies
       .filter((company) => !priorityMap.has(String(company.companyName || '').trim().toLowerCase()))
-      .sort(sortByDate);
+      .sort((a, b) => {
+        // First sort by data completeness (higher score first)
+        const scoreA = getCompletenessScore(a);
+        const scoreB = getCompletenessScore(b);
+        
+        if (scoreA !== scoreB) {
+          return scoreB - scoreA; // Higher score first
+        }
+        
+        // If same completeness score, sort by date
+        return sortByDate(a, b);
+      });
 
     const arranged = [...nonPrioritized];
     prioritizedCompanies.forEach(({ company, priority }) => {
@@ -180,13 +203,13 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
         <div className="mb-6">
           <div className="relative flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              <Search className="absolute right-3 md:right-auto md:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10" size={20} />
               <input
                 type="text"
-                placeholder="Search companies, products..."
+                placeholder="Search companies"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                className="w-full px-4 md:pl-12 md:pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500 relative"
               />
             </div>
             
@@ -200,7 +223,7 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
                     : 'bg-white border-gray-300 text-gray-700 hover:border-blue-500'
                 }`}
               >
-                <Filter size={20} />
+                <Filter className="w-4 h-4 md:w-5 md:h-5" />
               </button>
               
               {/* Filter Dropdown */}
