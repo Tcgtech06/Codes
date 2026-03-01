@@ -65,6 +65,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/logo.jpg" />
         <link rel="apple-touch-icon" sizes="180x180" href="/logo.jpg" />
         <link rel="shortcut icon" href="/logo.jpg" />
+        <script src="/register-sw.js" defer></script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50`}

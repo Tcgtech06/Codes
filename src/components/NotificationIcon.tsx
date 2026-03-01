@@ -142,7 +142,7 @@ export default function NotificationIcon() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsOpen(true)}
-            className="p-2 rounded-lg relative"
+            className="p-2 rounded-lg relative active:bg-blue-100 transition-colors"
           >
             <User size={24} className="text-gray-700" />
           </button>
@@ -151,7 +151,7 @@ export default function NotificationIcon() {
           {signedIn && (
             <button
               onClick={handleNotificationOpen}
-              className="p-2 rounded-lg relative"
+              className="p-2 rounded-lg relative active:bg-blue-100 transition-colors"
             >
               <Bell size={24} className="text-gray-700" />
               {hasUnreadNotifications && notifications.length > 0 && (
@@ -179,7 +179,7 @@ export default function NotificationIcon() {
             className="fixed inset-0 bg-black/50 z-[65] md:hidden"
             onClick={() => setIsOpen(false)}
           />
-          <div className="fixed top-0 left-0 bottom-0 w-80 bg-white z-[70] md:hidden shadow-xl flex flex-col">
+          <div className="fixed top-0 left-0 bottom-0 w-64 bg-white z-[70] md:hidden shadow-xl flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-xl font-bold text-gray-900">Menu</h2>
@@ -209,7 +209,7 @@ export default function NotificationIcon() {
                   <Link
                     href="/sign-in"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors font-medium"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 active:bg-[#1e3a8a]/80 transition-colors font-medium"
                   >
                     <User size={18} />
                     <span>Login</span>
@@ -217,7 +217,7 @@ export default function NotificationIcon() {
                   <Link
                     href="/sign-in?mode=sign-up"
                     onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border-2 border-[#1e3a8a] text-[#1e3a8a] rounded-lg hover:bg-[#1e3a8a]/5 transition-colors font-medium"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-2.5 border-2 border-[#1e3a8a] text-[#1e3a8a] rounded-lg hover:bg-[#1e3a8a]/5 active:bg-[#1e3a8a]/20 transition-colors font-medium"
                   >
                     <User size={18} />
                     <span>Sign Up</span>
@@ -234,7 +234,7 @@ export default function NotificationIcon() {
               <nav className="space-y-4 px-4">
                 <Link
                   href="/advertise"
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] rounded-lg transition-colors font-medium"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] active:bg-blue-200 rounded-lg transition-colors font-medium"
                   onClick={() => setIsOpen(false)}
                 >
                   <Megaphone size={20} className="text-[#1e3a8a]" />
@@ -243,7 +243,7 @@ export default function NotificationIcon() {
 
                 <Link
                   href="/add-data"
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] rounded-lg transition-colors font-medium"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] active:bg-blue-200 rounded-lg transition-colors font-medium"
                   onClick={() => setIsOpen(false)}
                 >
                   <Database size={20} className="text-[#1e3a8a]" />
@@ -252,7 +252,7 @@ export default function NotificationIcon() {
 
                 <Link
                   href="/collaborate"
-                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] rounded-lg transition-colors font-medium"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-[#1e3a8a] active:bg-blue-200 rounded-lg transition-colors font-medium"
                   onClick={() => setIsOpen(false)}
                 >
                   <Handshake size={20} className="text-[#1e3a8a]" />
