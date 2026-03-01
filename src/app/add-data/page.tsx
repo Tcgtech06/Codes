@@ -5,6 +5,7 @@ import { ArrowLeft, Send, CheckCircle, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { submissionsAPI, categoriesAPI } from '@/lib/api';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function AddDataPage() {
   return (
@@ -16,6 +17,7 @@ export default function AddDataPage() {
 
 function AddDataContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const [categories, setCategories] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -79,6 +81,7 @@ function AddDataContent() {
 
       const submissionData = {
         type: 'add-data',
+        userId: user?.id || '',
         formData: {
           companyName: formData.companyName,
           contactPerson: formData.contactPerson,

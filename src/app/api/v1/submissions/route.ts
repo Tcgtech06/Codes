@@ -7,6 +7,7 @@ const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
 const toSubmissionDto = (row: any) => ({
   id: row.id,
   type: row.type,
+  userId: row.user_id,
   formData: row.form_data ?? row.formData ?? {},
   attachments: row.attachments ?? [],
   status: row.status ?? 'pending',
@@ -49,6 +50,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const type = body?.type;
+    const userId = body?.userId;
     const formData = body?.formData;
     const attachments = Array.isArray(body?.attachments) ? body.attachments : [];
 
@@ -62,6 +64,7 @@ export async function POST(request: NextRequest) {
 
     const insertPayload = {
       type,
+      user_id: userId || null,
       form_data: formData,
       attachments,
       status: 'pending',

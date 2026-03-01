@@ -5,9 +5,11 @@ import { ArrowLeft, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { submissionsAPI } from '@/lib/api';
 import { getSignInRedirectUrl, isUserSignedIn } from '@/lib/userSession';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function AdvertisePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -69,6 +71,7 @@ export default function AdvertisePage() {
 
       await submissionsAPI.create({
         type: 'advertise',
+        userId: user?.id || '',
         formData: {
           ...formData,
           visitingCardName: visitingCard?.name || ''

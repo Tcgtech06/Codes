@@ -14,7 +14,7 @@ export const useVisitorStats = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  const initializeVisitorTracking = useCallback(() => {
+  const initializeVisitorTracking = useCallback(async () => {
     try {
       // Check if this is a new session
       const sessionId = sessionStorage.getItem('visitor_session_id');
@@ -24,14 +24,20 @@ export const useVisitorStats = () => {
         const newSessionId = `visitor_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         sessionStorage.setItem('visitor_session_id', newSessionId);
         
-        // Increment total visitors ONLY ONCE per session
-        incrementTotalVisitors();
+        console.log('New visitor session created:', newSessionId);
         
-        // Add to live visitors ONLY ONCE
-        addToLiveVisitors();
+        // Increment total visitors in database
+        await incrementTotalVisitors(newSessionId);
+        
+        // Mark as active user
+        await updateActiveSession(newSessionId);
+      } else {
+        console.log('Existing visitor session:', sessionId);
+        // Update activity for existing session
+        await updateActiveSession(sessionId);
       }
       
-      // Update last activity in sessionStorage instead of localStorage to avoid triggers
+      // Update last activity
       sessionStorage.setItem('last_activity', Date.now().toString());
       
     } catch (error) {
@@ -39,187 +45,142 @@ export const useVisitorStats = () => {
     }
   }, []);
 
-  const incrementTotalVisitors = () => {
+  const incrementTotalVisitors = async (sessionId: string) => {
     try {
-      const currentTotal = parseInt(localStorage.getItem('total_visitors') || '0');
-      const newTotal = currentTotal + 1;
-      localStorage.setItem('total_visitors', newTotal.toString());
+      console.log('Incrementing visitor count for session:', sessionId);
       
-      // If using Firebase, sync to database (currently disabled)
-      // syncVisitorToFirebase(newTotal);
+      const response = await fetch('/api/v1/visitors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Visitor count updated:', data);
+        
+        setStats(prev => ({
+          ...prev,
+          totalVisitors: data.totalVisitors
+        }));
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to increment visitor count:', errorData);
+      }
     } catch (error) {
       console.error('Error incrementing total visitors:', error);
     }
   };
 
-  const addToLiveVisitors = () => {
+  const updateActiveSession = async (sessionId: string) => {
     try {
-      const liveVisitors = JSON.parse(localStorage.getItem('live_visitors') || '[]');
-      const sessionId = sessionStorage.getItem('visitor_session_id');
-      const now = Date.now();
-      
-      // Remove expired sessions (older than 5 minutes)
-      const activeVisitors = liveVisitors.filter((visitor: any) => 
-        now - visitor.lastActivity < 5 * 60 * 1000
-      );
-      
-      // Add or update current session
-      const existingIndex = activeVisitors.findIndex((visitor: any) => visitor.sessionId === sessionId);
-      if (existingIndex >= 0) {
-        activeVisitors[existingIndex].lastActivity = now;
-      } else {
-        activeVisitors.push({
-          sessionId,
-          lastActivity: now,
-          startTime: now
-        });
+      const response = await fetch('/api/v1/visitors/active', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionId })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Active session updated:', data);
+        
+        // Add random 2-6 to actual active count
+        const randomIncrease = Math.floor(Math.random() * 5) + 2; // 2-6
+        const displayCount = data.activeCount + randomIncrease;
+        
+        setStats(prev => ({
+          ...prev,
+          liveVisitors: displayCount
+        }));
       }
-      
-      localStorage.setItem('live_visitors', JSON.stringify(activeVisitors));
     } catch (error) {
-      console.error('Error managing live visitors:', error);
+      console.error('Error updating active session:', error);
     }
   };
-
-  const updateLiveVisitors = () => {
-    try {
-      const liveVisitors = JSON.parse(localStorage.getItem('live_visitors') || '[]');
-      const now = Date.now();
-      
-      // Remove expired sessions
-      const activeVisitors = liveVisitors.filter((visitor: any) => 
-        now - visitor.lastActivity < 5 * 60 * 1000
-      );
-      
-      // Update current session activity
-      const sessionId = sessionStorage.getItem('visitor_session_id');
-      const existingIndex = activeVisitors.findIndex((visitor: any) => visitor.sessionId === sessionId);
-      if (existingIndex >= 0) {
-        activeVisitors[existingIndex].lastActivity = now;
-      }
-      
-      localStorage.setItem('live_visitors', JSON.stringify(activeVisitors));
-      
-      // Update stats
-      setStats(prev => ({
-        ...prev,
-        liveVisitors: activeVisitors.length
-      }));
-    } catch (error) {
-      console.error('Error updating live visitors:', error);
-    }
-  };
-
-  // New function that only updates display without writing to localStorage
-  const updateLiveVisitorsDisplay = useCallback(() => {
-    try {
-      const liveVisitors = JSON.parse(localStorage.getItem('live_visitors') || '[]');
-      const now = Date.now();
-      
-      // Remove expired sessions
-      const activeVisitors = liveVisitors.filter((visitor: any) => 
-        now - visitor.lastActivity < 5 * 60 * 1000
-      );
-      
-      // Only update state, don't write to localStorage
-      setStats(prev => ({
-        ...prev,
-        liveVisitors: Math.max(activeVisitors.length, 5) // Minimum 5 visitors
-      }));
-    } catch (error) {
-      console.error('Error updating live visitors display:', error);
-    }
-  }, []);
 
   const loadStats = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Load total visitors with realistic baseline
-      const storedTotal = parseInt(localStorage.getItem('total_visitors') || '0');
-      const baselineVisitors = 1247; // Starting baseline
-      const totalVisitors = Math.max(storedTotal, baselineVisitors);
+      console.log('Loading visitor stats...');
       
-      // Load live visitors
-      const liveVisitors = JSON.parse(localStorage.getItem('live_visitors') || '[]');
-      const now = Date.now();
-      const activeVisitors = liveVisitors.filter((visitor: any) => 
-        now - visitor.lastActivity < 5 * 60 * 1000
-      );
+      // Fetch visitor stats from database
+      const response = await fetch('/api/v1/visitors');
       
-      // Add some realistic variance to live visitors (5-25 range)
-      const baseLiveCount = activeVisitors.length;
-      const randomVariance = Math.floor(Math.random() * 8) + 5; // 5-12 additional
-      const finalLiveCount = Math.max(baseLiveCount, randomVariance);
-      
-      // Load total companies with realistic growth
-      const totalCompanies = await getTotalCompanies();
-      
-      setStats({
-        liveVisitors: finalLiveCount,
-        totalVisitors: totalVisitors,
-        totalCompanies
-      });
-      
-      // Simulate gradual increase in total visitors
-      if (storedTotal < baselineVisitors + 500) {
-        const increment = Math.random() < 0.3 ? 1 : 0; // 30% chance to increment
-        if (increment) {
-          localStorage.setItem('total_visitors', (totalVisitors + 1).toString());
+      if (response.ok) {
+        const data = await response.json();
+        
+        console.log('Visitor stats loaded:', data);
+        
+        // Fetch active visitors count
+        const activeResponse = await fetch('/api/v1/visitors/active');
+        let liveVisitors = 7; // Default
+        
+        if (activeResponse.ok) {
+          const activeData = await activeResponse.json();
+          // Add random 2-6 to actual active count
+          const randomIncrease = Math.floor(Math.random() * 5) + 2; // 2-6
+          liveVisitors = activeData.activeCount + randomIncrease;
+          console.log('Active visitors:', activeData.activeCount, '+ random:', randomIncrease, '=', liveVisitors);
         }
+        
+        setStats({
+          liveVisitors: liveVisitors,
+          totalVisitors: data.totalVisitors,
+          totalCompanies: data.totalCompanies
+        });
+      } else {
+        console.error('Failed to load visitor stats:', await response.text());
+        // Fallback to default values
+        setStats({
+          liveVisitors: Math.floor(Math.random() * 5) + 7, // 7-11
+          totalVisitors: 1247,
+          totalCompanies: 668
+        });
       }
       
     } catch (error) {
       console.error('Error loading stats:', error);
-      // Fallback to realistic default values
+      // Fallback to default values
       setStats({
-        liveVisitors: Math.floor(Math.random() * 15) + 8, // 8-23 live visitors
-        totalVisitors: 1247 + Math.floor(Math.random() * 100), // Some variance
-        totalCompanies: 850 + Math.floor(Math.random() * 50) // Some variance
+        liveVisitors: Math.floor(Math.random() * 5) + 7, // 7-11
+        totalVisitors: 1247,
+        totalCompanies: 668
       });
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const getTotalCompanies = async (): Promise<number> => {
+  const updateLiveVisitorsDisplay = useCallback(async () => {
     try {
-      // Fallback to stored count with realistic baseline
-      const storedCount = localStorage.getItem('total_companies_count');
-      const baseCount = 850;
+      const sessionId = sessionStorage.getItem('visitor_session_id');
       
-      if (storedCount) {
-        return Math.max(parseInt(storedCount), baseCount);
+      if (sessionId) {
+        // Update current session activity
+        await updateActiveSession(sessionId);
       }
       
-      // Generate and store initial count with some growth
-      const growth = Math.floor(Math.random() * 50);
-      const initialCount = baseCount + growth;
-      localStorage.setItem('total_companies_count', initialCount.toString());
-      return initialCount;
+      // Fetch current active count
+      const activeResponse = await fetch('/api/v1/visitors/active');
       
+      if (activeResponse.ok) {
+        const activeData = await activeResponse.json();
+        // Add random 2-6 to actual active count
+        const randomIncrease = Math.floor(Math.random() * 5) + 2; // 2-6
+        const displayCount = activeData.activeCount + randomIncrease;
+        
+        setStats(prev => ({
+          ...prev,
+          liveVisitors: displayCount
+        }));
+      }
     } catch (error) {
-      console.error('Error getting total companies:', error);
-      return 850 + Math.floor(Math.random() * 30);
-    }
-  };
-
-  const syncVisitorToFirebase = async (totalCount: number) => {
-    try {
-      // This would sync visitor data to Firebase
-      // Implementation depends on Firebase setup
-      console.log('Syncing visitor count to Firebase:', totalCount);
-    } catch (error) {
-      console.error('Error syncing to Firebase:', error);
-    }
-  };
-
-  const cleanupVisitorSession = useCallback(() => {
-    try {
-      // Update last activity before leaving
-      localStorage.setItem('last_activity', Date.now().toString());
-    } catch (error) {
-      console.error('Error cleaning up visitor session:', error);
+      console.error('Error updating live visitors display:', error);
     }
   }, []);
 
@@ -227,15 +188,21 @@ export const useVisitorStats = () => {
     initializeVisitorTracking();
     loadStats();
 
-    const interval = setInterval(() => {
+    // Update live visitors every 30 seconds with random increase
+    const liveInterval = setInterval(() => {
       updateLiveVisitorsDisplay();
     }, 30000);
 
+    // Refresh all stats every 2 minutes
+    const statsInterval = setInterval(() => {
+      loadStats();
+    }, 120000);
+
     return () => {
-      clearInterval(interval);
-      cleanupVisitorSession();
+      clearInterval(liveInterval);
+      clearInterval(statsInterval);
     };
-  }, [cleanupVisitorSession, initializeVisitorTracking, loadStats, updateLiveVisitorsDisplay]);
+  }, [initializeVisitorTracking, loadStats, updateLiveVisitorsDisplay]);
 
   return {
     stats,

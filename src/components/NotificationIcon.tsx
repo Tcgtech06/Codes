@@ -5,13 +5,14 @@ import { X, User, LogOut, Megaphone, Database, Handshake, Bell, Building2, Messa
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { notificationsAPI } from '@/lib/api';
 
 export default function NotificationIcon() {
   const [isOpen, setIsOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(true);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const { user, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -21,12 +22,40 @@ export default function NotificationIcon() {
   // Only show on home page
   const isHomePage = pathname === '/';
 
-  // Mock notifications data - replace with actual API call
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'company', message: 'New company "ABC Textiles" added to the directory', time: '2 hours ago' },
-    { id: 2, type: 'collaboration', message: 'New collaboration request from "XYZ Fabrics"', time: '5 hours ago' },
-    { id: 3, type: 'advertisement', message: 'New advertisement enquiry received', time: '1 day ago' },
-  ]);
+  // Notifications state
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  // Load notifications for logged-in users
+  useEffect(() => {
+    if (signedIn && user?.id) {
+      loadNotifications();
+      
+      // Poll for new notifications every 30 seconds
+      const interval = setInterval(loadNotifications, 30000);
+      return () => clearInterval(interval);
+    } else {
+      // Clear notifications for non-logged-in users
+      setNotifications([]);
+      setHasUnreadNotifications(false);
+    }
+  }, [signedIn, user?.id]);
+
+  const loadNotifications = async () => {
+    if (!user?.id) return;
+    
+    setNotificationsLoading(true);
+    try {
+      const response = await notificationsAPI.getByUser(user.id);
+      const unreadNotifications = response.notifications.filter((n: any) => !n.read);
+      setNotifications(unreadNotifications);
+      setHasUnreadNotifications(unreadNotifications.length > 0);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    } finally {
+      setNotificationsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen || isNotificationOpen) {
@@ -68,15 +97,26 @@ export default function NotificationIcon() {
     setHasUnreadNotifications(false);
   };
 
-  const clearAllNotifications = () => {
-    setNotifications([]);
-    setHasUnreadNotifications(false);
+  const clearAllNotifications = async () => {
+    try {
+      // Delete all notifications for the user
+      await Promise.all(notifications.map(n => notificationsAPI.delete(n.id)));
+      setNotifications([]);
+      setHasUnreadNotifications(false);
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
   };
 
-  const clearNotification = (id: number) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-    if (notifications.length <= 1) {
-      setHasUnreadNotifications(false);
+  const clearNotification = async (id: string) => {
+    try {
+      await notificationsAPI.delete(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      if (notifications.length <= 1) {
+        setHasUnreadNotifications(false);
+      }
+    } catch (error) {
+      console.error('Error deleting notification:', error);
     }
   };
 
@@ -97,7 +137,7 @@ export default function NotificationIcon() {
 
   return (
     <>
-      {/* Header bar with Profile Icon, Notification Bell, and Logo */}
+      {/* Header bar with Profile Icon, Notification Bell (only for logged-in users), and Logo */}
       <div className={`md:hidden fixed top-0 left-0 right-0 z-[70] bg-white shadow-md px-4 py-3 flex items-center justify-between transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="flex items-center gap-3">
           <button
@@ -107,17 +147,20 @@ export default function NotificationIcon() {
             <User size={24} className="text-gray-700" />
           </button>
           
-          <button
-            onClick={handleNotificationOpen}
-            className="p-2 rounded-lg relative"
-          >
-            <Bell size={24} className="text-gray-700" />
-            {hasUnreadNotifications && notifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                {notifications.length > 9 ? '9+' : notifications.length}
-              </span>
-            )}
-          </button>
+          {/* Only show notification bell for logged-in users */}
+          {signedIn && (
+            <button
+              onClick={handleNotificationOpen}
+              className="p-2 rounded-lg relative"
+            >
+              <Bell size={24} className="text-gray-700" />
+              {hasUnreadNotifications && notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
+            </button>
+          )}
         </div>
         
         <Link href="/" className="flex items-center">
@@ -153,9 +196,9 @@ export default function NotificationIcon() {
                 </div>
                 <div className="flex-1">
                   {signedIn ? (
-                    <p className="font-semibold text-gray-900">Welcome {displayName} to Knitinfo Online Directory</p>
+                    <p className="text-sm font-semibold text-gray-900">Welcome {displayName} to Knitinfo Online Directory</p>
                   ) : (
-                    <p className="font-semibold text-gray-900">Welcome to Knitinfo Online Directory</p>
+                    <p className="text-sm font-semibold text-gray-900">Welcome to Knitinfo Online Directory</p>
                   )}
                 </div>
               </div>

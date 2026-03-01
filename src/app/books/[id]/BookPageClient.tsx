@@ -121,10 +121,11 @@ export default function BookPageClient({ book }: BookPageClientProps) {
 
             {/* Price */}
             <div className="mb-6 pb-6 border-b border-gray-200">
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-2 mb-2">
                 <span className="text-4xl font-bold text-[#1e3a8a]">₹{book.price}</span>
                 <span className="text-gray-500">per book</span>
               </div>
+              <p className="text-sm text-green-600 font-medium">* Courier charges included</p>
             </div>
 
             {/* Quantity Selector */}

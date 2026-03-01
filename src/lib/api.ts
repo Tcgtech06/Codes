@@ -221,3 +221,28 @@ export const analyticsAPI = {
 export const settingsAPI = {
   get: (key: string) => apiCall<any>(`/settings/${key}`),
 };
+
+// Notifications API
+export const notificationsAPI = {
+  getAll: () => apiCall<{ notifications: any[] }>('/notifications'),
+
+  getByUser: (userId: string) => 
+    apiCall<{ notifications: any[] }>(`/notifications?userId=${userId}`),
+
+  create: (data: any) =>
+    apiCall<{ message: string; notification: any }>('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  markAsRead: (id: string) =>
+    apiCall<{ message: string }>(`/notifications/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ read: true }),
+    }),
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/notifications/${id}`, {
+      method: 'DELETE',
+    }),
+};

@@ -21,12 +21,11 @@ import {
   MapPin,
   Calendar,
   FileText,
-  Cloud,
-  CloudOff,
-  RefreshCw
+  RefreshCw,
+  Search
 } from 'lucide-react';
 import { usePriorities, useDataService } from '../../../hooks/useLocalStorage';
-import { submissionsAPI } from '@/lib/api';
+import { submissionsAPI, companiesAPI, notificationsAPI } from '@/lib/api';
 
 interface AddDataSubmission {
   id: string;
@@ -91,9 +90,12 @@ export default function AdminDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority' | 'approved-data'>('overview');
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [allSubmissions, setAllSubmissions] = useState<any[]>([]);
+  const [approvedCompanies, setApprovedCompanies] = useState<any[]>([]);
+  const [approvedLoading, setApprovedLoading] = useState(false);
+  const [approvedSearchTerm, setApprovedSearchTerm] = useState('');
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [submissionActionId, setSubmissionActionId] = useState<string | null>(null);
   const [priorityForm, setPriorityForm] = useState({
@@ -105,6 +107,15 @@ export default function AdminDashboard() {
     durationType: 'days' // days, months, years
   });
   const [editingPriority, setEditingPriority] = useState<any>(null);
+  const [dbStatus, setDbStatus] = useState<{
+    connected: boolean;
+    database: string;
+    checking: boolean;
+  }>({
+    connected: false,
+    database: 'Unknown',
+    checking: true
+  });
   const router = useRouter();
 
   // Use local storage hooks
@@ -120,6 +131,53 @@ export default function AdminDashboard() {
       console.error('Error loading submissions:', error);
     } finally {
       setSubmissionsLoading(false);
+    }
+  };
+
+  const loadApprovedCompanies = async () => {
+    setApprovedLoading(true);
+    try {
+      const response = await companiesAPI.getAll();
+      setApprovedCompanies(response.companies || []);
+    } catch (error) {
+      console.error('Error loading approved companies:', error);
+    } finally {
+      setApprovedLoading(false);
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await companiesAPI.delete(companyId);
+      alert('Company deleted successfully');
+      await loadApprovedCompanies();
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      alert('Failed to delete company. Please try again.');
+    }
+  };
+
+  const checkDatabaseConnection = async () => {
+    setDbStatus(prev => ({ ...prev, checking: true }));
+    try {
+      const response = await fetch('/api/v1/health/db');
+      const data = await response.json();
+      setDbStatus({
+        connected: data.connected,
+        database: data.database,
+        checking: false
+      });
+    } catch (error) {
+      console.error('Error checking database connection:', error);
+      setDbStatus({
+        connected: false,
+        database: 'Unknown',
+        checking: false
+      });
     }
   };
 
@@ -161,16 +219,108 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (isAuthenticated) {
       loadSubmissions();
+      loadApprovedCompanies();
+      checkDatabaseConnection();
+      
+      // Check database connection every 30 seconds
+      const interval = setInterval(checkDatabaseConnection, 30000);
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
 
   const handleApproveAddData = async (submissionId: string) => {
     try {
       setSubmissionActionId(submissionId);
+      const submission = allSubmissions.find(s => s.id === submissionId);
+      
+      // Approve the submission first
       await submissionsAPI.approve(submissionId);
+      
+      // Try to create notification (don't fail if this fails)
+      try {
+        if (submission?.userId) {
+          await notificationsAPI.create({
+            userId: submission.userId,
+            type: 'company',
+            message: `Your company "${submission.formData?.companyName || 'data'}" has been approved and added to the directory`,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to create notification (non-critical):', notifError);
+      }
+      
       await loadSubmissions();
+      alert('Submission approved successfully!');
     } catch (error) {
       console.error('Error approving submission:', error);
+      alert('Failed to approve submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handleApproveAdvertise = async (submissionId: string) => {
+    try {
+      setSubmissionActionId(submissionId);
+      const submission = allSubmissions.find(s => s.id === submissionId);
+      
+      // Approve the submission first
+      await submissionsAPI.updateStatus(submissionId, 'approved', 'Approved by admin');
+      
+      // Try to create notification (don't fail if this fails)
+      try {
+        if (submission?.userId) {
+          await notificationsAPI.create({
+            userId: submission.userId,
+            type: 'advertise',
+            message: `Your advertising request for "${submission.formData?.companyName || 'your company'}" has been approved. We'll contact you shortly.`,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to create notification (non-critical):', notifError);
+      }
+      
+      await loadSubmissions();
+      alert('Advertising request approved successfully!');
+    } catch (error) {
+      console.error('Error approving advertise submission:', error);
+      alert('Failed to approve submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handleApproveCollaborate = async (submissionId: string) => {
+    try {
+      setSubmissionActionId(submissionId);
+      const submission = allSubmissions.find(s => s.id === submissionId);
+      
+      // Approve the submission first
+      await submissionsAPI.updateStatus(submissionId, 'approved', 'Approved by admin');
+      
+      // Try to create notification (don't fail if this fails)
+      try {
+        if (submission?.userId) {
+          await notificationsAPI.create({
+            userId: submission.userId,
+            type: 'collaborate',
+            message: `Your collaboration proposal from "${submission.formData?.organizationName || 'your organization'}" has been approved. Our team will reach out soon.`,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to create notification (non-critical):', notifError);
+      }
+      
+      await loadSubmissions();
+      alert('Collaboration proposal approved successfully!');
+    } catch (error) {
+      console.error('Error approving collaborate submission:', error);
       alert('Failed to approve submission. Please try again.');
     } finally {
       setSubmissionActionId(null);
@@ -376,7 +526,7 @@ export default function AdminDashboard() {
     { title: 'Add Data Requests', value: addDataSubmissions.length.toString(), icon: Database, color: 'bg-blue-500' },
     { title: 'Advertise Requests', value: advertiseSubmissions.length.toString(), icon: Megaphone, color: 'bg-green-500' },
     { title: 'Collaborate Requests', value: collaborateSubmissions.length.toString(), icon: Handshake, color: 'bg-purple-500' },
-    { title: 'Priority Companies', value: priorities.length.toString(), icon: TrendingUp, color: 'bg-orange-500' },
+    { title: 'Approved Companies', value: approvedCompanies.length.toString(), icon: CheckCircle, color: 'bg-teal-500' },
   ];
 
   const recentOrders = [
@@ -396,30 +546,31 @@ export default function AdminDashboard() {
               <p className="text-sm text-gray-600">KnitInfo Directory Management</p>
             </div>
             <div className="flex items-center gap-4">
-              {/* Firebase Status Indicator */}
+              {/* Database Status Indicator */}
               <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm">
-                {isReady ? (
-                  isOffline ? (
-                    <>
-                      <CloudOff size={16} className="text-orange-500" />
-                      <span className="text-orange-600">Offline</span>
-                    </>
-                  ) : (
-                    <>
-                      <Cloud size={16} className="text-green-500" />
-                      <span className="text-green-600">Firebase Connected</span>
-                    </>
-                  )
+                {dbStatus.checking ? (
+                  <>
+                    <RefreshCw size={16} className="text-gray-500 animate-spin" />
+                    <span className="text-gray-600">Checking...</span>
+                  </>
+                ) : dbStatus.connected ? (
+                  <>
+                    <Database size={16} className="text-green-500" />
+                    <span className="text-green-600">{dbStatus.database} Connected</span>
+                  </>
                 ) : (
                   <>
-                    <Database size={16} className="text-gray-500" />
-                    <span className="text-gray-600">Local Storage</span>
+                    <Database size={16} className="text-red-500" />
+                    <span className="text-red-600">Not Connected</span>
                   </>
                 )}
               </div>
               
               <button
-                onClick={loadSubmissions}
+                onClick={() => {
+                  loadSubmissions();
+                  checkDatabaseConnection();
+                }}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <RefreshCw size={18} />
@@ -453,7 +604,7 @@ export default function AdminDashboard() {
                    if (index === 0) setActiveTab('add-data');
                    else if (index === 1) setActiveTab('advertise');
                    else if (index === 2) setActiveTab('collaborate');
-                   else if (index === 3) setActiveTab('priority');
+                   else if (index === 3) setActiveTab('approved-data');
                    else setActiveTab('overview');
                  }}>
               <div className="flex items-center justify-between">
@@ -511,6 +662,19 @@ export default function AdminDashboard() {
               }`}
             >
               Collaborate ({collaborateSubmissions.length})
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('approved-data');
+                loadApprovedCompanies();
+              }}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'approved-data'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Approved Data ({approvedCompanies.length})
             </button>
             <button
               onClick={() => setActiveTab('priority')}
@@ -780,6 +944,23 @@ export default function AdminDashboard() {
                       <p className="text-sm text-gray-700">{submission.message}</p>
                     </div>
                   )}
+                  
+                  <div className="mt-4 flex items-center gap-3">
+                    <button
+                      onClick={() => handleApproveAdvertise(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleRejectSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+                    >
+                      Reject
+                    </button>
+                  </div>
                 </div>
               ))
             )}
@@ -869,6 +1050,23 @@ export default function AdminDashboard() {
                         Visiting Card: {submission.visitingCardName}
                       </div>
                     )}
+                  </div>
+                  
+                  <div className="mt-4 flex items-center gap-3">
+                    <button
+                      onClick={() => handleApproveCollaborate(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleRejectSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+                    >
+                      Reject
+                    </button>
                   </div>
                 </div>
               ))
@@ -984,6 +1182,181 @@ export default function AdminDashboard() {
                     </div>
                     );
                   })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Approved Data Tab */}
+        {activeTab === 'approved-data' && (
+          <div>
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Approved Companies</h2>
+              <button
+                onClick={loadApprovedCompanies}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <RefreshCw size={18} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search by company name, contact person, email, phone, or products..."
+                  value={approvedSearchTerm}
+                  onChange={(e) => setApprovedSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {approvedLoading ? (
+                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a] mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading approved companies...</p>
+                </div>
+              ) : approvedCompanies.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <CheckCircle size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No approved companies yet</p>
+                </div>
+              ) : (
+                (() => {
+                  const filteredCompanies = approvedCompanies.filter(company => {
+                    const searchLower = approvedSearchTerm.toLowerCase();
+                    return (
+                      company.companyName?.toLowerCase().includes(searchLower) ||
+                      company.contactPerson?.toLowerCase().includes(searchLower) ||
+                      company.email?.toLowerCase().includes(searchLower) ||
+                      company.phone?.toLowerCase().includes(searchLower) ||
+                      company.category?.toLowerCase().includes(searchLower) ||
+                      (Array.isArray(company.products) && company.products.some((p: string) => p.toLowerCase().includes(searchLower)))
+                    );
+                  });
+
+                  if (filteredCompanies.length === 0) {
+                    return (
+                      <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                        <Search size={48} className="mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">No companies found matching "{approvedSearchTerm}"</p>
+                      </div>
+                    );
+                  }
+
+                  return filteredCompanies.map((company, index) => {
+                  const colors = [
+                    'bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500',
+                    'bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500',
+                    'bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500',
+                    'bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500',
+                  ];
+                  const colorClass = colors[index % colors.length];
+                  
+                  return (
+                    <div key={company.id} className={`${colorClass} rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900">{company.companyName}</h3>
+                          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium mt-2">
+                            {company.category}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCompany(company.id, company.companyName)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                        >
+                          <AlertCircle size={18} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {company.contactPerson && (
+                          <div className="flex items-center gap-2">
+                            <Users size={16} className="text-gray-600" />
+                            <span className="text-gray-700">Contact:</span>
+                            <span className="font-medium text-gray-900">{company.contactPerson}</span>
+                          </div>
+                        )}
+                        {company.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={16} className="text-gray-600" />
+                            <span className="text-gray-700">Phone:</span>
+                            <a href={`tel:${company.phone}`} className="font-medium text-blue-700 hover:underline">{company.phone}</a>
+                          </div>
+                        )}
+                        {company.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail size={16} className="text-gray-600" />
+                            <span className="text-gray-700">Email:</span>
+                            <a href={`mailto:${company.email}`} className="font-medium text-blue-700 hover:underline">{company.email}</a>
+                          </div>
+                        )}
+                        {company.gstNumber && (
+                          <div className="flex items-center gap-2">
+                            <FileText size={16} className="text-gray-600" />
+                            <span className="text-gray-700">GST:</span>
+                            <span className="font-medium text-gray-900">{company.gstNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {company.address && (
+                        <div className="mt-4 pt-4 border-t border-gray-300">
+                          <div className="flex items-start gap-2 mb-2">
+                            <MapPin size={16} className="text-gray-600 mt-0.5" />
+                            <p className="text-sm text-gray-800 font-medium">{company.address}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {company.description && (
+                        <p className="text-sm text-gray-800 mt-2">{company.description}</p>
+                      )}
+                      
+                      {company.products && Array.isArray(company.products) && company.products.length > 0 && (
+                        <div className="mt-3">
+                          <span className="text-sm font-bold text-gray-900">Products: </span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {company.products.map((product: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 bg-white/80 text-gray-900 rounded-full text-sm font-medium border border-gray-300"
+                              >
+                                {product}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {company.website && (
+                        <div className="mt-3">
+                          <a
+                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-700 hover:underline font-medium"
+                          >
+                            🌐 {company.website}
+                          </a>
+                        </div>
+                      )}
+                      
+                      <div className="mt-3 text-xs text-gray-500">
+                        <Calendar size={12} className="inline mr-1" />
+                        Added: {new Date(company.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                  });
+                })()
               )}
             </div>
           </div>

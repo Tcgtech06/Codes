@@ -1,60 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      'Supabase admin credentials are missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY).'
-    );
-  }
-
-  return createClient(supabaseUrl, supabaseKey);
-}
+import supabase from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdminClient();
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('notifications')
       .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
 
-    const notifications = data.map(n => ({
-      id: n.id,
-      message: n.message,
-      timestamp: new Date(n.created_at).toLocaleString(),
-      type: n.type
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Supabase fetch error:', error);
+      return NextResponse.json({ notifications: [] });
+    }
+
+    // Convert snake_case to camelCase
+    const notifications = (data || []).map((notification: any) => ({
+      id: notification.id,
+      userId: notification.user_id,
+      type: notification.type,
+      message: notification.message,
+      read: notification.read,
+      createdAt: notification.created_at,
+      updatedAt: notification.updated_at
     }));
 
     return NextResponse.json({ notifications });
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
+  } catch (error: any) {
+    console.error('GET error:', error);
     return NextResponse.json({ notifications: [] });
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdminClient();
+    const body = await request.json();
+    const { userId, type, message, read = false } = body;
 
-    const { error } = await supabase
+    if (!userId || !type || !message) {
+      return NextResponse.json(
+        { error: 'Missing required fields: userId, type, message' },
+        { status: 400 }
+      );
+    }
+
+    const { data, error } = await supabase
       .from('notifications')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
+      .insert({
+        user_id: userId,
+        type,
+        message,
+        read,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error clearing notifications:', error);
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({
+      message: 'Notification created successfully',
+      notification: {
+        id: data.id,
+        userId: data.user_id,
+        type: data.type,
+        message: data.message,
+        read: data.read,
+        createdAt: data.created_at
+      }
+    });
+  } catch (error: any) {
+    console.error('POST error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

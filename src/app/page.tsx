@@ -181,13 +181,13 @@ export default function Home() {
 
 
   return (
-    <div className="flex flex-col gap-12 pb-12">
+    <div className="flex flex-col pb-12 bg-gray-50">
       {/* Spacer for fixed mobile nav */}
-      <div className="md:hidden h-[58px]"></div>
+      <div className="md:hidden h-[58px] bg-gray-50"></div>
 
       {/* Hero Section with Slideshow */}
       <section
-        className="relative h-[300px] md:h-[400px] overflow-hidden select-none"
+        className="relative h-[300px] md:h-[400px] overflow-hidden select-none bg-white"
         style={{ touchAction: 'pan-y pinch-zoom' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -203,7 +203,7 @@ export default function Home() {
               src={slide.src}
               alt={slide.alt}
               fill
-              className="object-cover md:object-contain md:object-center"
+              className="object-contain"
               priority={index === 0}
             />
           </div>
@@ -249,15 +249,15 @@ export default function Home() {
       </section>
 
       {/* Books Section */}
-      <section className="bg-gray-50 py-12">
+      <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Our Physical Books</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {books.map((book, index) => (
               <Link key={index} href={`/books/${book.id}`}>
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer">
-                  <div className={`h-48 ${book.color} flex items-center justify-center p-6 text-white`}>
-                    <BookOpen size={64} opacity={0.8} />
+                  <div className={`h-32 md:h-48 ${book.color} flex items-center justify-center p-4 md:p-6 text-white`}>
+                    <BookOpen size={48} className="md:w-16 md:h-16" opacity={0.8} />
                   </div>
                   <div className="p-6 flex-grow flex flex-col">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
@@ -277,7 +277,7 @@ export default function Home() {
       </section>
 
       {/* Our Vision Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Vision</h2>
@@ -373,109 +373,79 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stories Section */}
-      {/* Stories Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-3xl py-12 shadow-2xl mb-12 flex flex-col items-center">
-        <h2 className="text-3xl font-bold text-white mb-8">Our Stories</h2>
-        <div className="flex flex-col w-full max-w-2xl items-center">
-          {stories.map((story, index) => {
-            // Calculate step indices
-            // Story 0: step 0
-            // Tube 0: step 1
-            // Story 1: step 2
-            // Tube 1: step 3
-            // Story 2: step 4
-            const storyStep = index * 2;
-            const tubeStep = index * 2 + 1;
-
-            return (
-              <div key={index} className="flex flex-col w-full items-center">
-                <div className="relative bg-white rounded-xl shadow-lg border-2 border-yellow-200 overflow-hidden group w-full flex flex-col md:flex-row min-h-[200px] z-10">
-                  {/* Liquid Filling Animation Overlay */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-b from-yellow-300/60 to-yellow-400/60 z-0"
-                    initial={{ height: "0%" }}
-                    animate={{
-                      height: animationStep === -1 ? "0%" :
-                        animationStep > storyStep ? "100%" :
-                          animationStep === storyStep ? "100%" : "0%"
-                    }}
-                    transition={{
-                      duration: animationStep === -1 ? 0 :
-                        animationStep === storyStep ? 3 : 0.5,
-                      ease: "linear"
-                    }}
-                    onAnimationComplete={() => {
-                      if (animationStep === storyStep) {
-                        if (index === stories.length - 1) {
-                          // Reset to -1 to drain all
-                          setAnimationStep(-1);
-                        } else {
-                          setAnimationStep(prev => prev + 1);
-                        }
-                      }
-                    }}
-                    style={{ top: 0, bottom: 'auto', width: '100%' }} // Fill top to bottom
-                  />
-
-                  {/* Content Container */}
-                  <div className="relative z-10 p-6 flex flex-col gap-4 w-full h-full items-center">
-                    <div className="relative w-full h-48 rounded-lg overflow-hidden shrink-0 bg-gray-50 border border-gray-100">
+      {/* Wall Gallery Section - Wall Background */}
+      <section className="w-full py-16 relative bg-cover bg-center" style={{
+        backgroundImage: 'url(/wallbg.jpg)'
+      }}>
+        {/* Dark overlay for better text visibility */}
+        <div className="absolute inset-0 bg-black/40"></div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 text-center drop-shadow-lg">Wall Gallery</h2>
+          <p className="text-gray-100 text-center mb-12 max-w-2xl mx-auto drop-shadow">
+            Memorable moments from our journey in the textile industry
+          </p>
+          
+          {/* Gallery Grid - 2 columns on mobile, 3 on desktop */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-12">
+            {stories.map((story, index) => {
+              // Different tilt angles for each photo
+              const tilts = ['-3deg', '2deg', '-2deg'];
+              const tilt = tilts[index % tilts.length];
+              
+              return (
+                <div
+                  key={index}
+                  className="group relative"
+                  style={{
+                    transform: `rotate(${tilt})`,
+                    transition: 'transform 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = `rotate(${tilt}) scale(1)`;
+                  }}
+                >
+                  {/* Hanging String */}
+                  <div className="absolute -top-6 md:-top-8 left-1/2 -translate-x-1/2 w-0.5 h-6 md:h-8 bg-gradient-to-b from-gray-300 to-gray-500"></div>
+                  <div className="absolute -top-7 md:-top-9 left-1/2 -translate-x-1/2 w-1.5 md:w-2 h-1.5 md:h-2 bg-gray-500 rounded-full shadow-md"></div>
+                  
+                  {/* Photo Frame */}
+                  <div className="bg-white p-1.5 md:p-4 shadow-2xl rounded-sm">
+                    {/* Photo */}
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 mb-1.5 md:mb-3 overflow-hidden">
                       <Image
                         src={story.image}
                         alt={story.title}
                         fill
-                        className="object-contain"
+                        className="object-cover"
                       />
                     </div>
-
-                    <div className="flex flex-col flex-grow justify-center text-center">
-                      <span className="text-sm font-bold text-yellow-600 uppercase tracking-wide mb-2 inline-block">
-                        {story.date}
-                      </span>
-                      <h3 className="text-xl font-bold text-gray-900 leading-snug">
+                    
+                    {/* Caption */}
+                    <div className="text-center">
+                      <p className="text-[9px] md:text-sm font-semibold text-gray-800 mb-0.5 md:mb-1 line-clamp-2">
                         {story.title}
-                      </h3>
+                      </p>
+                      <p className="text-[8px] md:text-xs text-gray-600">
+                        {story.date}
+                      </p>
                     </div>
                   </div>
-
-                  {/* Border Accent */}
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-400 z-20"></div>
+                  
+                  {/* Shadow */}
+                  <div className="absolute inset-0 bg-black/20 blur-xl -z-10 translate-y-3 md:translate-y-4"></div>
                 </div>
-
-                {/* Connecting Tube */}
-                {index < stories.length - 1 && (
-                  <div className="relative w-4 h-16 bg-gray-700/30 rounded-full my-[-4px] overflow-hidden z-0">
-                    <motion.div
-                      className="w-full bg-gradient-to-b from-yellow-300 to-yellow-500 shadow-[0_0_15px_rgba(250,204,21,0.9)]"
-                      initial={{ height: "0%" }}
-                      animate={{
-                        height: animationStep === -1 ? "0%" :
-                          animationStep > tubeStep ? "100%" :
-                            animationStep === tubeStep ? "100%" : "0%"
-                      }}
-                      transition={{
-                        duration: animationStep === -1 ? 0 :
-                          animationStep === tubeStep ? 1 : 0,
-                        ease: "linear"
-                      }}
-                      onAnimationComplete={() => {
-                        if (animationStep === tubeStep) {
-                          setAnimationStep(prev => prev + 1);
-                        }
-                      }}
-                      style={{ top: 0 }}
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* Live Visitor Statistics Section */}
-      <section className="bg-gradient-to-br from-[#1e3a8a] via-blue-700 to-indigo-900 text-white py-12 mx-4 sm:mx-6 lg:mx-8 rounded-3xl mb-8 overflow-hidden relative">
+      <section className="bg-gradient-to-br from-[#1e3a8a] via-blue-700 to-indigo-900 text-white py-16 overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-900/20"></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>

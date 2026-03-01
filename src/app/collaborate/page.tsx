@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { ArrowLeft, Send, CheckCircle, Users, Handshake, Target, Lightbulb } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { submissionsAPI } from '@/lib/api';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function CollaboratePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,6 +43,7 @@ export default function CollaboratePage() {
 
       await submissionsAPI.create({
         type: 'collaborate',
+        userId: user?.id || '',
         formData: {
           organizationName: formData.company,
           contactPerson: formData.name,

@@ -1,38 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import supabase from '@/lib/supabase';
 
-function getSupabaseAdminClient() {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const { read } = body;
 
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      'Supabase admin credentials are missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_KEY).'
-    );
+    const { data, error } = await supabase
+      .from('notifications')
+      .update({
+        read,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase update error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      message: 'Notification updated successfully',
+      notification: data
+    });
+  } catch (error: any) {
+    console.error('PUT error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
-  return createClient(supabaseUrl, supabaseKey);
 }
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = getSupabaseAdminClient();
-    const { id } = await context.params;
+    const { id } = await params;
 
     const { error } = await supabase
       .from('notifications')
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase delete error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting notification:', error);
-    return NextResponse.json({ success: false }, { status: 500 });
+    return NextResponse.json({ message: 'Notification deleted successfully' });
+  } catch (error: any) {
+    console.error('DELETE error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

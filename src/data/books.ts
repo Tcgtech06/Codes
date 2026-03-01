@@ -13,7 +13,7 @@ export const books: Book[] = [
   { 
     id: 'textile-industry-guide',
     title: 'Textile Industry Guide', 
-    price: 500, 
+    price: 550, 
     edition: '2nd Edition', 
     color: 'bg-blue-600',
     description: 'A comprehensive guide covering all aspects of the textile industry, from raw materials to finished products. Perfect for professionals and students alike.',
@@ -29,7 +29,7 @@ export const books: Book[] = [
   { 
     id: 'advanced-knitting-techniques',
     title: 'Advanced Knitting Techniques', 
-    price: 25, 
+    price: 550, 
     edition: '1st Edition', 
     color: 'bg-emerald-600',
     description: 'Master advanced knitting techniques with detailed instructions and illustrations. Learn professional methods used in the industry.',
@@ -45,7 +45,7 @@ export const books: Book[] = [
   { 
     id: 'fabric-science-technology',
     title: 'Fabric Science & Technology', 
-    price: 40, 
+    price: 550, 
     edition: '3rd Edition', 
     color: 'bg-purple-600',
     description: 'Explore the science behind fabrics and modern textile technology. Includes latest innovations and manufacturing processes.',
