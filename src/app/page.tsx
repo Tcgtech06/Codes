@@ -30,6 +30,7 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useVisitorStats } from '@/hooks/useVisitorStats';
 import StatCard from '@/components/StatCard';
+import ClientOnlyStats from '@/components/ClientOnlyStats';
 import { booksAPI, categoriesAPI } from '@/lib/api';
 
 const categories = [
@@ -49,6 +50,12 @@ const stories = [
   { title: 'Knit Info Launched by EX.M.L.A', date: 'April-2007', image: '/s1.jpg' },
   { title: 'Knit Info Office Opened By Tripur Garments Head', date: 'May-2008', image: '/s2.jpg' },
   { title: 'Meeting Honourable Dhayanithi Maran Sir M.P', date: 'June-2009', image: '/s3.jpg' },
+  { title: 'Industry Partnership Event', date: 'August-2012', image: '/s4.JPG' },
+  { title: 'Technology Innovation Summit', date: 'March-2015', image: '/s5.JPG' },
+  { title: 'Global Textile Conference', date: 'November-2018', image: '/s6.JPG' },
+  { title: 'Digital Transformation Launch', date: 'January-2020', image: '/s7.JPG' },
+  { title: 'Business Excellence Award', date: 'September-2021', image: '/s9.JPG' },
+  { title: 'Innovation & Growth Summit', date: 'March-2022', image: '/s10.JPG' },
 ];
 
 const slides = [
@@ -67,24 +74,6 @@ export default function Home() {
   const [isSwiping, setIsSwiping] = useState(false);
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-
-  // Handle loop restart
-  useEffect(() => {
-    if (animationStep === -1) {
-      // Wait for instant reset (or use timeout if we animated the reset)
-      // With duration: 0 in the reset, we can switch back to 0 immediately? 
-      // No, if duration is 0, it happens instantly.
-      // But if we set state -1, then immediately 0, it might batch and skip -1 visual.
-      // Framer Motion usually handles this, but a small timeout is safer.
-      const timer = setTimeout(() => {
-        setAnimationStep(0);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [animationStep]);
-
-  // Visitor statistics
-  const { stats, loading: statsLoading } = useVisitorStats();
 
   // Fetch books and categories
   // Fetch categories from API, use static books data
@@ -387,56 +376,44 @@ export default function Home() {
           </p>
           
           {/* Gallery Grid - 2 columns on mobile, 3 on desktop */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-12">
             {stories.map((story, index) => {
-              // Different tilt angles for each photo
-              const tilts = ['-3deg', '2deg', '-2deg'];
-              const tilt = tilts[index % tilts.length];
-              
               return (
                 <div
-                  key={index}
+                  key={`story-${story.date}`}
                   className="group relative"
-                  style={{
-                    transform: `rotate(${tilt})`,
-                    transition: 'transform 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = `rotate(${tilt}) scale(1)`;
-                  }}
                 >
                   {/* Hanging String */}
-                  <div className="absolute -top-6 md:-top-8 left-1/2 -translate-x-1/2 w-0.5 h-6 md:h-8 bg-gradient-to-b from-gray-300 to-gray-500"></div>
-                  <div className="absolute -top-7 md:-top-9 left-1/2 -translate-x-1/2 w-1.5 md:w-2 h-1.5 md:h-2 bg-gray-500 rounded-full shadow-md"></div>
+                  <div className="absolute -top-3 md:-top-8 left-1/2 -translate-x-1/2 w-0.5 h-3 md:h-8 bg-gradient-to-b from-gray-300 to-gray-500"></div>
+                  <div className="absolute -top-4 md:-top-9 left-1/2 -translate-x-1/2 w-1 md:w-2 h-1 md:h-2 bg-gray-500 rounded-full shadow-md"></div>
                   
                   {/* Photo Frame */}
-                  <div className="bg-white p-1.5 md:p-4 shadow-2xl rounded-sm">
+                  <div className="bg-white p-1 md:p-4 shadow-xl md:shadow-2xl rounded-sm">
                     {/* Photo */}
-                    <div className="relative w-full aspect-[4/3] bg-gray-100 mb-1.5 md:mb-3 overflow-hidden">
+                    <div className="relative w-full aspect-[4/3] bg-gray-100 mb-1 md:mb-3 overflow-hidden">
                       <Image
                         src={story.image}
                         alt={story.title}
                         fill
                         className="object-cover"
+                        sizes="(max-width: 768px) 40vw, 30vw"
+                        priority={index < 6}
                       />
                     </div>
                     
                     {/* Caption */}
                     <div className="text-center">
-                      <p className="text-[9px] md:text-sm font-semibold text-gray-800 mb-0.5 md:mb-1 line-clamp-2">
+                      <p className="text-[7px] md:text-sm font-semibold text-gray-800 mb-0.5 md:mb-1 line-clamp-2">
                         {story.title}
                       </p>
-                      <p className="text-[8px] md:text-xs text-gray-600">
+                      <p className="text-[6px] md:text-xs text-gray-600">
                         {story.date}
                       </p>
                     </div>
                   </div>
                   
                   {/* Shadow */}
-                  <div className="absolute inset-0 bg-black/20 blur-xl -z-10 translate-y-3 md:translate-y-4"></div>
+                  <div className="absolute inset-0 bg-black/20 blur-md md:blur-xl -z-10 translate-y-1 md:translate-y-4"></div>
                 </div>
               );
             })}
@@ -456,41 +433,7 @@ export default function Home() {
             <p className="text-blue-200 text-lg">Real-time insights into our growing textile community</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Live Visitors */}
-            <StatCard
-              icon={<Eye size={32} />}
-              title="LIVE"
-              value={stats.liveVisitors}
-              subtitle="Active Visitors"
-              description="Currently browsing"
-              loading={statsLoading}
-              isLive={true}
-              color="green"
-            />
-
-            {/* Total Visitors */}
-            <StatCard
-              icon={<TrendingUp size={32} />}
-              title="ALL TIME"
-              value={stats.totalVisitors}
-              subtitle="Total Visitors"
-              description="Since launch"
-              loading={statsLoading}
-              color="blue"
-            />
-
-            {/* Total Companies */}
-            <StatCard
-              icon={<Building2 size={32} />}
-              title="DATABASE"
-              value={stats.totalCompanies}
-              subtitle="Companies Listed"
-              description="Verified businesses"
-              loading={statsLoading}
-              color="purple"
-            />
-          </div>
+          <ClientOnlyStats />
 
           {/* Additional Info */}
           <div className="mt-8 text-center">
