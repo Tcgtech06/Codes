@@ -57,10 +57,7 @@ html, body {
   touch-action: manipulation;
   overflow-x: hidden;
   max-width: 100vw;
-}
-
-* {
-  max-width: 100%;
+  width: 100%;
 }
 
 /* Hide scrollbar for app-like experience on mobile */
