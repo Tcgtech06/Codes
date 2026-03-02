@@ -51,13 +51,18 @@ textarea:-ms-input-placeholder {
 }
 
 /* PWA App-like styles */
-html, body {
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
   overscroll-behavior: none;
   -webkit-overflow-scrolling: touch;
   touch-action: manipulation;
   overflow-x: hidden;
-  max-width: 100vw;
   width: 100%;
+  position: relative;
 }
 
 /* Hide scrollbar for app-like experience on mobile */
