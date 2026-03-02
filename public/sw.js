@@ -1,6 +1,6 @@
 // Service Worker for KnitInfo - Cache-First Strategy
-const CACHE_NAME = 'knitinfo-cache-v1';
-const RUNTIME_CACHE = 'knitinfo-runtime-v1';
+const CACHE_NAME = 'knitinfo-cache-v2';
+const RUNTIME_CACHE = 'knitinfo-runtime-v2';
 
 // Assets to cache on install
 const PRECACHE_URLS = [
