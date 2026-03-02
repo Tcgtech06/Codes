@@ -68,7 +68,7 @@ export default function RootLayout({
         <script src="/register-sw.js" defer></script>
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 overflow-x-hidden`}
       >
         <AuthProvider>
           {false && isMobile && showSplash && <SplashScreen onFinish={handleSplashFinish} />}
