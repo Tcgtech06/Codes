@@ -244,7 +244,7 @@ export default function Home() {
             {books.map((book, index) => (
               <Link key={index} href={`/books/${book.id}`}>
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer max-w-xs mx-auto">
-                  <div className={`${book.color} flex items-center justify-center p-6 md:p-8`}>
+                  <div className="flex items-center justify-center p-6 md:p-8">
                     <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain" />
                   </div>
                   <div className="p-6 flex-grow flex flex-col">
