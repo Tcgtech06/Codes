@@ -30,54 +30,56 @@ export default function Contact() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* 16:9 Slideshow */}
-      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-        <div className="absolute inset-0 bg-gray-900">
-          {slides.map((slide, index) => (
-            <div
-              key={index}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentSlide ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              <img
-                src={slide.src}
-                alt={slide.alt}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-          
-          {/* Navigation Arrows */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft size={24} />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
-            aria-label="Next slide"
-          >
-            <ChevronRight size={24} />
-          </button>
-
-          {/* Slide Indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-            {slides.map((_, index) => (
-              <button
+      {/* 16:9 Slideshow - Reduced height for desktop */}
+      <div className="relative w-full max-w-6xl mx-auto">
+        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+          <div className="absolute inset-0 bg-gray-900 rounded-lg overflow-hidden">
+            {slides.map((slide, index) => (
+              <div
                 key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentSlide
-                    ? 'bg-white w-8'
-                    : 'bg-white/50 hover:bg-white/75'
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  index === currentSlide ? 'opacity-100' : 'opacity-0'
                 }`}
-                aria-label={`Go to slide ${index + 1}`}
-              />
+              >
+                <img
+                  src={slide.src}
+                  alt={slide.alt}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ))}
+            
+            {/* Navigation Arrows */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={24} />
+            </button>
+
+            {/* Slide Indicators */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {slides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentSlide
+                      ? 'bg-white w-8'
+                      : 'bg-white/50 hover:bg-white/75'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
