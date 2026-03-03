@@ -123,7 +123,8 @@ function AddDataContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      <div className="bg-white shadow-sm sticky top-0 z-40 md:top-16">
+      {/* Desktop Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-40 md:top-16 md:block hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => router.back()}
@@ -135,6 +136,23 @@ function AddDataContent() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Add Your Data</h1>
             <p className="text-gray-600 mt-2">Submit your company information to be listed in our directory</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Header */}
+      <div className="bg-white shadow-sm md:hidden">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-700 hover:text-[#1e3a8a] transition-colors mb-4"
+          >
+            <ArrowLeft size={20} />
+            <span className="font-medium">Back</span>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Add Your Data</h1>
+            <p className="text-gray-600 mt-2 text-sm">Submit your company information to be listed in our directory</p>
           </div>
         </div>
       </div>
@@ -169,7 +187,7 @@ function AddDataContent() {
                   name="companyName"
                   value={formData.companyName}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -180,7 +198,7 @@ function AddDataContent() {
                   name="contactPerson"
                   value={formData.contactPerson}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -194,7 +212,7 @@ function AddDataContent() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -205,7 +223,7 @@ function AddDataContent() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -217,7 +235,7 @@ function AddDataContent() {
                 name="category"
                 value={formData.category}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                 required
               >
                 <option value="">Select Category</option>
@@ -234,7 +252,7 @@ function AddDataContent() {
                 value={formData.address}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 resize-none"
                 required
               />
             </div>
@@ -246,7 +264,7 @@ function AddDataContent() {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none resize-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 resize-none"
                 placeholder="Describe your company, services, and expertise..."
                 required
               />
@@ -258,7 +276,7 @@ function AddDataContent() {
                 type="file"
                 accept="image/*"
                 onChange={handleVisitingCardSelect}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
               />
               {visitingCard && (
                 <p className="mt-2 text-sm text-gray-600">Selected: {visitingCard.name}</p>
@@ -271,7 +289,7 @@ function AddDataContent() {
                 type="file"
                 accept="image/*"
                 onChange={handleVisitingCardSelect}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
               />
               {visitingCard && (
                 <p className="text-sm text-gray-600 mt-2">Selected: {visitingCard.name}</p>

@@ -76,8 +76,8 @@ export default function CollaboratePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      {/* Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-40 md:top-16">
+      {/* Desktop Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-40 md:top-16 md:block hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => router.back()}
@@ -89,6 +89,23 @@ export default function CollaboratePage() {
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Collaborate With Us</h1>
             <p className="text-gray-600 mt-2">Partner with KnitInfo to drive innovation in the textile industry</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Header */}
+      <div className="bg-white shadow-sm md:hidden">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-700 hover:text-[#1e3a8a] transition-colors mb-4"
+          >
+            <ArrowLeft size={20} />
+            <span className="font-medium">Back</span>
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Collaborate With Us</h1>
+            <p className="text-gray-600 mt-2 text-sm">Partner with KnitInfo to drive innovation in the textile industry</p>
           </div>
         </div>
       </div>
@@ -196,15 +213,6 @@ export default function CollaboratePage() {
                 </div>
               </div>
             </div>
-
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold text-gray-900 mb-2">Contact Our Partnership Team</h3>
-              <div className="space-y-1 text-sm text-gray-600">
-                <p><strong>Phone:</strong> +91 9943632229</p>
-                <p><strong>Email:</strong> partnerships@knitinfo.com</p>
-                <p><strong>Business Hours:</strong> Mon-Fri, 9 AM - 6 PM IST</p>
-              </div>
-            </div>
           </div>
 
           {/* Form Section */}
@@ -229,7 +237,7 @@ export default function CollaboratePage() {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -241,7 +249,7 @@ export default function CollaboratePage() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -253,7 +261,7 @@ export default function CollaboratePage() {
                   name="company"
                   value={formData.company}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   required
                 />
               </div>
@@ -265,7 +273,7 @@ export default function CollaboratePage() {
                   name="gstNumber"
                   value={formData.gstNumber}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                   placeholder="Enter GST Number (optional)"
                 />
               </div>
@@ -277,7 +285,7 @@ export default function CollaboratePage() {
                   value={formData.message}
                   onChange={handleInputChange}
                   rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none resize-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 resize-none"
                   placeholder="Tell us about your collaboration idea..."
                   required
                 />
@@ -289,7 +297,7 @@ export default function CollaboratePage() {
                   type="file"
                   accept="image/*"
                   onChange={handleVisitingCardSelect}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
                 />
                 {visitingCard && (
                   <p className="mt-2 text-sm text-gray-600">Selected: {visitingCard.name}</p>
