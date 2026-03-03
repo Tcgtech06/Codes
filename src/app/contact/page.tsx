@@ -30,9 +30,9 @@ export default function Contact() {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* 16:9 Slideshow - Reduced height for desktop */}
-      <div className="relative w-full max-w-6xl mx-auto">
-        <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+      {/* Slideshow - Reduced height for desktop */}
+      <div className="relative w-full max-w-6xl mx-auto px-4 py-8">
+        <div className="relative w-full h-64 md:h-96 lg:h-[450px]">
           <div className="absolute inset-0 bg-gray-900 rounded-lg overflow-hidden">
             {slides.map((slide, index) => (
               <div
