@@ -123,8 +123,8 @@ function AddDataContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
-      {/* Desktop Header */}
-      <div className="bg-white shadow-sm sticky top-0 z-40 md:top-16 md:block hidden">
+      {/* Header - Sticky on desktop, static on mobile */}
+      <div className="bg-white shadow-sm md:sticky md:top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => router.back()}
@@ -134,25 +134,8 @@ function AddDataContent() {
             <span className="font-medium">Back</span>
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Add Your Data</h1>
-            <p className="text-gray-600 mt-2">Submit your company information to be listed in our directory</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Header */}
-      <div className="bg-white shadow-sm md:hidden">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-700 hover:text-[#1e3a8a] transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-medium">Back</span>
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Add Your Data</h1>
-            <p className="text-gray-600 mt-2 text-sm">Submit your company information to be listed in our directory</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Add Your Data</h1>
+            <p className="text-gray-600 mt-2 text-sm md:text-base">Submit your company information to be listed in our directory</p>
           </div>
         </div>
       </div>
