@@ -1,155 +1,144 @@
 'use client';
-import { useState } from 'react';
-import { Mail, Phone, MapPin } from 'lucide-react';
-import { contactAPI } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { Mail, Phone, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const slides = [
+  { src: '/ad1.jpg', alt: 'Advertisement 1' },
+  { src: '/ad2.jpg', alt: 'Advertisement 2' },
+  { src: '/ad3.jpg', alt: 'Advertisement 3' },
+  { src: '/ad4.jpg', alt: 'Advertisement 4' },
+  { src: '/ad5.jpg', alt: 'Advertisement 5' },
+];
 
 export default function Contact() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    message: ''
-  });
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    
-    try {
-      // Submit to API
-      await contactAPI.submit(formData);
-      setSuccess(true);
-      
-      // Create WhatsApp message
-      const whatsappMessage = `*New Contact Form Submission*%0A%0A*Name:* ${formData.name}%0A*Email:* ${formData.email}%0A*Message:* ${formData.message}`;
-      const phoneNumber = '919943632229';
-      window.open(`https://wa.me/${phoneNumber}?text=${whatsappMessage}`, '_blank');
-      
-      // Reset form
-      setFormData({ name: '', email: '', message: '' });
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (error) {
-      console.error('Error submitting contact form:', error);
-      alert('Failed to submit. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
   return (
-    <div className="bg-white py-12 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+    <div className="bg-white min-h-screen">
+      {/* 16:9 Slideshow */}
+      <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+        <div className="absolute inset-0 bg-gray-900">
+          {slides.map((slide, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img
+                src={slide.src}
+                alt={slide.alt}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+          
+          {/* Navigation Arrows */}
+          <button
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={24} />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
+            aria-label="Next slide"
+          >
+            <ChevronRight size={24} />
+          </button>
+
+          {/* Slide Indicators */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === currentSlide
+                    ? 'bg-white w-8'
+                    : 'bg-white/50 hover:bg-white/75'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Get in Touch Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">
           Contact Us
         </h1>
+        <p className="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+          Get in touch with us for any inquiries about our services, products, or partnerships.
+        </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Contact Info */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
-            <div className="space-y-6">
-              <a 
-                href="https://www.google.com/maps/search/S1+RBS+Complex+Near+Chennai+Mobiles+Dharapuram+Road+Tirupur" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-start gap-4 hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="bg-blue-100 p-3 rounded-full text-blue-600">
-                  <MapPin size={24} />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Address</h3>
-                  <p className="text-gray-600">KNIT INFO, S1 RBS Complex Near Chennai Mobiles, Dharapuram Road, Tirupur - 4</p>
-                </div>
-              </a>
-              
-              <a 
-                href="tel:+919943632229"
-                className="flex items-start gap-4 hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="bg-blue-100 p-3 rounded-full text-blue-600">
-                  <Phone size={24} />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Phone</h3>
-                  <p className="text-gray-600">9943632229</p>
-                </div>
-              </a>
-              
-              <a 
-                href="mailto:knitinfo.in@gmail.com"
-                className="flex items-start gap-4 hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer"
-              >
-                <div className="bg-blue-100 p-3 rounded-full text-blue-600">
-                  <Mail size={24} />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Email</h3>
-                  <p className="text-gray-600">knitinfo.in@gmail.com</p>
-                </div>
-              </a>
-            </div>
-          </div>
-          
-          {/* Contact Form */}
-          <div className="bg-gray-50 p-8 rounded-xl">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Send us a Message</h2>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input 
-                  type="text" 
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
-                  placeholder="Your Name"
-                  required
-                />
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">Get in Touch</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <a 
+              href="https://www.google.com/maps/search/S1+RBS+Complex+Near+Chennai+Mobiles+Dharapuram+Road+Tirupur" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex flex-col items-center text-center gap-4 hover:bg-gray-50 p-6 rounded-xl transition-all duration-300 cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-lg"
+            >
+              <div className="bg-blue-100 p-4 rounded-full text-blue-600">
+                <MapPin size={32} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input 
-                  type="email" 
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none" 
-                  placeholder="your@email.com"
-                  required
-                />
+                <h3 className="font-semibold text-gray-900 mb-2 text-lg">Address</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  KNIT INFO, S1 RBS Complex<br />
+                  Near Chennai Mobiles<br />
+                  Dharapuram Road<br />
+                  Tirupur - 4
+                </p>
+              </div>
+            </a>
+            
+            <a 
+              href="tel:+919943632229"
+              className="flex flex-col items-center text-center gap-4 hover:bg-gray-50 p-6 rounded-xl transition-all duration-300 cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-lg"
+            >
+              <div className="bg-blue-100 p-4 rounded-full text-blue-600">
+                <Phone size={32} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <textarea 
-                  name="message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none h-32" 
-                  placeholder="How can we help?"
-                  required
-                ></textarea>
+                <h3 className="font-semibold text-gray-900 mb-2 text-lg">Phone</h3>
+                <p className="text-gray-600 text-lg font-medium">9943632229</p>
               </div>
-              <button 
-                type="submit" 
-                disabled={submitting}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting ? 'Sending...' : success ? 'Sent!' : 'Send via WhatsApp'}
-              </button>
-              {success && (
-                <p className="text-green-600 text-sm text-center">Message sent successfully!</p>
-              )}
-            </form>
+            </a>
+            
+            <a 
+              href="mailto:knitinfo.in@gmail.com"
+              className="flex flex-col items-center text-center gap-4 hover:bg-gray-50 p-6 rounded-xl transition-all duration-300 cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-lg"
+            >
+              <div className="bg-blue-100 p-4 rounded-full text-blue-600">
+                <Mail size={32} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2 text-lg">Email</h3>
+                <p className="text-gray-600 text-sm break-all">knitinfo.in@gmail.com</p>
+              </div>
+            </a>
           </div>
         </div>
       </div>
