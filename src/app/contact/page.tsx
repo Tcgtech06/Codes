@@ -66,16 +66,22 @@ export default function Contact() {
             </button>
 
             {/* Slide Indicators */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex z-10" style={{ gap: '4px' }}>
               {slides.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`rounded-full transition-all duration-300 ${
-                    index === currentSlide
-                      ? 'bg-white w-3 h-1.5'
-                      : 'bg-white/50 hover:bg-white/75 w-1.5 h-1.5'
-                  }`}
+                  style={{
+                    width: index === currentSlide ? '12px' : '4px',
+                    height: '4px',
+                    backgroundColor: index === currentSlide ? 'white' : 'rgba(255, 255, 255, 0.6)',
+                    borderRadius: '9999px',
+                    transition: 'all 0.3s',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer'
+                  }}
+                  className="md:!w-2 md:!h-2"
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
