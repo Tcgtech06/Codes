@@ -240,10 +240,10 @@ export default function Home() {
       <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Our Physical Books</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {books.map((book, index) => (
               <Link key={index} href={`/books/${book.id}`}>
-                <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer">
+                <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer max-w-xs mx-auto">
                   <div className={`h-48 md:h-64 ${book.color} flex items-center justify-center p-4 md:p-6`}>
                     <img src={book.image} alt={book.title} className="h-full w-auto object-contain" />
                   </div>

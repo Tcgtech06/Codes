@@ -298,7 +298,7 @@ body {
 /* Faster animation for mobile */
 @media (max-width: 768px) {
   .animate-scroll-left {
-    animation: scroll-left 10s linear infinite;
+    animation: scroll-left 5s linear infinite;
   }
 }
 
