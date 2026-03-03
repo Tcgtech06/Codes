@@ -58,7 +58,7 @@ export default function Contact() {
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Get in Touch</h2>
             <div className="space-y-6">
               <a 
-                href="https://www.google.com/maps/search/123+Textile+Street,+Yarn+City,+NY" 
+                href="https://www.google.com/maps/search/S1+RBS+Complex+Near+Chennai+Mobiles+Dharapuram+Road+Tirupur" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-start gap-4 hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer"
@@ -68,7 +68,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Address</h3>
-                  <p className="text-gray-600">123 Textile Street, Yarn City, NY</p>
+                  <p className="text-gray-600">KNIT INFO, S1 RBS Complex Near Chennai Mobiles, Dharapuram Road, Tirupur - 4</p>
                 </div>
               </a>
               
@@ -81,12 +81,12 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Phone</h3>
-                  <p className="text-gray-600">+91 9943632229</p>
+                  <p className="text-gray-600">9943632229</p>
                 </div>
               </a>
               
               <a 
-                href="mailto:knitinfo@knitinfo.com"
+                href="mailto:knitinfo.in@gmail.com"
                 className="flex items-start gap-4 hover:bg-gray-50 p-3 rounded-lg transition-colors cursor-pointer"
               >
                 <div className="bg-blue-100 p-3 rounded-full text-blue-600">
@@ -94,7 +94,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Email</h3>
-                  <p className="text-gray-600">knitinfo@knitinfo.com</p>
+                  <p className="text-gray-600">knitinfo.in@gmail.com</p>
                 </div>
               </a>
             </div>
