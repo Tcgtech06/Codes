@@ -79,12 +79,12 @@ export default function BookPageClient({ book }: BookPageClientProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Book Image */}
           <div className="bg-white rounded-2xl overflow-hidden shadow-lg">
-            <div className="relative h-[400px] md:h-[500px]">
+            <div className="relative h-[300px] md:h-[400px]">
               <Image
                 src={book.image}
                 alt={book.title}
                 fill
-                className="object-cover"
+                className="object-contain p-4"
                 priority
               />
             </div>

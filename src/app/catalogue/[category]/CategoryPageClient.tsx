@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { 
   Building2, 
   Mail, 
@@ -97,11 +97,9 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFilter]);
 
-  const filteredCompanies = (() => {
+  const filteredCompanies = useMemo(() => {
     const searchedCompanies = companies.filter(company =>
       company.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       company.contactPerson?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -162,7 +160,7 @@ export default function CategoryPageClient({ categorySlug, categoryName }: Categ
     });
 
     return arranged;
-  })();
+  }, [companies, searchTerm, sortOrder, priorityMap]);
 
   if (loading) {
     return (

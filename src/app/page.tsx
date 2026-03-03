@@ -53,15 +53,14 @@ const stories = [
   { title: 'Industry Partnership Event', date: 'August-2012', image: '/s4.JPG' },
   { title: 'Technology Innovation Summit', date: 'March-2015', image: '/s5.JPG' },
   { title: 'Global Textile Conference', date: 'November-2018', image: '/s6.JPG' },
-  { title: 'Digital Transformation Launch', date: 'January-2020', image: '/s7.JPG' },
-  { title: 'Business Excellence Award', date: 'September-2021', image: '/s9.JPG' },
-  { title: 'Innovation & Growth Summit', date: 'March-2022', image: '/s10.JPG' },
 ];
 
 const slides = [
-  { src: '/s1.jpg', alt: 'Slide 1' },
-  { src: '/s2.jpg', alt: 'Slide 2' },
-  { src: '/s3.jpg', alt: 'Slide 3' },
+  { src: '/ad1.jpg', alt: 'Advertisement 1' },
+  { src: '/ad2.jpg', alt: 'Advertisement 2' },
+  { src: '/ad3.jpg', alt: 'Advertisement 3' },
+  { src: '/ad4.jpg', alt: 'Advertisement 4' },
+  { src: '/ad5.jpg', alt: 'Advertisement 5' },
 ];
 
 export default function Home() {
@@ -245,8 +244,8 @@ export default function Home() {
             {books.map((book, index) => (
               <Link key={index} href={`/books/${book.id}`}>
                 <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer">
-                  <div className={`h-32 md:h-48 ${book.color} flex items-center justify-center p-4 md:p-6 text-white`}>
-                    <BookOpen size={48} className="md:w-16 md:h-16" opacity={0.8} />
+                  <div className={`h-48 md:h-64 ${book.color} flex items-center justify-center p-4 md:p-6`}>
+                    <img src={book.image} alt={book.title} className="h-full w-auto object-contain" />
                   </div>
                   <div className="p-6 flex-grow flex flex-col">
                     <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
