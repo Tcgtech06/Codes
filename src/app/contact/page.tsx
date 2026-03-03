@@ -66,15 +66,15 @@ export default function Contact() {
             </button>
 
             {/* Slide Indicators */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
               {slides.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentSlide(index)}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  className={`rounded-full transition-all duration-300 ${
                     index === currentSlide
-                      ? 'bg-white w-8'
-                      : 'bg-white/50 hover:bg-white/75'
+                      ? 'bg-white w-3 h-1.5'
+                      : 'bg-white/50 hover:bg-white/75 w-1.5 h-1.5'
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
