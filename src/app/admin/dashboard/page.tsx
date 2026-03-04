@@ -176,43 +176,41 @@ export default function AdminDashboard() {
       return;
     }
     
-    // Check if attachments exists
+    // NEW FORMAT: Check if attachments exists (new submissions with storage)
     let attachments = submission.attachments;
     
     console.log('Attachments:', attachments);
     
-    if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
-      alert('No attachments found for this submission.');
-      return;
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      // Get the visiting card attachment
+      let visitingCardAttachment = attachments.find(
+        (att: any) => att && att.purpose === 'visiting-card'
+      ) || attachments[0];
+      
+      console.log('Visiting card attachment:', visitingCardAttachment);
+      
+      if (visitingCardAttachment) {
+        // Check for image URL (from storage) or base64 data
+        const imageUrl = visitingCardAttachment.url || visitingCardAttachment.data;
+        
+        console.log('Image URL:', imageUrl ? imageUrl.substring(0, 100) : 'none');
+        
+        if (imageUrl && typeof imageUrl === 'string' && imageUrl.length > 0) {
+          setSelectedVisitingCard({ 
+            name: visitingCardAttachment.name || 'Visiting Card', 
+            url: imageUrl 
+          });
+          setShowVisitingCardModal(true);
+          return;
+        }
+      }
     }
     
-    // Get the visiting card attachment
-    let visitingCardAttachment = attachments.find(
-      (att: any) => att && att.purpose === 'visiting-card'
-    ) || attachments[0];
-    
-    console.log('Visiting card attachment:', visitingCardAttachment);
-    
-    if (!visitingCardAttachment) {
-      alert('No visiting card attachment found.');
-      return;
-    }
-    
-    // Check for image URL (from storage) or base64 data
-    const imageUrl = visitingCardAttachment.url || visitingCardAttachment.data;
-    
-    console.log('Image URL:', imageUrl ? imageUrl.substring(0, 100) : 'none');
-    
-    if (imageUrl && typeof imageUrl === 'string' && imageUrl.length > 0) {
-      setSelectedVisitingCard({ 
-        name: visitingCardAttachment.name || 'Visiting Card', 
-        url: imageUrl 
-      });
-      setShowVisitingCardModal(true);
-    } else {
-      alert('Visiting card image not found. The image may not have been uploaded properly.');
-      console.log('Full attachment data:', visitingCardAttachment);
-    }
+    // OLD FORMAT: This is an old submission created before storage was implemented
+    // The visiting card was supposed to be in attachments but the old code didn't save it properly
+    // These old submissions only have the filename but not the actual image data
+    alert('This is an old submission created before the storage system was implemented. The visiting card image was not saved. Please ask the user to resubmit with the new form.');
+    console.log('Old submission without image data - only filename exists');
   };
 
   const handleDownloadVisitingCard = () => {
