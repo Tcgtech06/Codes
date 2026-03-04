@@ -102,7 +102,7 @@ export default function AdvertisePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 md:pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 pb-20 md:pb-8">
       {/* Header - Sticky on desktop, static on mobile */}
       <div className="bg-white shadow-sm md:sticky md:top-16 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

@@ -272,7 +272,7 @@ export default function About() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setActiveStory(activeStory > 0 ? activeStory - 1 : stories.length - 1)}
-              className="bg-white text-gray-600 hover:text-blue-600 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+              className="bg-gradient-to-b from-blue-50 to-green-50 text-gray-600 hover:text-blue-600 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -282,7 +282,7 @@ export default function About() {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => setActiveStory(activeStory < stories.length - 1 ? activeStory + 1 : 0)}
-              className="bg-white text-gray-600 hover:text-blue-600 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
+              className="bg-gradient-to-b from-blue-50 to-green-50 text-gray-600 hover:text-blue-600 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -292,7 +292,7 @@ export default function About() {
         </div>
 
         {/* Timeline Overview - Mobile Friendly */}
-        <div className="bg-white rounded-2xl p-4 md:p-8 shadow-xl">
+        <div className="bg-gradient-to-b from-blue-50 to-green-50 rounded-2xl p-4 md:p-8 shadow-xl">
           <h3 className="text-xl md:text-2xl font-bold text-gray-900 text-center mb-6 md:mb-8">Complete Timeline</h3>
           <div className="relative">
             {/* Timeline Line */}
@@ -317,7 +317,7 @@ export default function About() {
                     <div className="md:hidden w-full pl-10">
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
-                        className="bg-white border border-gray-200 rounded-xl p-4 shadow-lg transition-all duration-300 cursor-pointer"
+                        className="bg-gradient-to-b from-blue-50 to-green-50 border border-gray-200 rounded-xl p-4 shadow-lg transition-all duration-300 cursor-pointer"
                         onClick={() => setActiveStory(index)}
                       >
                         <div className="flex items-center space-x-2 mb-2">
@@ -347,7 +347,7 @@ export default function About() {
                         <div className="w-5/12 pr-8 text-right">
                           <motion.div 
                             whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                            className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg transition-all duration-300 cursor-pointer"
+                            className="bg-gradient-to-b from-blue-50 to-green-50 border border-gray-200 rounded-xl p-6 shadow-lg transition-all duration-300 cursor-pointer"
                             onClick={() => setActiveStory(index)}
                           >
                             <div className="flex items-center space-x-3 mb-3 justify-end">
@@ -382,7 +382,7 @@ export default function About() {
                         <div className="w-5/12 pl-8 text-left">
                           <motion.div 
                             whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}
-                            className="bg-white border border-gray-200 rounded-xl p-6 shadow-lg transition-all duration-300 cursor-pointer"
+                            className="bg-gradient-to-b from-blue-50 to-green-50 border border-gray-200 rounded-xl p-6 shadow-lg transition-all duration-300 cursor-pointer"
                             onClick={() => setActiveStory(index)}
                           >
                             <div className="flex items-center space-x-3 mb-3 justify-start">

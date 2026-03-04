@@ -29,7 +29,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
       {/* Slideshow - Slightly increased height for desktop */}
       <div className="relative w-full max-w-6xl mx-auto px-4 py-8">
         <div className="relative w-full h-64 md:h-96 lg:h-[420px]">
