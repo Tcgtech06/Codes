@@ -17,7 +17,7 @@ export const books: Book[] = [
     edition: '2nd Edition', 
     color: 'bg-blue-600',
     description: 'A comprehensive guide covering all aspects of the textile industry, from raw materials to finished products. Perfect for professionals and students alike.',
-    image: '/Book2.png',
+    image: '/Book1.jpg',
     details: [
       'Complete overview of textile manufacturing processes',
       'Industry standards and quality control',
@@ -49,7 +49,7 @@ export const books: Book[] = [
     edition: '3rd Edition', 
     color: 'bg-purple-600',
     description: 'Explore the science behind fabrics and modern textile technology. Includes latest innovations and manufacturing processes.',
-    image: '/Book2.png',
+    image: '/Book3.jpeg',
     details: [
       'Fabric properties and characteristics',
       'Modern textile technologies',
