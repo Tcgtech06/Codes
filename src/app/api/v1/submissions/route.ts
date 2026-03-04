@@ -86,7 +86,11 @@ export async function POST(request: NextRequest) {
     // Process attachments - upload base64 images to storage
     const processedAttachments = [];
     for (const attachment of attachments) {
+      console.log('Processing attachment:', attachment.name, 'purpose:', attachment.purpose);
+      
       if (attachment.data && typeof attachment.data === 'string' && attachment.data.startsWith('data:')) {
+        console.log('Uploading base64 image to storage...');
+        
         // Upload base64 image to storage
         const publicUrl = await uploadBase64Image(
           attachment.data,
@@ -95,6 +99,7 @@ export async function POST(request: NextRequest) {
         );
 
         if (publicUrl) {
+          console.log('Upload successful, URL:', publicUrl);
           processedAttachments.push({
             name: attachment.name,
             type: attachment.type,
@@ -104,6 +109,7 @@ export async function POST(request: NextRequest) {
           });
         } else {
           // If upload fails, store metadata without data
+          console.error('Upload failed for:', attachment.name);
           processedAttachments.push({
             name: attachment.name,
             type: attachment.type,
@@ -114,9 +120,12 @@ export async function POST(request: NextRequest) {
         }
       } else {
         // Keep attachment as is if it's not base64
+        console.log('Keeping attachment as-is (not base64)');
         processedAttachments.push(attachment);
       }
     }
+    
+    console.log('Processed attachments:', processedAttachments.length);
 
     // Update submission with processed attachments
     if (processedAttachments.length > 0) {

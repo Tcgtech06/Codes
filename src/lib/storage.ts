@@ -40,13 +40,19 @@ export async function uploadBase64Image(
   submissionId: string
 ): Promise<string | null> {
   try {
+    console.log('Starting uploadBase64Image for:', fileName);
+    
     // Convert base64 to blob
     const base64Response = await fetch(base64Data);
     const blob = await base64Response.blob();
+    
+    console.log('Blob created, size:', blob.size, 'type:', blob.type);
 
     const fileExt = fileName.split('.').pop() || 'jpg';
     const newFileName = `${submissionId}-${Date.now()}.${fileExt}`;
     const filePath = `visiting-cards/${newFileName}`;
+    
+    console.log('Uploading to path:', filePath);
 
     // Upload blob to Supabase Storage
     const { data, error } = await supabase.storage
@@ -58,14 +64,18 @@ export async function uploadBase64Image(
       });
 
     if (error) {
-      console.error('Error uploading to storage:', error);
+      console.error('Supabase storage upload error:', error);
       return null;
     }
+    
+    console.log('Upload successful, data:', data);
 
     // Get public URL
     const { data: urlData } = supabase.storage
       .from('attachments')
       .getPublicUrl(filePath);
+    
+    console.log('Public URL:', urlData.publicUrl);
 
     return urlData.publicUrl;
   } catch (error) {
