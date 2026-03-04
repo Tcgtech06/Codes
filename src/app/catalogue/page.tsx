@@ -69,8 +69,23 @@ export default function Catalogue() {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
+        {/* Animated Image Strip */}
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
+          <div className="flex animate-scroll-left gap-6">
+            {/* Duplicate images for seamless loop */}
+            {[...Array(4)].map((_, setIndex) => (
+              <div key={setIndex} className="flex gap-6 shrink-0">
+                <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Full Catalogue</h1>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {[...Array(10)].map((_, i) => (
@@ -85,8 +100,23 @@ export default function Catalogue() {
     );
   }
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
+      {/* Animated Image Strip */}
+      <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
+        <div className="flex animate-scroll-left gap-6">
+          {/* Duplicate images for seamless loop */}
+          {[...Array(4)].map((_, setIndex) => (
+            <div key={setIndex} className="flex gap-6 shrink-0">
+              <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Full Catalogue</h1>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {categories.map((category) => {

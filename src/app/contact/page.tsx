@@ -1,95 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
-import { Mail, Phone, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const slides = [
-  { src: '/ad1.jpg', alt: 'Advertisement 1' },
-  { src: '/ad2.jpg', alt: 'Advertisement 2' },
-  { src: '/ad3.jpg', alt: 'Advertisement 3' },
-  { src: '/ad4.jpg', alt: 'Advertisement 4' },
-  { src: '/ad5.jpg', alt: 'Advertisement 5' },
-];
+import { useState } from 'react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Contact() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
   return (
     <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
-      {/* Slideshow - Slightly increased height for desktop */}
-      <div className="relative w-full max-w-6xl mx-auto px-4 py-8">
-        <div className="relative w-full h-64 md:h-96 lg:h-[420px]">
-          <div className="absolute inset-0 bg-gray-900 rounded-lg overflow-hidden">
-            {slides.map((slide, index) => (
-              <div
-                key={index}
-                className={`absolute inset-0 transition-opacity duration-1000 ${
-                  index === currentSlide ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                <img
-                  src={slide.src}
-                  alt={slide.alt}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            ))}
-            
-            {/* Navigation Arrows */}
-            <button
-              onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
-              aria-label="Previous slide"
-            >
-              <ChevronLeft size={24} />
-            </button>
-            <button
-              onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 rounded-full transition-all duration-300 z-10"
-              aria-label="Next slide"
-            >
-              <ChevronRight size={24} />
-            </button>
-
-            {/* Slide Indicators */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex z-10" style={{ gap: '4px' }}>
-              {slides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  style={{
-                    width: index === currentSlide ? '12px' : '4px',
-                    height: '4px',
-                    backgroundColor: index === currentSlide ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                    borderRadius: '9999px',
-                    transition: 'all 0.3s',
-                    border: 'none',
-                    padding: 0,
-                    cursor: 'pointer'
-                  }}
-                  className="md:!w-2 md:!h-2"
-                  aria-label={`Go to slide ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Get in Touch Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 text-center">
