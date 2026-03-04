@@ -36,6 +36,12 @@ export default function Contact() {
                   Dharapuram Road<br />
                   Tirupur - 641 604
                 </p>
+                <p className="text-gray-600 text-sm leading-relaxed mt-3 pt-3 border-t border-gray-300">
+                  5/381, Edakattu Vayal<br />
+                  Nallur Palayam<br />
+                  Vadambachery (PO)<br />
+                  Coimbatore - 641 669
+                </p>
               </div>
             </a>
             
@@ -48,7 +54,7 @@ export default function Contact() {
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2 text-lg">Phone</h3>
-                <p className="text-gray-600 text-lg font-medium">9943632229</p>
+                <p className="text-gray-600 text-lg font-medium">9943632229 / 9843232229</p>
               </div>
             </a>
             
