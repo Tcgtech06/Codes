@@ -111,21 +111,6 @@ export default function About() {
 
   return (
     <div className="bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
-      {/* Animated Image Strip */}
-      <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
-        <div className="flex animate-scroll-left gap-6">
-          {/* Duplicate images for seamless loop */}
-          {[...Array(4)].map((_, setIndex) => (
-            <div key={setIndex} className="flex gap-6 shrink-0">
-              <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-              <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-              <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-              <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Hero Section */}
       <motion.div 
         initial={{ opacity: 0, y: -50 }}

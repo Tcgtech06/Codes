@@ -273,6 +273,21 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Animated Image Strip */}
+      <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
+        <div className="flex animate-scroll-left gap-6">
+          {/* Duplicate images for seamless loop */}
+          {[...Array(4)].map((_, setIndex) => (
+            <div key={setIndex} className="flex gap-6 shrink-0">
+              <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Our Vision Section */}
       <section className="py-20 bg-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
