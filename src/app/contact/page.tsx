@@ -18,7 +18,7 @@ export default function Contact() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-8 text-center">Get in Touch</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <a 
-              href="https://www.google.com/maps/search/S1+RBS+Complex+Near+Chennai+Mobiles+Dharapuram+Road+Tirupur" 
+              href="https://www.google.com/maps/search/Winner+Traders+51+RPS+Complex+KSC+School+Road+Dharapuram+Road+Tirupur" 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex flex-col items-center text-center gap-4 hover:bg-gray-50 p-6 rounded-xl transition-all duration-300 cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-lg"
@@ -29,10 +29,12 @@ export default function Contact() {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-2 text-lg">Address</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  KNIT INFO, S1 RBS Complex<br />
-                  Near Chennai Mobiles<br />
+                  N.Mohanraj (Knit Info)<br />
+                  Winner Traders<br />
+                  51, RPS Complex, KSC School Road<br />
+                  Near Shri Paper Mart<br />
                   Dharapuram Road<br />
-                  Tirupur - 4
+                  Tirupur - 641 604
                 </p>
               </div>
             </a>

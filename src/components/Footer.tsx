@@ -34,7 +34,7 @@ const Footer = () => {
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="shrink-0 mt-0.5" />
-                <span>KNIT INFO, S1 RBS Complex<br />Near Chennai Mobiles<br />Dharapuram Road, Tirupur - 4</span>
+                <span>N.Mohanraj (Knit Info)<br />Winner Traders<br />51, RPS Complex, KSC School Road<br />Near Shri Paper Mart<br />Dharapuram Road, Tirupur - 641 604</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone size={16} className="shrink-0" />
