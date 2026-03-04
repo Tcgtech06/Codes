@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Send, CheckCircle, Users, Handshake, Target, Lightbulb } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { submissionsAPI } from '@/lib/api';
@@ -9,6 +9,8 @@ import { useAuth } from '@/components/AuthProvider';
 export default function CollaboratePage() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,6 +21,23 @@ export default function CollaboratePage() {
   const [visitingCard, setVisitingCard] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHeaderVisible(false);
+      } else {
+        setIsHeaderVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -37,8 +56,26 @@ export default function CollaboratePage() {
     setIsSubmitting(true);
 
     try {
+      let visitingCardData = null;
+      
+      // Convert visiting card to base64 if exists
+      if (visitingCard) {
+        const reader = new FileReader();
+        visitingCardData = await new Promise((resolve, reject) => {
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(visitingCard);
+        });
+      }
+
       const attachments = visitingCard
-        ? [{ name: visitingCard.name, type: visitingCard.type, size: visitingCard.size, purpose: 'visiting-card' }]
+        ? [{ 
+            name: visitingCard.name, 
+            type: visitingCard.type, 
+            size: visitingCard.size, 
+            purpose: 'visiting-card',
+            data: visitingCardData
+          }]
         : [];
 
       await submissionsAPI.create({
@@ -60,6 +97,9 @@ export default function CollaboratePage() {
       });
 
       setSubmitStatus('success');
+      
+      // Scroll to top to show success message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       setTimeout(() => {
         setFormData({ name: '', email: '', company: '', gstNumber: '', message: '' });
@@ -69,6 +109,8 @@ export default function CollaboratePage() {
     } catch (error) {
       console.error('Error submitting collaborate form:', error);
       setSubmitStatus('error');
+      // Scroll to top to show error message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
@@ -76,8 +118,10 @@ export default function CollaboratePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 pb-20 md:pb-8">
-      {/* Header - Sticky on desktop, static on mobile */}
-      <div className="bg-white shadow-sm md:sticky md:top-16 z-40">
+      {/* Header - Hides on scroll down, shows on scroll up */}
+      <div className={`bg-white shadow-sm fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => router.back()}
@@ -92,6 +136,9 @@ export default function CollaboratePage() {
           </div>
         </div>
       </div>
+
+      {/* Spacer for fixed header */}
+      <div className="h-[140px]"></div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Collaboration Types */}

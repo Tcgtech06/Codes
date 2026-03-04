@@ -179,10 +179,10 @@ export default function SignInPage() {
           <span className="font-medium">Back</span>
         </button>
 
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-xl font-bold text-gray-900">
           {mode === 'sign-up' ? 'Sign Up' : 'Login'}
         </h1>
-        <p className="text-gray-600 mt-1 mb-6">
+        <p className="text-sm text-gray-600 mt-1 mb-6">
           {mode === 'sign-up' 
             ? 'Create your account with email/password or continue with Google.' 
             : 'Login with email/password or continue with Google.'}

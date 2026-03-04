@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
 import { verifyAdminFromRequest } from '@/lib/serverAuth';
+import { uploadBase64Image } from '@/lib/storage';
 
 const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
 
@@ -62,30 +63,82 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Form data is required' }, { status: 400 });
     }
 
+    // First, insert the submission to get an ID
     const insertPayload = {
       type,
       user_id: userId || null,
       form_data: formData,
-      attachments,
+      attachments: [], // Will update after uploading images
       status: 'pending',
       submitted_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
+    const { data: submissionData, error: insertError } = await supabase
       .from('form_submissions')
       .insert([insertPayload])
       .select('*')
       .single();
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 });
+    }
+
+    // Process attachments - upload base64 images to storage
+    const processedAttachments = [];
+    for (const attachment of attachments) {
+      if (attachment.data && typeof attachment.data === 'string' && attachment.data.startsWith('data:')) {
+        // Upload base64 image to storage
+        const publicUrl = await uploadBase64Image(
+          attachment.data,
+          attachment.name,
+          submissionData.id
+        );
+
+        if (publicUrl) {
+          processedAttachments.push({
+            name: attachment.name,
+            type: attachment.type,
+            size: attachment.size,
+            purpose: attachment.purpose,
+            url: publicUrl, // Store URL instead of base64
+          });
+        } else {
+          // If upload fails, store metadata without data
+          processedAttachments.push({
+            name: attachment.name,
+            type: attachment.type,
+            size: attachment.size,
+            purpose: attachment.purpose,
+            error: 'Failed to upload to storage',
+          });
+        }
+      } else {
+        // Keep attachment as is if it's not base64
+        processedAttachments.push(attachment);
+      }
+    }
+
+    // Update submission with processed attachments
+    if (processedAttachments.length > 0) {
+      const { error: updateError } = await supabase
+        .from('form_submissions')
+        .update({ attachments: processedAttachments })
+        .eq('id', submissionData.id);
+
+      if (updateError) {
+        console.error('Error updating attachments:', updateError);
+      }
     }
 
     return NextResponse.json(
-      { message: 'Submission created successfully', submission: toSubmissionDto(data) },
+      { 
+        message: 'Submission created successfully', 
+        submission: toSubmissionDto({ ...submissionData, attachments: processedAttachments }) 
+      },
       { status: 201 }
     );
   } catch (error: any) {
+    console.error('Error in POST /submissions:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

@@ -22,7 +22,10 @@ import {
   Calendar,
   FileText,
   RefreshCw,
-  Search
+  Search,
+  Image as ImageIcon,
+  Download,
+  X
 } from 'lucide-react';
 import { usePriorities, useDataService } from '../../../hooks/useLocalStorage';
 import { submissionsAPI, companiesAPI, notificationsAPI } from '@/lib/api';
@@ -98,6 +101,8 @@ export default function AdminDashboard() {
   const [approvedSearchTerm, setApprovedSearchTerm] = useState('');
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [submissionActionId, setSubmissionActionId] = useState<string | null>(null);
+  const [showVisitingCardModal, setShowVisitingCardModal] = useState(false);
+  const [selectedVisitingCard, setSelectedVisitingCard] = useState<{ name: string; url: string } | null>(null);
   const [priorityForm, setPriorityForm] = useState({
     companyName: '',
     category: '',
@@ -159,6 +164,58 @@ export default function AdminDashboard() {
       console.error('Error deleting company:', error);
       alert('Failed to delete company. Please try again.');
     }
+  };
+
+  const handleViewVisitingCard = (submissionId: string) => {
+    const submission = allSubmissions.find(s => s.id === submissionId);
+    
+    if (!submission) {
+      alert('Submission not found');
+      return;
+    }
+    
+    // Check if attachments exists
+    let attachments = submission.attachments;
+    
+    if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
+      alert('No attachments found for this submission.');
+      return;
+    }
+    
+    // Get the visiting card attachment
+    let visitingCardAttachment = attachments.find(
+      (att: any) => att && att.purpose === 'visiting-card'
+    ) || attachments[0];
+    
+    if (!visitingCardAttachment) {
+      alert('No visiting card attachment found.');
+      return;
+    }
+    
+    // Check for image URL (from storage) or base64 data
+    const imageUrl = visitingCardAttachment.url || visitingCardAttachment.data;
+    
+    if (imageUrl && typeof imageUrl === 'string' && imageUrl.length > 0) {
+      setSelectedVisitingCard({ 
+        name: visitingCardAttachment.name || 'Visiting Card', 
+        url: imageUrl 
+      });
+      setShowVisitingCardModal(true);
+    } else {
+      alert('Visiting card image not found. The image may not have been uploaded properly. Please try uploading again.');
+    }
+  };
+
+  const handleDownloadVisitingCard = () => {
+    if (!selectedVisitingCard) return;
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = selectedVisitingCard.url;
+    link.download = selectedVisitingCard.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const checkDatabaseConnection = async () => {
@@ -847,9 +904,16 @@ export default function AdminDashboard() {
                       </div>
                     )}
                     {submission.visitingCardName && (
-                      <div className="mt-2 text-sm text-gray-800">
-                        <FileText size={14} className="inline mr-1" />
-                        Visiting Card: {submission.visitingCardName}
+                      <div className="mt-2 flex items-center gap-2">
+                        <FileText size={14} className="inline text-gray-600" />
+                        <span className="text-sm text-gray-800">Visiting Card: {submission.visitingCardName}</span>
+                        <button
+                          onClick={() => handleViewVisitingCard(submission.id)}
+                          className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs flex items-center gap-1"
+                        >
+                          <ImageIcon size={14} />
+                          View
+                        </button>
                       </div>
                     )}
 
@@ -895,53 +959,60 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-900 font-medium">
                         <Calendar size={14} className="inline mr-1" />
                         {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
                       {submission.adType}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                     <div className="flex items-center gap-2">
-                      <Users size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Contact:</span>
-                      <span className="font-medium">{submission.contactPerson}</span>
+                      <Users size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Contact:</span>
+                      <span className="font-medium text-gray-900">{submission.contactPerson}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Phone:</span>
-                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-600 hover:underline">{submission.phone}</a>
+                      <Phone size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Phone:</span>
+                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-700 hover:underline">{submission.phone}</a>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Email:</span>
-                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-600 hover:underline">{submission.email}</a>
+                      <Mail size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Email:</span>
+                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-700 hover:underline">{submission.email}</a>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Category:</span>
-                      <span className="font-medium">{submission.category}</span>
+                      <span className="text-gray-900 font-semibold">Category:</span>
+                      <span className="font-medium text-gray-900">{submission.category}</span>
                     </div>
                   </div>
                   
                   {submission.budget && (
                     <div className="mb-2">
-                      <span className="text-sm font-medium text-gray-700">Budget: </span>
-                      <span className="text-sm text-gray-600">{submission.budget}</span>
+                      <span className="text-sm font-semibold text-gray-900">Budget: </span>
+                      <span className="text-sm text-gray-900">{submission.budget}</span>
                     </div>
                   )}
                   {submission.visitingCardName && (
-                    <div className="mb-2 text-sm text-gray-700">
-                      <FileText size={14} className="inline mr-1" />
-                      Visiting Card: {submission.visitingCardName}
+                    <div className="mb-2 flex items-center gap-2">
+                      <FileText size={14} className="inline text-gray-700" />
+                      <span className="text-sm text-gray-900 font-medium">Visiting Card: {submission.visitingCardName}</span>
+                      <button
+                        onClick={() => handleViewVisitingCard(submission.id)}
+                        className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs flex items-center gap-1"
+                      >
+                        <ImageIcon size={14} />
+                        View
+                      </button>
                     </div>
                   )}
                   {submission.message && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-sm text-gray-700">{submission.message}</p>
+                      <p className="text-sm text-gray-900">{submission.message}</p>
                     </div>
                   )}
                   
@@ -986,68 +1057,75 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{submission.organizationName || 'Collaboration Request'}</h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-900 font-medium">
                         <Calendar size={14} className="inline mr-1" />
                         {new Date(submission.submittedAt).toLocaleString()}
                       </p>
                     </div>
-                    <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
+                    <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full font-medium">
                       {submission.collaborationType || 'Collaboration'}
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
                     <div className="flex items-center gap-2">
-                      <Users size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Contact:</span>
-                      <span className="font-medium">{submission.contactPerson}</span>
+                      <Users size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Contact:</span>
+                      <span className="font-medium text-gray-900">{submission.contactPerson}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Phone size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Phone:</span>
+                      <Phone size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Phone:</span>
                       {submission.phone ? (
-                        <a href={`tel:${submission.phone}`} className="font-medium text-blue-600 hover:underline">{submission.phone}</a>
+                        <a href={`tel:${submission.phone}`} className="font-medium text-blue-700 hover:underline">{submission.phone}</a>
                       ) : (
-                        <span className="font-medium text-gray-500">Not provided</span>
+                        <span className="font-medium text-gray-900">Not provided</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-gray-400" />
-                      <span className="text-gray-600">Email:</span>
-                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-600 hover:underline">{submission.email}</a>
+                      <Mail size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Email:</span>
+                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-700 hover:underline">{submission.email}</a>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Company:</span>
-                      <span className="font-medium">{submission.organizationName || 'Not provided'}</span>
+                      <span className="text-gray-900 font-semibold">Company:</span>
+                      <span className="font-medium text-gray-900">{submission.organizationName || 'Not provided'}</span>
                     </div>
                   </div>
                   
                   <div className="mt-4 pt-4 border-t border-gray-200">
                     <h4 className="font-semibold text-gray-900 mb-2">Message:</h4>
-                    <p className="text-sm text-gray-700 mb-3">{submission.message || submission.projectDescription || 'No message provided.'}</p>
+                    <p className="text-sm text-gray-900 mb-3">{submission.message || submission.projectDescription || 'No message provided.'}</p>
                     
                     {submission.timeline && (
                       <div className="mb-2">
-                        <span className="text-sm font-medium text-gray-700">Timeline: </span>
-                        <span className="text-sm text-gray-600">{submission.timeline}</span>
+                        <span className="text-sm font-semibold text-gray-900">Timeline: </span>
+                        <span className="text-sm text-gray-900">{submission.timeline}</span>
                       </div>
                     )}
                     {submission.budget && (
                       <div className="mb-2">
-                        <span className="text-sm font-medium text-gray-700">Budget: </span>
-                        <span className="text-sm text-gray-600">{submission.budget}</span>
+                        <span className="text-sm font-semibold text-gray-900">Budget: </span>
+                        <span className="text-sm text-gray-900">{submission.budget}</span>
                       </div>
                     )}
                     {submission.experience && (
                       <div className="mt-3">
                         <h4 className="font-semibold text-gray-900 mb-1">Experience:</h4>
-                        <p className="text-sm text-gray-700">{submission.experience}</p>
+                        <p className="text-sm text-gray-900">{submission.experience}</p>
                       </div>
                     )}
                     {submission.visitingCardName && (
-                      <div className="mt-3 text-sm text-gray-700">
-                        <FileText size={14} className="inline mr-1" />
-                        Visiting Card: {submission.visitingCardName}
+                      <div className="mt-3 flex items-center gap-2">
+                        <FileText size={14} className="inline text-gray-700" />
+                        <span className="text-sm text-gray-900 font-medium">Visiting Card: {submission.visitingCardName}</span>
+                        <button
+                          onClick={() => handleViewVisitingCard(submission.id)}
+                          className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs flex items-center gap-1"
+                        >
+                          <ImageIcon size={14} />
+                          View
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1671,6 +1749,63 @@ export default function AdminDashboard() {
                   ⚠️ If WEBSITE or PRODUCTS columns are missing, those fields will be empty for all companies!
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Visiting Card Modal */}
+      {showVisitingCardModal && selectedVisitingCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Visiting Card Preview</h3>
+              <button
+                onClick={() => {
+                  setShowVisitingCardModal(false);
+                  setSelectedVisitingCard(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-auto max-h-[calc(90vh-180px)]">
+              <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center min-h-[400px]">
+                <img
+                  src={selectedVisitingCard.url}
+                  alt={selectedVisitingCard.name}
+                  className="max-w-full max-h-[600px] object-contain rounded-lg shadow-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%236b7280"%3EImage not available%3C/text%3E%3C/svg%3E';
+                  }}
+                />
+              </div>
+              
+              <div className="mt-4 text-center text-sm text-gray-600">
+                <p className="font-medium">{selectedVisitingCard.name}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={handleDownloadVisitingCard}
+                className="px-6 py-3 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors flex items-center gap-2 font-medium"
+              >
+                <Download size={20} />
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  setShowVisitingCardModal(false);
+                  setSelectedVisitingCard(null);
+                }}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

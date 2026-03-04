@@ -18,6 +18,8 @@ export default function AddDataPage() {
 function AddDataContent() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const [categories, setCategories] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     companyName: '',
@@ -36,6 +38,23 @@ function AddDataContent() {
   const [visitingCard, setVisitingCard] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsHeaderVisible(false);
+      } else {
+        setIsHeaderVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -75,8 +94,26 @@ function AddDataContent() {
     setIsSubmitting(true);
     
     try {
+      let visitingCardData = null;
+      
+      // Convert visiting card to base64 if exists
+      if (visitingCard) {
+        const reader = new FileReader();
+        visitingCardData = await new Promise((resolve, reject) => {
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(visitingCard);
+        });
+      }
+
       const attachments = visitingCard
-        ? [{ name: visitingCard.name, type: visitingCard.type, size: visitingCard.size, purpose: 'visiting-card' }]
+        ? [{ 
+            name: visitingCard.name, 
+            type: visitingCard.type, 
+            size: visitingCard.size, 
+            purpose: 'visiting-card',
+            data: visitingCardData
+          }]
         : [];
 
       const submissionData = {
@@ -102,6 +139,9 @@ function AddDataContent() {
       await submissionsAPI.create(submissionData);
       setSubmitStatus('success');
       
+      // Scroll to top to show success message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
       setTimeout(() => {
         setFormData({
           companyName: '', contactPerson: '', email: '', phone: '',
@@ -116,6 +156,8 @@ function AddDataContent() {
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
+      // Scroll to top to show error message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setIsSubmitting(false);
     }
@@ -123,8 +165,10 @@ function AddDataContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50 pb-20 md:pb-8">
-      {/* Header - Sticky on desktop, static on mobile */}
-      <div className="bg-white shadow-sm md:sticky md:top-16 z-40">
+      {/* Header - Hides on scroll down, shows on scroll up */}
+      <div className={`bg-white shadow-sm fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${
+        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
             onClick={() => router.back()}
@@ -139,6 +183,9 @@ function AddDataContent() {
           </div>
         </div>
       </div>
+
+      {/* Spacer for fixed header */}
+      <div className="h-[140px]"></div>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-2xl shadow-lg p-8">
@@ -228,6 +275,31 @@ function AddDataContent() {
               </select>
             </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Website URL</label>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.website}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
+                  placeholder="https://yourwebsite.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Products/Services</label>
+                <input
+                  type="text"
+                  name="products"
+                  value={formData.products}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
+                  placeholder="e.g., Cotton Yarn, Polyester Fabric, etc."
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Business Address *</label>
               <textarea
@@ -263,19 +335,6 @@ function AddDataContent() {
               />
               {visitingCard && (
                 <p className="mt-2 text-sm text-gray-600">Selected: {visitingCard.name}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Visiting Card Image</label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleVisitingCardSelect}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900"
-              />
-              {visitingCard && (
-                <p className="text-sm text-gray-600 mt-2">Selected: {visitingCard.name}</p>
               )}
             </div>
 
