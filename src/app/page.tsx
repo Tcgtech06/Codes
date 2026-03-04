@@ -173,14 +173,22 @@ export default function Home() {
       {/* Spacer for fixed mobile nav */}
       <div className="md:hidden h-[58px] bg-blue-50"></div>
 
-      {/* Hero Section with Slideshow - 16:4 aspect ratio */}
-      <section
-        className="relative w-full overflow-hidden select-none bg-white"
-        style={{ paddingBottom: '25%', touchAction: 'pan-y pinch-zoom' }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      {/* Hero Section with Slideshow - Adjusted for desktop */}
+      <div className="w-full md:max-w-6xl md:mx-auto md:px-4 md:py-4">
+        <section
+          className="relative w-full overflow-hidden select-none bg-white md:rounded-lg"
+          style={{ paddingBottom: '25%', touchAction: 'pan-y pinch-zoom' }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <style jsx>{`
+            @media (min-width: 768px) {
+              section {
+                padding-bottom: 28% !important;
+              }
+            }
+          `}</style>
         {slides.map((slide, index) => (
           <div
             key={index}
@@ -235,6 +243,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      </div>
 
       {/* Books Section */}
       <section className="bg-blue-50 py-16">
