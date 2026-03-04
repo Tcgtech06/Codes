@@ -169,14 +169,14 @@ export default function Home() {
 
 
   return (
-    <div className="flex flex-col pb-12 bg-gray-50">
+    <div className="flex flex-col pb-12 bg-gradient-to-b from-blue-50 to-green-50">
       {/* Spacer for fixed mobile nav */}
-      <div className="md:hidden h-[58px] bg-gray-50"></div>
+      <div className="md:hidden h-[58px] bg-blue-50"></div>
 
-      {/* Hero Section with Slideshow */}
+      {/* Hero Section with Slideshow - 16:4 aspect ratio */}
       <section
-        className="relative h-[300px] md:h-[400px] overflow-hidden select-none bg-white"
-        style={{ touchAction: 'pan-y pinch-zoom' }}
+        className="relative w-full overflow-hidden select-none bg-white"
+        style={{ paddingBottom: '25%', touchAction: 'pan-y pinch-zoom' }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -191,7 +191,7 @@ export default function Home() {
               src={slide.src}
               alt={slide.alt}
               fill
-              className="object-contain"
+              className="object-cover"
               priority={index === 0}
             />
           </div>
@@ -237,7 +237,7 @@ export default function Home() {
       </section>
 
       {/* Books Section */}
-      <section className="bg-gray-50 py-16">
+      <section className="bg-blue-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Our Physical Books</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -265,7 +265,7 @@ export default function Home() {
       </section>
 
       {/* Our Vision Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Vision</h2>
