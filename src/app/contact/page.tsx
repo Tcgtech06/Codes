@@ -1,8 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, X } from 'lucide-react';
 
 export default function Contact() {
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+
+  const phoneNumbers = [
+    { number: '9943632229', label: 'Primary' },
+    { number: '9843232229', label: 'Secondary' }
+  ];
+
   return (
     <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
       {/* Get in Touch Section */}
@@ -45,8 +52,8 @@ export default function Contact() {
               </div>
             </a>
             
-            <a 
-              href="tel:+919943632229"
+            <button
+              onClick={() => setShowPhoneModal(true)}
               className="flex flex-col items-center text-center gap-4 hover:bg-gray-50 p-6 rounded-xl transition-all duration-300 cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-lg"
             >
               <div className="bg-blue-100 p-4 rounded-full text-blue-600">
@@ -56,7 +63,7 @@ export default function Contact() {
                 <h3 className="font-semibold text-gray-900 mb-2 text-lg">Phone</h3>
                 <p className="text-gray-600 text-lg font-medium">9943632229 / 9843232229</p>
               </div>
-            </a>
+            </button>
             
             <a 
               href="mailto:knitinfo.in@gmail.com"
@@ -73,6 +80,51 @@ export default function Contact() {
           </div>
         </div>
       </div>
+
+      {/* Phone Number Selection Modal */}
+      {showPhoneModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Select Phone Number</h3>
+              <button
+                onClick={() => setShowPhoneModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4 text-center">Choose a number to call:</p>
+              <div className="space-y-3">
+                {phoneNumbers.map((phone, index) => (
+                  <a
+                    key={index}
+                    href={`tel:+91${phone.number}`}
+                    className="flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all duration-300 cursor-pointer border border-blue-200 hover:border-blue-400"
+                    onClick={() => setShowPhoneModal(false)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-600 p-2 rounded-full">
+                        <Phone size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{phone.number}</p>
+                        <p className="text-sm text-gray-600">{phone.label}</p>
+                      </div>
+                    </div>
+                    <div className="text-blue-600">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

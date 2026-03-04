@@ -169,6 +169,8 @@ export default function AdminDashboard() {
   const handleViewVisitingCard = (submissionId: string) => {
     const submission = allSubmissions.find(s => s.id === submissionId);
     
+    console.log('Full submission:', submission);
+    
     if (!submission) {
       alert('Submission not found');
       return;
@@ -176,6 +178,8 @@ export default function AdminDashboard() {
     
     // Check if attachments exists
     let attachments = submission.attachments;
+    
+    console.log('Attachments:', attachments);
     
     if (!attachments || !Array.isArray(attachments) || attachments.length === 0) {
       alert('No attachments found for this submission.');
@@ -187,6 +191,8 @@ export default function AdminDashboard() {
       (att: any) => att && att.purpose === 'visiting-card'
     ) || attachments[0];
     
+    console.log('Visiting card attachment:', visitingCardAttachment);
+    
     if (!visitingCardAttachment) {
       alert('No visiting card attachment found.');
       return;
@@ -195,6 +201,8 @@ export default function AdminDashboard() {
     // Check for image URL (from storage) or base64 data
     const imageUrl = visitingCardAttachment.url || visitingCardAttachment.data;
     
+    console.log('Image URL:', imageUrl ? imageUrl.substring(0, 100) : 'none');
+    
     if (imageUrl && typeof imageUrl === 'string' && imageUrl.length > 0) {
       setSelectedVisitingCard({ 
         name: visitingCardAttachment.name || 'Visiting Card', 
@@ -202,7 +210,8 @@ export default function AdminDashboard() {
       });
       setShowVisitingCardModal(true);
     } else {
-      alert('Visiting card image not found. The image may not have been uploaded properly. Please try uploading again.');
+      alert('Visiting card image not found. The image may not have been uploaded properly.');
+      console.log('Full attachment data:', visitingCardAttachment);
     }
   };
 
