@@ -174,7 +174,7 @@ export default function Home() {
       <div className="md:hidden h-[58px] bg-blue-50"></div>
 
       {/* Hero Section with Slideshow - Adjusted for desktop */}
-      <div className="w-full md:max-w-5xl md:mx-auto md:px-4 md:py-4">
+      <div className="w-full md:max-w-6xl md:mx-auto md:px-4 md:py-4">
         <section
           className="relative w-full overflow-hidden select-none bg-white md:rounded-lg"
           style={{ paddingBottom: '56.25%', touchAction: 'pan-y pinch-zoom' }}
@@ -185,7 +185,7 @@ export default function Home() {
           <style jsx>{`
             @media (min-width: 768px) {
               section {
-                padding-bottom: 35% !important;
+                padding-bottom: 40% !important;
               }
             }
           `}</style>
