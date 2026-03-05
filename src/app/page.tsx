@@ -50,7 +50,7 @@ const stories = [
   { title: 'Knit Info Launched by EX.M.L.A', date: 'April-2007', image: '/s1.jpg' },
   { title: 'Knit Info Office Opened By Tripur Garments Head', date: 'May-2008', image: '/s2.jpg' },
   { title: 'Meeting Honourable Dhayanithi Maran Sir M.P', date: 'June-2009', image: '/s3.jpg' },
-  { title: 'Industry Partnership Event', date: 'August-2012', image: '/s4.JPG' },
+  { title: 'Meeting Karur M.P MRS. Jothi Mani', date: 'February-2026', image: '/s4.JPG' },
   { title: 'Technology Innovation Summit', date: 'March-2015', image: '/s5.JPG' },
   { title: 'Global Textile Conference', date: 'November-2018', image: '/s6.JPG' },
 ];
@@ -174,7 +174,7 @@ export default function Home() {
       <div className="md:hidden h-[58px] bg-blue-50"></div>
 
       {/* Hero Section with Slideshow - Adjusted for desktop */}
-      <div className="w-full md:max-w-6xl md:mx-auto md:px-4 md:py-4">
+      <div className="w-full md:max-w-7xl md:mx-auto md:px-4 md:py-4">
         <section
           className="relative w-full overflow-hidden select-none bg-white md:rounded-lg"
           style={{ paddingBottom: '56.25%', touchAction: 'pan-y pinch-zoom' }}
@@ -185,7 +185,7 @@ export default function Home() {
           <style jsx>{`
             @media (min-width: 768px) {
               section {
-                padding-bottom: 40% !important;
+                padding-bottom: 30% !important;
               }
             }
           `}</style>
@@ -199,7 +199,7 @@ export default function Home() {
               src={slide.src}
               alt={slide.alt}
               fill
-              className="object-cover"
+              className="object-contain"
               priority={index === 0}
             />
           </div>
