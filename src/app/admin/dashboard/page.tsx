@@ -25,7 +25,10 @@ import {
   Search,
   Image as ImageIcon,
   Download,
-  X
+  X,
+  Cloud,
+  CloudOff,
+  RefreshCw
 } from 'lucide-react';
 import { usePriorities, useDataService } from '../../../hooks/useLocalStorage';
 import { submissionsAPI, companiesAPI, notificationsAPI } from '@/lib/api';
@@ -44,6 +47,7 @@ interface AddDataSubmission {
   certifications?: string;
   gstNumber?: string;
   visitingCardName?: string;
+  attachments?: SubmissionAttachment[];
   submittedAt: string;
   type: string;
   status: string;
@@ -61,6 +65,7 @@ interface AdvertiseSubmission {
   budget?: string;
   message?: string;
   visitingCardName?: string;
+  attachments?: SubmissionAttachment[];
   submittedAt: string;
   type: string;
   status: string;
@@ -81,9 +86,19 @@ interface CollaborateSubmission {
   budget?: string;
   experience?: string;
   visitingCardName?: string;
+  attachments?: SubmissionAttachment[];
   submittedAt: string;
   type: string;
   status: string;
+}
+
+interface SubmissionAttachment {
+  name?: string;
+  type?: string;
+  size?: number;
+  purpose?: string;
+  url?: string | null;
+  path?: string;
 }
 
 export default function AdminDashboard() {
@@ -248,15 +263,69 @@ export default function AdminDashboard() {
   // Filter submissions by type with proper typing
   const addDataSubmissions = allSubmissions
     .filter(s => s.type === 'add-data' && s.status === 'pending')
-    .map(s => ({ id: s.id, ...s.formData, type: s.type, submittedAt: s.submittedAt, status: s.status } as AddDataSubmission));
+    .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as AddDataSubmission));
   
   const advertiseSubmissions = allSubmissions
     .filter(s => s.type === 'advertise' && s.status === 'pending')
-    .map(s => ({ id: s.id, ...s.formData, type: s.type, submittedAt: s.submittedAt, status: s.status } as AdvertiseSubmission));
+    .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as AdvertiseSubmission));
   
   const collaborateSubmissions = allSubmissions
     .filter(s => s.type === 'collaborate' && s.status === 'pending')
-    .map(s => ({ id: s.id, ...s.formData, type: s.type, submittedAt: s.submittedAt, status: s.status } as CollaborateSubmission));
+    .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as CollaborateSubmission));
+
+  const getVisitingCardAttachment = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
+    const attachments = Array.isArray(submission.attachments) ? submission.attachments : [];
+    return (
+      attachments.find((item) => item?.purpose === 'visiting-card') ||
+      attachments.find((item) => item?.name === submission.visitingCardName) ||
+      null
+    );
+  };
+
+  const renderVisitingCard = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
+    const attachment = getVisitingCardAttachment(submission);
+    const cardName = attachment?.name || submission.visitingCardName;
+
+    if (!cardName) {
+      return null;
+    }
+
+    const isImage = Boolean(attachment?.type?.startsWith('image/'));
+    const hasUrl = Boolean(attachment?.url);
+
+    return (
+      <div className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm text-gray-800">
+          <FileText size={14} className="text-gray-600" />
+          <span className="font-medium">Visiting Card: {cardName}</span>
+        </div>
+
+        {isImage && hasUrl && (
+          <img
+            src={attachment?.url || ''}
+            alt={`Visiting card ${cardName}`}
+            className="mt-3 h-32 w-auto rounded border border-gray-200 object-contain"
+            loading="lazy"
+          />
+        )}
+
+        {hasUrl ? (
+          <a
+            href={attachment?.url || '#'}
+            target="_blank"
+            rel="noreferrer"
+            download={cardName}
+            className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            {isImage ? <ImageIcon size={14} /> : <Download size={14} />}
+            {isImage ? 'Open Full Image' : 'Download File'}
+          </a>
+        ) : (
+          <p className="mt-2 text-xs text-amber-700">Attachment URL is not available for this older submission.</p>
+        )}
+      </div>
+    );
+  };
 
   const categories = [
     'Yarn',
@@ -399,6 +468,27 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error rejecting submission:', error);
       alert('Failed to reject submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handlePermanentDeleteSubmission = async (submissionId: string) => {
+    const confirmed = window.confirm(
+      'Delete this submission permanently? This will also remove uploaded visiting card files from storage.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setSubmissionActionId(submissionId);
+      await submissionsAPI.delete(submissionId);
+      await loadSubmissions();
+    } catch (error) {
+      console.error('Error deleting submission permanently:', error);
+      alert('Failed to delete submission. Please try again.');
     } finally {
       setSubmissionActionId(null);
     }
@@ -910,19 +1000,7 @@ export default function AdminDashboard() {
                         <span className="text-sm text-gray-800">{submission.products}</span>
                       </div>
                     )}
-                    {submission.visitingCardName && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <FileText size={14} className="inline text-gray-600" />
-                        <span className="text-sm text-gray-800">Visiting Card: {submission.visitingCardName}</span>
-                        <button
-                          onClick={() => handleViewVisitingCard(submission.id)}
-                          className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs flex items-center gap-1"
-                        >
-                          <ImageIcon size={14} />
-                          View
-                        </button>
-                      </div>
-                    )}
+                    {renderVisitingCard(submission)}
 
                     <div className="mt-4 flex items-center gap-3">
                       <button
@@ -938,6 +1016,13 @@ export default function AdminDashboard() {
                         className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
                       >
                         {submissionActionId === submission.id ? 'Processing...' : 'Reject'}
+                      </button>
+                      <button
+                        onClick={() => handlePermanentDeleteSubmission(submission.id)}
+                        disabled={submissionActionId === submission.id}
+                        className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+                      >
+                        {submissionActionId === submission.id ? 'Processing...' : 'Delete Permanently'}
                       </button>
                     </div>
                   </div>
@@ -1004,25 +1089,12 @@ export default function AdminDashboard() {
                       <span className="text-sm text-gray-900">{submission.budget}</span>
                     </div>
                   )}
-                  {submission.visitingCardName && (
-                    <div className="mb-2 flex items-center gap-2">
-                      <FileText size={14} className="inline text-gray-700" />
-                      <span className="text-sm text-gray-900 font-medium">Visiting Card: {submission.visitingCardName}</span>
-                      <button
-                        onClick={() => handleViewVisitingCard(submission.id)}
-                        className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs flex items-center gap-1"
-                      >
-                        <ImageIcon size={14} />
-                        View
-                      </button>
-                    </div>
-                  )}
+                  {renderVisitingCard(submission)}
                   {submission.message && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <p className="text-sm text-gray-900">{submission.message}</p>
                     </div>
                   )}
-                  
                   <div className="mt-4 flex items-center gap-3">
                     <button
                       onClick={() => handleApproveAdvertise(submission.id)}
@@ -1036,7 +1108,14 @@ export default function AdminDashboard() {
                       disabled={submissionActionId === submission.id}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
                     >
-                      Reject
+                      {submissionActionId === submission.id ? 'Processing...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => handlePermanentDeleteSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Delete Permanently'}
                     </button>
                   </div>
                 </div>
@@ -1122,19 +1201,7 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-900">{submission.experience}</p>
                       </div>
                     )}
-                    {submission.visitingCardName && (
-                      <div className="mt-3 flex items-center gap-2">
-                        <FileText size={14} className="inline text-gray-700" />
-                        <span className="text-sm text-gray-900 font-medium">Visiting Card: {submission.visitingCardName}</span>
-                        <button
-                          onClick={() => handleViewVisitingCard(submission.id)}
-                          className="ml-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-xs flex items-center gap-1"
-                        >
-                          <ImageIcon size={14} />
-                          View
-                        </button>
-                      </div>
-                    )}
+                    {renderVisitingCard(submission)}
                   </div>
                   
                   <div className="mt-4 flex items-center gap-3">
@@ -1150,7 +1217,14 @@ export default function AdminDashboard() {
                       disabled={submissionActionId === submission.id}
                       className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
                     >
-                      Reject
+                      {submissionActionId === submission.id ? 'Processing...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => handlePermanentDeleteSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Delete Permanently'}
                     </button>
                   </div>
                 </div>

@@ -166,11 +166,39 @@ export const submissionsAPI = {
     return apiCall<{ submissions: any[] }>(`/submissions?${query}`);
   },
 
-  create: (data: any) =>
-    apiCall<{ message: string; submission: any }>('/submissions', {
+  create: async (data: any, visitingCardFile?: File | null) => {
+    if (!visitingCardFile) {
+      return apiCall<{ message: string; submission: any }>('/submissions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    }
+
+    const token = getAuthToken();
+    const payload = new FormData();
+    payload.append('type', data.type);
+    payload.append('formData', JSON.stringify(data.formData || {}));
+    payload.append('attachments', JSON.stringify(data.attachments || []));
+    payload.append('visitingCard', visitingCardFile);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/submissions`, {
       method: 'POST',
-      body: JSON.stringify(data),
-    }),
+      headers,
+      body: payload,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json() as Promise<{ message: string; submission: any }>;
+  },
 
   updateStatus: (id: string, status: string, notes?: string) =>
     apiCall<{ message: string }>(`/submissions/${id}/status`, {
@@ -181,6 +209,11 @@ export const submissionsAPI = {
   approve: (id: string) =>
     apiCall<{ message: string }>(`/submissions/${id}/approve`, {
       method: 'POST',
+    }),
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/submissions/${id}`, {
+      method: 'DELETE',
     }),
 };
 

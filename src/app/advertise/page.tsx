@@ -114,7 +114,7 @@ export default function AdvertisePage() {
           visitingCardName: visitingCard?.name || ''
         },
         attachments,
-      });
+      }, visitingCard);
 
       setSubmitStatus('success');
       

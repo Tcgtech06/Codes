@@ -12,6 +12,17 @@ export type AuthUser = {
   district?: string;
 };
 
+function getOAuthBaseUrl(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) {
+    return configured.replace(/\/$/, '');
+  }
+
+  const origin = window.location.origin;
+  const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+  return isLocalhost ? origin : 'https://knitinfo.com';
+}
+
 /**
  * Maps a Supabase auth user into the app-level user model.
  */
@@ -33,7 +44,7 @@ export function mapAuthUser(user: User): AuthUser {
  */
 export async function signInWithGoogle(redirectPath = '/dashboard'): Promise<void> {
   const supabase = getSupabaseBrowserClient();
-  const redirectTo = `${window.location.origin}/sign-in?redirect=${encodeURIComponent(redirectPath)}`;
+  const redirectTo = `${getOAuthBaseUrl()}/sign-in?redirect=${encodeURIComponent(redirectPath)}`;
 
   const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
