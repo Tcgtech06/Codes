@@ -27,8 +27,7 @@ import {
   Download,
   X,
   Cloud,
-  CloudOff,
-  RefreshCw
+  CloudOff
 } from 'lucide-react';
 import { usePriorities, useDataService } from '../../../hooks/useLocalStorage';
 import { submissionsAPI, companiesAPI, notificationsAPI } from '@/lib/api';
