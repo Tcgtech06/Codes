@@ -4,6 +4,8 @@ import { verifyAdminFromRequest } from '@/lib/serverAuth';
 import { uploadBase64Image } from '@/lib/storage';
 
 const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
+type AllowedType = typeof ALLOWED_TYPES[number];
+
 const ATTACHMENTS_BUCKET = process.env.SUPABASE_SUBMISSIONS_BUCKET || 'submission-attachments';
 
 const sanitizeFileName = (fileName: string): string =>
@@ -12,6 +14,10 @@ const sanitizeFileName = (fileName: string): string =>
     .replace(/\s+/g, '-')
     .replace(/[^a-zA-Z0-9._-]/g, '')
     .toLowerCase();
+
+const isAllowedType = (value: any): value is AllowedType => {
+  return typeof value === 'string' && (ALLOWED_TYPES as readonly string[]).includes(value);
+};
 
 const createSignedAttachmentUrl = async (attachment: any) => {
   if (!attachment || typeof attachment !== 'object') {
@@ -135,7 +141,7 @@ export async function POST(request: NextRequest) {
       attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     }
 
-    if (!type || !ALLOWED_TYPES.includes(type)) {
+    if (!isAllowedType(type)) {
       return NextResponse.json({ error: 'Invalid submission type' }, { status: 400 });
     }
 
