@@ -4,17 +4,48 @@ import { verifyAdminFromRequest } from '@/lib/serverAuth';
 import { uploadBase64Image } from '@/lib/storage';
 
 const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
+const ATTACHMENTS_BUCKET = process.env.SUPABASE_SUBMISSIONS_BUCKET || 'submission-attachments';
 
-const toSubmissionDto = (row: any) => ({
-  id: row.id,
-  type: row.type,
-  userId: row.user_id,
-  formData: row.form_data ?? row.formData ?? {},
-  attachments: row.attachments ?? [],
-  status: row.status ?? 'pending',
-  reviewNotes: row.review_notes ?? null,
-  submittedAt: row.submitted_at ?? row.created_at ?? new Date().toISOString(),
-});
+const sanitizeFileName = (fileName: string): string =>
+  fileName
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9._-]/g, '')
+    .toLowerCase();
+
+const createSignedAttachmentUrl = async (attachment: any) => {
+  if (!attachment || typeof attachment !== 'object') {
+    return attachment;
+  }
+
+  if (attachment.url || !attachment.path) {
+    return attachment;
+  }
+
+  const bucket = attachment.bucket || ATTACHMENTS_BUCKET;
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(attachment.path, 60 * 60 * 6);
+
+  return {
+    ...attachment,
+    url: data?.signedUrl || null,
+  };
+};
+
+const toSubmissionDto = async (row: any) => {
+  const rawAttachments = Array.isArray(row.attachments) ? row.attachments : [];
+  const attachments = await Promise.all(rawAttachments.map((item: any) => createSignedAttachmentUrl(item)));
+
+  return {
+    id: row.id,
+    type: row.type,
+    userId: row.user_id ?? null,
+    formData: row.form_data ?? row.formData ?? {},
+    attachments,
+    status: row.status ?? 'pending',
+    reviewNotes: row.review_notes ?? null,
+    submittedAt: row.submitted_at ?? row.created_at ?? new Date().toISOString(),
+  };
+};
 
 export async function GET(request: NextRequest) {
   const auth = verifyAdminFromRequest(request);
@@ -41,7 +72,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ submissions: (data || []).map(toSubmissionDto) });
+    const submissions = await Promise.all((data || []).map((row) => toSubmissionDto(row)));
+    return NextResponse.json({ submissions });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -49,11 +81,59 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const type = body?.type;
-    const userId = body?.userId;
-    const formData = body?.formData;
-    const attachments = Array.isArray(body?.attachments) ? body.attachments : [];
+    const contentType = request.headers.get('content-type') || '';
+
+    let type: string | undefined;
+    let userId: string | null = null;
+    let formData: Record<string, any> | undefined;
+    let attachments: any[] = [];
+
+    if (contentType.includes('multipart/form-data')) {
+      const multipart = await request.formData();
+      type = String(multipart.get('type') || '');
+      const rawUserId = multipart.get('userId');
+      userId = rawUserId ? String(rawUserId) : null;
+
+      const rawFormData = multipart.get('formData');
+      const rawAttachments = multipart.get('attachments');
+      formData = rawFormData ? JSON.parse(String(rawFormData)) : undefined;
+      attachments = rawAttachments ? JSON.parse(String(rawAttachments)) : [];
+
+      const visitingCard = multipart.get('visitingCard');
+      if (visitingCard && visitingCard instanceof File && visitingCard.size > 0) {
+        const safeName = sanitizeFileName(visitingCard.name || 'visiting-card');
+        const objectPath = `${type}/${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from(ATTACHMENTS_BUCKET)
+          .upload(objectPath, visitingCard, {
+            contentType: visitingCard.type || 'application/octet-stream',
+            upsert: false,
+          });
+
+        if (uploadError) {
+          return NextResponse.json({ error: `Failed to upload visiting card: ${uploadError.message}` }, { status: 500 });
+        }
+
+        attachments = [
+          ...attachments,
+          {
+            name: visitingCard.name,
+            type: visitingCard.type,
+            size: visitingCard.size,
+            purpose: 'visiting-card',
+            bucket: ATTACHMENTS_BUCKET,
+            path: objectPath,
+          },
+        ];
+      }
+    } else {
+      const body = await request.json();
+      type = body?.type;
+      userId = body?.userId ? String(body.userId) : null;
+      formData = body?.formData;
+      attachments = Array.isArray(body?.attachments) ? body.attachments : [];
+    }
 
     if (!type || !ALLOWED_TYPES.includes(type)) {
       return NextResponse.json({ error: 'Invalid submission type' }, { status: 400 });
@@ -140,9 +220,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
-        message: 'Submission created successfully', 
-        submission: toSubmissionDto({ ...submissionData, attachments: processedAttachments }) 
+      {
+        message: 'Submission created successfully',
+        submission: await toSubmissionDto({ ...submissionData, attachments: processedAttachments }),
       },
       { status: 201 }
     );

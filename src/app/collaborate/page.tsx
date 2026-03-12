@@ -94,7 +94,7 @@ export default function CollaboratePage() {
           visitingCardName: visitingCard?.name || ''
         },
         attachments,
-      });
+      }, visitingCard);
 
       setSubmitStatus('success');
       

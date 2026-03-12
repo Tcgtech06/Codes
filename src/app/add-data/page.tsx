@@ -34,7 +34,6 @@ function AddDataContent() {
     certifications: '',
     gstNumber: ''
   });
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [visitingCard, setVisitingCard] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -77,11 +76,6 @@ function AddDataContent() {
       ...formData,
       [e.target.name]: e.target.value
     });
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(files);
   };
 
   const handleVisitingCardSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +130,7 @@ function AddDataContent() {
         attachments
       };
       
-      await submissionsAPI.create(submissionData);
+      await submissionsAPI.create(submissionData, visitingCard);
       setSubmitStatus('success');
       
       // Scroll to top to show success message
@@ -148,7 +142,6 @@ function AddDataContent() {
           website: '', address: '', category: '', description: '',
           products: '', certifications: '', gstNumber: ''
         });
-        setSelectedFiles([]);
         setVisitingCard(null);
         setSubmitStatus('idle');
       }, 3000);

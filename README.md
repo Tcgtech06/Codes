@@ -87,8 +87,10 @@ Create a `.env.local` file:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+NEXT_PUBLIC_SITE_URL=https://knitinfo.com
 SUPABASE_URL=https://your-project-ref.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+SUPABASE_SUBMISSIONS_BUCKET=submission-attachments
 JWT_SECRET=replace_with_a_long_random_secret
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=replace_admin_password
