@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const submissions = await Promise.all((data || []).map((row) => toSubmissionDto(row)));
+    const submissions = await Promise.all((data || []).map((row: any) => toSubmissionDto(row)));
     return NextResponse.json({ submissions });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
