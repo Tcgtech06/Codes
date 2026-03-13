@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+
+# Allow all search engines to crawl the site
+Allow: /catalogue
+Allow: /about
+Allow: /contact
+Allow: /books
+Allow: /advertise
+Allow: /collaborate
+Allow: /add-data
+
+# Disallow admin and API routes
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://knitinfo.netlify.app/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

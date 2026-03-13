@@ -1,0 +1,1895 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  Users, 
+  BookOpen, 
+  MessageSquare, 
+  TrendingUp, 
+  Settings,
+  LogOut,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle,
+  AlertCircle,
+  Database,
+  Megaphone,
+  Handshake,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  FileText,
+  RefreshCw,
+  Search,
+  Image as ImageIcon,
+  Download,
+  X,
+  Cloud,
+  CloudOff
+} from 'lucide-react';
+import { usePriorities, useDataService } from '../../../hooks/useLocalStorage';
+import { submissionsAPI, companiesAPI, notificationsAPI } from '@/lib/api';
+
+interface AddDataSubmission {
+  id: string;
+  companyName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  website?: string;
+  address: string;
+  category: string;
+  description: string;
+  products?: string;
+  certifications?: string;
+  gstNumber?: string;
+  visitingCardName?: string;
+  attachments?: SubmissionAttachment[];
+  submittedAt: string;
+  type: string;
+  status: string;
+}
+
+interface AdvertiseSubmission {
+  id: string;
+  companyName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  website?: string;
+  category: string;
+  adType: string;
+  budget?: string;
+  message?: string;
+  visitingCardName?: string;
+  attachments?: SubmissionAttachment[];
+  submittedAt: string;
+  type: string;
+  status: string;
+}
+
+interface CollaborateSubmission {
+  id: string;
+  organizationName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  website?: string;
+  organizationType: string;
+  collaborationType: string;
+  projectDescription: string;
+  message?: string;
+  timeline?: string;
+  budget?: string;
+  experience?: string;
+  visitingCardName?: string;
+  attachments?: SubmissionAttachment[];
+  submittedAt: string;
+  type: string;
+  status: string;
+}
+
+interface SubmissionAttachment {
+  name?: string;
+  type?: string;
+  size?: number;
+  purpose?: string;
+  url?: string | null;
+  path?: string;
+}
+
+export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+  const [uploadMessage, setUploadMessage] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority' | 'approved-data'>('overview');
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
+  const [allSubmissions, setAllSubmissions] = useState<any[]>([]);
+  const [approvedCompanies, setApprovedCompanies] = useState<any[]>([]);
+  const [approvedLoading, setApprovedLoading] = useState(false);
+  const [approvedSearchTerm, setApprovedSearchTerm] = useState('');
+  const [submissionsLoading, setSubmissionsLoading] = useState(true);
+  const [submissionActionId, setSubmissionActionId] = useState<string | null>(null);
+  const [showVisitingCardModal, setShowVisitingCardModal] = useState(false);
+  const [selectedVisitingCard, setSelectedVisitingCard] = useState<{ name: string; url: string } | null>(null);
+  const [priorityForm, setPriorityForm] = useState({
+    companyName: '',
+    category: '',
+    position: '',
+    priorityType: 'permanent', // permanent or temporary
+    duration: '',
+    durationType: 'days' // days, months, years
+  });
+  const [editingPriority, setEditingPriority] = useState<any>(null);
+  const [dbStatus, setDbStatus] = useState<{
+    connected: boolean;
+    database: string;
+    checking: boolean;
+  }>({
+    connected: false,
+    database: 'Unknown',
+    checking: true
+  });
+  const router = useRouter();
+
+  // Use local storage hooks
+  const { isReady, isOffline } = useDataService();
+  const { priorities, loading: prioritiesLoading, createPriority, updatePriority, deletePriority, reload: reloadPriorities } = usePriorities();
+
+  const loadSubmissions = async () => {
+    setSubmissionsLoading(true);
+    try {
+      const response = await submissionsAPI.getAll();
+      setAllSubmissions(response.submissions || []);
+    } catch (error) {
+      console.error('Error loading submissions:', error);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  };
+
+  const loadApprovedCompanies = async () => {
+    setApprovedLoading(true);
+    try {
+      const response = await companiesAPI.getAll();
+      setApprovedCompanies(response.companies || []);
+    } catch (error) {
+      console.error('Error loading approved companies:', error);
+    } finally {
+      setApprovedLoading(false);
+    }
+  };
+
+  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await companiesAPI.delete(companyId);
+      alert('Company deleted successfully');
+      await loadApprovedCompanies();
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      alert('Failed to delete company. Please try again.');
+    }
+  };
+
+  const handleViewVisitingCard = (submissionId: string) => {
+    const submission = allSubmissions.find(s => s.id === submissionId);
+    
+    console.log('Full submission:', submission);
+    
+    if (!submission) {
+      alert('Submission not found');
+      return;
+    }
+    
+    // NEW FORMAT: Check if attachments exists (new submissions with storage)
+    let attachments = submission.attachments;
+    
+    console.log('Attachments:', attachments);
+    
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      // Get the visiting card attachment
+      let visitingCardAttachment = attachments.find(
+        (att: any) => att && att.purpose === 'visiting-card'
+      ) || attachments[0];
+      
+      console.log('Visiting card attachment:', visitingCardAttachment);
+      
+      if (visitingCardAttachment) {
+        // Check for image URL (from storage) or base64 data
+        const imageUrl = visitingCardAttachment.url || visitingCardAttachment.data;
+        
+        console.log('Image URL:', imageUrl ? imageUrl.substring(0, 100) : 'none');
+        
+        if (imageUrl && typeof imageUrl === 'string' && imageUrl.length > 0) {
+          setSelectedVisitingCard({ 
+            name: visitingCardAttachment.name || 'Visiting Card', 
+            url: imageUrl 
+          });
+          setShowVisitingCardModal(true);
+          return;
+        }
+      }
+    }
+    
+    // OLD FORMAT: This is an old submission created before storage was implemented
+    // The visiting card was supposed to be in attachments but the old code didn't save it properly
+    // These old submissions only have the filename but not the actual image data
+    alert('This is an old submission created before the storage system was implemented. The visiting card image was not saved. Please ask the user to resubmit with the new form.');
+    console.log('Old submission without image data - only filename exists');
+  };
+
+  const handleDownloadVisitingCard = () => {
+    if (!selectedVisitingCard) return;
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = selectedVisitingCard.url;
+    link.download = selectedVisitingCard.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const checkDatabaseConnection = async () => {
+    setDbStatus(prev => ({ ...prev, checking: true }));
+    try {
+      const response = await fetch('/api/v1/health/db');
+      const data = await response.json();
+      setDbStatus({
+        connected: data.connected,
+        database: data.database,
+        checking: false
+      });
+    } catch (error) {
+      console.error('Error checking database connection:', error);
+      setDbStatus({
+        connected: false,
+        database: 'Unknown',
+        checking: false
+      });
+    }
+  };
+
+  // Filter submissions by type with proper typing
+  const addDataSubmissions = allSubmissions
+    .filter(s => s.type === 'add-data' && s.status === 'pending')
+    .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as AddDataSubmission));
+  
+  const advertiseSubmissions = allSubmissions
+    .filter(s => s.type === 'advertise' && s.status === 'pending')
+    .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as AdvertiseSubmission));
+  
+  const collaborateSubmissions = allSubmissions
+    .filter(s => s.type === 'collaborate' && s.status === 'pending')
+    .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as CollaborateSubmission));
+
+  const getVisitingCardAttachment = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
+    const attachments = Array.isArray(submission.attachments) ? submission.attachments : [];
+    return (
+      attachments.find((item) => item?.purpose === 'visiting-card') ||
+      attachments.find((item) => item?.name === submission.visitingCardName) ||
+      null
+    );
+  };
+
+  const renderVisitingCard = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
+    const attachment = getVisitingCardAttachment(submission);
+    const cardName = attachment?.name || submission.visitingCardName;
+
+    if (!cardName) {
+      return null;
+    }
+
+    const isImage = Boolean(attachment?.type?.startsWith('image/'));
+    const hasUrl = Boolean(attachment?.url);
+
+    return (
+      <div className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
+        <div className="flex items-center gap-2 text-sm text-gray-800">
+          <FileText size={14} className="text-gray-600" />
+          <span className="font-medium">Visiting Card: {cardName}</span>
+        </div>
+
+        {isImage && hasUrl && (
+          <img
+            src={attachment?.url || ''}
+            alt={`Visiting card ${cardName}`}
+            className="mt-3 h-32 w-auto rounded border border-gray-200 object-contain"
+            loading="lazy"
+          />
+        )}
+
+        {hasUrl ? (
+          <a
+            href={attachment?.url || '#'}
+            target="_blank"
+            rel="noreferrer"
+            download={cardName}
+            className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            {isImage ? <ImageIcon size={14} /> : <Download size={14} />}
+            {isImage ? 'Open Full Image' : 'Download File'}
+          </a>
+        ) : (
+          <p className="mt-2 text-xs text-amber-700">Attachment URL is not available for this older submission.</p>
+        )}
+      </div>
+    );
+  };
+
+  const categories = [
+    'Yarn',
+    'Fabric Suppliers',
+    'Knitting',
+    'Buying Agents',
+    'Printing',
+    'Threads',
+    'Trims & Accessories',
+    'Dyes & Chemicals',
+    'Machineries',
+    'Machine Spares'
+  ];
+
+  useEffect(() => {
+    const auth = localStorage.getItem('adminAuthenticated');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    } else {
+      router.push('/admin');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadSubmissions();
+      loadApprovedCompanies();
+      checkDatabaseConnection();
+      
+      // Check database connection every 30 seconds
+      const interval = setInterval(checkDatabaseConnection, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
+  const handleApproveAddData = async (submissionId: string) => {
+    try {
+      setSubmissionActionId(submissionId);
+      const submission = allSubmissions.find(s => s.id === submissionId);
+      
+      // Approve the submission first
+      await submissionsAPI.approve(submissionId);
+      
+      // Try to create notification (don't fail if this fails)
+      try {
+        if (submission?.userId) {
+          await notificationsAPI.create({
+            userId: submission.userId,
+            type: 'company',
+            message: `Your company "${submission.formData?.companyName || 'data'}" has been approved and added to the directory`,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to create notification (non-critical):', notifError);
+      }
+      
+      await loadSubmissions();
+      alert('Submission approved successfully!');
+    } catch (error) {
+      console.error('Error approving submission:', error);
+      alert('Failed to approve submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handleApproveAdvertise = async (submissionId: string) => {
+    try {
+      setSubmissionActionId(submissionId);
+      const submission = allSubmissions.find(s => s.id === submissionId);
+      
+      // Approve the submission first
+      await submissionsAPI.updateStatus(submissionId, 'approved', 'Approved by admin');
+      
+      // Try to create notification (don't fail if this fails)
+      try {
+        if (submission?.userId) {
+          await notificationsAPI.create({
+            userId: submission.userId,
+            type: 'advertise',
+            message: `Your advertising request for "${submission.formData?.companyName || 'your company'}" has been approved. We'll contact you shortly.`,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to create notification (non-critical):', notifError);
+      }
+      
+      await loadSubmissions();
+      alert('Advertising request approved successfully!');
+    } catch (error) {
+      console.error('Error approving advertise submission:', error);
+      alert('Failed to approve submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handleApproveCollaborate = async (submissionId: string) => {
+    try {
+      setSubmissionActionId(submissionId);
+      const submission = allSubmissions.find(s => s.id === submissionId);
+      
+      // Approve the submission first
+      await submissionsAPI.updateStatus(submissionId, 'approved', 'Approved by admin');
+      
+      // Try to create notification (don't fail if this fails)
+      try {
+        if (submission?.userId) {
+          await notificationsAPI.create({
+            userId: submission.userId,
+            type: 'collaborate',
+            message: `Your collaboration proposal from "${submission.formData?.organizationName || 'your organization'}" has been approved. Our team will reach out soon.`,
+            read: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      } catch (notifError) {
+        console.error('Failed to create notification (non-critical):', notifError);
+      }
+      
+      await loadSubmissions();
+      alert('Collaboration proposal approved successfully!');
+    } catch (error) {
+      console.error('Error approving collaborate submission:', error);
+      alert('Failed to approve submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handleRejectSubmission = async (submissionId: string) => {
+    try {
+      setSubmissionActionId(submissionId);
+      await submissionsAPI.updateStatus(submissionId, 'rejected', 'Rejected by admin');
+      await loadSubmissions();
+    } catch (error) {
+      console.error('Error rejecting submission:', error);
+      alert('Failed to reject submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const handlePermanentDeleteSubmission = async (submissionId: string) => {
+    const confirmed = window.confirm(
+      'Delete this submission permanently? This will also remove uploaded visiting card files from storage.'
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setSubmissionActionId(submissionId);
+      await submissionsAPI.delete(submissionId);
+      await loadSubmissions();
+    } catch (error) {
+      console.error('Error deleting submission permanently:', error);
+      alert('Failed to delete submission. Please try again.');
+    } finally {
+      setSubmissionActionId(null);
+    }
+  };
+
+  const calculateExpiryDate = (duration: string, durationType: string) => {
+    const now = new Date();
+    const durationNum = parseInt(duration);
+    
+    switch (durationType) {
+      case 'days':
+        return new Date(now.getTime() + durationNum * 24 * 60 * 60 * 1000);
+      case 'months':
+        return new Date(now.setMonth(now.getMonth() + durationNum));
+      case 'years':
+        return new Date(now.setFullYear(now.getFullYear() + durationNum));
+      default:
+        return null;
+    }
+  };
+
+  const handlePrioritySubmit = async () => {
+    if (!priorityForm.companyName || !priorityForm.category || !priorityForm.position) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    if (priorityForm.priorityType === 'temporary' && !priorityForm.duration) {
+      alert('Please specify duration for temporary priority');
+      return;
+    }
+
+    const expiresAt = priorityForm.priorityType === 'temporary' 
+      ? calculateExpiryDate(priorityForm.duration, priorityForm.durationType)
+      : null;
+
+    const priorityData = {
+      companyId: `local-${priorityForm.companyName.replace(/\s+/g, '-').toLowerCase()}`,
+      companyName: priorityForm.companyName,
+      category: priorityForm.category,
+      position: parseInt(priorityForm.position),
+      priorityType: priorityForm.priorityType as 'permanent' | 'temporary',
+      duration: priorityForm.duration ? parseInt(priorityForm.duration) : undefined,
+      durationType: priorityForm.durationType as 'days' | 'months' | 'years',
+      expiresAt: expiresAt ? expiresAt.toISOString() : undefined,
+      createdBy: 'admin',
+      status: 'active' as const
+    };
+
+    try {
+      if (editingPriority) {
+        await updatePriority(editingPriority.id, priorityData);
+      } else {
+        await createPriority(priorityData);
+      }
+
+      // Reset form
+      setPriorityForm({
+        companyName: '',
+        category: '',
+        position: '',
+        priorityType: 'permanent',
+        duration: '',
+        durationType: 'days'
+      });
+      setEditingPriority(null);
+      setShowPriorityModal(false);
+    } catch (error) {
+      console.error('Error saving priority:', error);
+      alert('Error saving priority. Please try again.');
+    }
+  };
+
+  const editPriority = (priority: any) => {
+    setPriorityForm({
+      companyName: priority.companyName,
+      category: priority.category,
+      position: priority.position.toString(),
+      priorityType: priority.priorityType,
+      duration: priority.duration?.toString() || '',
+      durationType: priority.durationType || 'days'
+    });
+    setEditingPriority(priority);
+    setShowPriorityModal(true);
+  };
+
+  const handleDeletePriority = async (id: string) => {
+    try {
+      await deletePriority(id);
+    } catch (error) {
+      console.error('Error deleting priority:', error);
+      alert('Error deleting priority. Please try again.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('adminAuthenticated');
+    router.push('/admin');
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+          file.type === 'application/vnd.ms-excel') {
+        setSelectedFile(file);
+        setUploadStatus('idle');
+        setUploadMessage('');
+      } else {
+        setUploadMessage('Please select a valid Excel file (.xlsx or .xls)');
+        setUploadStatus('error');
+      }
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile || !selectedCategory) {
+      setUploadMessage('Please select both a file and category');
+      setUploadStatus('error');
+      return;
+    }
+
+    setUploadStatus('uploading');
+    setUploadMessage('Uploading and processing file...');
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('Admin session expired. Please login again.');
+      }
+
+      const payload = new FormData();
+      payload.append('file', selectedFile);
+      payload.append('category', selectedCategory);
+
+      const response = await fetch('/api/v1/excel/parse', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: payload,
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        const serverError = Array.isArray(result?.errors)
+          ? result.errors.join(', ')
+          : result?.error || 'Failed to process Excel file';
+        throw new Error(serverError);
+      }
+
+      const addedCount = Number(result.count || 0);
+      const deletedCount = Number(result.existingDeleted || 0);
+      const parseErrors = Array.isArray(result.errors) ? result.errors : [];
+
+      let message = `Successfully replaced ${selectedCategory} data. `;
+      message += `Deleted ${deletedCount} old companies and added ${addedCount} companies.`;
+      if (parseErrors.length > 0) {
+        message += ` ${parseErrors.length} row issues were skipped.`;
+      }
+
+      setUploadStatus('success');
+      setUploadMessage(message);
+      
+      // Reset form after success
+      setTimeout(() => {
+        setSelectedFile(null);
+        setSelectedCategory('');
+        setUploadStatus('idle');
+        setUploadMessage('');
+        setShowUploadModal(false);
+      }, 3000);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setUploadStatus('error');
+      setUploadMessage(`Upload failed: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-[#1e3a8a]"></div>
+      </div>
+    );
+  }
+
+  const stats = [
+    { title: 'Add Data Requests', value: addDataSubmissions.length.toString(), icon: Database, color: 'bg-blue-500' },
+    { title: 'Advertise Requests', value: advertiseSubmissions.length.toString(), icon: Megaphone, color: 'bg-green-500' },
+    { title: 'Collaborate Requests', value: collaborateSubmissions.length.toString(), icon: Handshake, color: 'bg-purple-500' },
+    { title: 'Approved Companies', value: approvedCompanies.length.toString(), icon: CheckCircle, color: 'bg-teal-500' },
+  ];
+
+  const recentOrders = [
+    { id: 1, book: 'Textile Industry Guide', customer: 'John Doe', amount: '$500', status: 'Completed' },
+    { id: 2, book: 'Advanced Knitting Techniques', customer: 'Jane Smith', amount: '$25', status: 'Pending' },
+    { id: 3, book: 'Fabric Science & Technology', customer: 'Mike Johnson', amount: '$40', status: 'Processing' },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-sm text-gray-600">KnitInfo Directory Management</p>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* Database Status Indicator */}
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full text-sm">
+                {dbStatus.checking ? (
+                  <>
+                    <RefreshCw size={16} className="text-gray-500 animate-spin" />
+                    <span className="text-gray-600">Checking...</span>
+                  </>
+                ) : dbStatus.connected ? (
+                  <>
+                    <Database size={16} className="text-green-500" />
+                    <span className="text-green-600">{dbStatus.database} Connected</span>
+                  </>
+                ) : (
+                  <>
+                    <Database size={16} className="text-red-500" />
+                    <span className="text-red-600">Not Connected</span>
+                  </>
+                )}
+              </div>
+              
+              <button
+                onClick={() => {
+                  loadSubmissions();
+                  checkDatabaseConnection();
+                }}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <RefreshCw size={18} />
+                <span>Refresh</span>
+              </button>
+              <button
+                onClick={() => setShowUploadModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors"
+              >
+                <Upload size={20} />
+                <span>Upload Excel</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                <LogOut size={20} />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat, index) => (
+            <div key={index} className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-md transition-shadow"
+                 onClick={() => {
+                   if (index === 0) setActiveTab('add-data');
+                   else if (index === 1) setActiveTab('advertise');
+                   else if (index === 2) setActiveTab('collaborate');
+                   else if (index === 3) setActiveTab('approved-data');
+                   else setActiveTab('overview');
+                 }}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-lg ${stat.color}`}>
+                  <stat.icon size={24} className="text-white" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-6 border-b border-gray-200">
+          <div className="flex gap-4">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'overview'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('add-data')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'add-data'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Add Data ({addDataSubmissions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('advertise')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'advertise'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Advertise ({advertiseSubmissions.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('collaborate')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'collaborate'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Collaborate ({collaborateSubmissions.length})
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('approved-data');
+                loadApprovedCompanies();
+              }}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'approved-data'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Approved Data ({approvedCompanies.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('priority')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'priority'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Priority ({priorities.length})
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'overview' && (
+        <div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Recent Orders */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Recent Orders</h2>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                {recentOrders.map((order) => (
+                  <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{order.book}</h3>
+                      <p className="text-sm text-gray-600">{order.customer}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{order.amount}</p>
+                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${
+                        order.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                        order.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-2 gap-4">
+                <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left">
+                  <BookOpen className="text-blue-600 mb-2" size={24} />
+                  <h3 className="font-semibold text-gray-900">Manage Books</h3>
+                  <p className="text-sm text-gray-600">Add, edit, or remove books</p>
+                </button>
+                
+                <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left">
+                  <Users className="text-green-600 mb-2" size={24} />
+                  <h3 className="font-semibold text-gray-900">User Management</h3>
+                  <p className="text-sm text-gray-600">View and manage users</p>
+                </button>
+                
+                <button className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-left">
+                  <MessageSquare className="text-purple-600 mb-2" size={24} />
+                  <h3 className="font-semibold text-gray-900">Messages</h3>
+                  <p className="text-sm text-gray-600">View customer inquiries</p>
+                </button>
+                
+                <button className="p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors text-left">
+                  <Settings className="text-orange-600 mb-2" size={24} />
+                  <h3 className="font-semibold text-gray-900">Settings</h3>
+                  <p className="text-sm text-gray-600">Configure app settings</p>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* System Info - Only in overview */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">System Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-700">Application</h3>
+              <p className="text-gray-600">KnitInfo Directory v1.0</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-700">Last Updated</h3>
+              <p className="text-gray-600">January 31, 2026</p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-700">Status</h3>
+              <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                Online
+              </span>
+            </div>
+          </div>
+        </div>
+        </div>
+        )}
+
+        {/* Add Data Submissions Tab */}
+        {activeTab === 'add-data' && (
+          <div className="space-y-4">
+            {submissionsLoading ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a] mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading submissions...</p>
+              </div>
+            ) : addDataSubmissions.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Database size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No add data submissions yet</p>
+              </div>
+            ) : (
+              addDataSubmissions.map((submission) => (
+                <div key={submission.id} className="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
+                      <p className="text-sm text-gray-700">
+                        <Calendar size={14} className="inline mr-1" />
+                        {new Date(submission.submittedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
+                      {submission.category}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-gray-600" />
+                      <span className="text-gray-700">Contact:</span>
+                      <span className="font-medium text-gray-900">{submission.contactPerson}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone size={16} className="text-gray-600" />
+                      <span className="text-gray-700">Phone:</span>
+                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-700 hover:underline">{submission.phone}</a>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-gray-600" />
+                      <span className="text-gray-700">Email:</span>
+                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-700 hover:underline">{submission.email}</a>
+                    </div>
+                    {submission.gstNumber && (
+                      <div className="flex items-center gap-2">
+                        <FileText size={16} className="text-gray-600" />
+                        <span className="text-gray-700">GST:</span>
+                        <span className="font-medium text-gray-900">{submission.gstNumber}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-300">
+                    <div className="flex items-start gap-2 mb-2">
+                      <MapPin size={16} className="text-gray-600 mt-0.5" />
+                      <p className="text-sm text-gray-800 font-medium">{submission.address}</p>
+                    </div>
+                    <p className="text-sm text-gray-800 mt-2">{submission.description}</p>
+                    {submission.products && (
+                      <div className="mt-2">
+                        <span className="text-sm font-bold text-gray-900">Products: </span>
+                        <span className="text-sm text-gray-800">{submission.products}</span>
+                      </div>
+                    )}
+                    {renderVisitingCard(submission)}
+
+                    <div className="mt-4 flex items-center gap-3">
+                      <button
+                        onClick={() => handleApproveAddData(submission.id)}
+                        disabled={submissionActionId === submission.id}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+                      >
+                        {submissionActionId === submission.id ? 'Processing...' : 'Approve'}
+                      </button>
+                      <button
+                        onClick={() => handleRejectSubmission(submission.id)}
+                        disabled={submissionActionId === submission.id}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+                      >
+                        {submissionActionId === submission.id ? 'Processing...' : 'Reject'}
+                      </button>
+                      <button
+                        onClick={() => handlePermanentDeleteSubmission(submission.id)}
+                        disabled={submissionActionId === submission.id}
+                        className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+                      >
+                        {submissionActionId === submission.id ? 'Processing...' : 'Delete Permanently'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Advertise Submissions Tab */}
+        {activeTab === 'advertise' && (
+          <div className="space-y-4">
+            {submissionsLoading ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a] mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading submissions...</p>
+              </div>
+            ) : advertiseSubmissions.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Megaphone size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No advertising requests yet</p>
+              </div>
+            ) : (
+              advertiseSubmissions.map((submission, index) => (
+                <div key={index} className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{submission.companyName}</h3>
+                      <p className="text-sm text-gray-900 font-medium">
+                        <Calendar size={14} className="inline mr-1" />
+                        {new Date(submission.submittedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
+                      {submission.adType}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Contact:</span>
+                      <span className="font-medium text-gray-900">{submission.contactPerson}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Phone:</span>
+                      <a href={`tel:${submission.phone}`} className="font-medium text-blue-700 hover:underline">{submission.phone}</a>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Email:</span>
+                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-700 hover:underline">{submission.email}</a>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-900 font-semibold">Category:</span>
+                      <span className="font-medium text-gray-900">{submission.category}</span>
+                    </div>
+                  </div>
+                  
+                  {submission.budget && (
+                    <div className="mb-2">
+                      <span className="text-sm font-semibold text-gray-900">Budget: </span>
+                      <span className="text-sm text-gray-900">{submission.budget}</span>
+                    </div>
+                  )}
+                  {renderVisitingCard(submission)}
+                  {submission.message && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <p className="text-sm text-gray-900">{submission.message}</p>
+                    </div>
+                  )}
+                  <div className="mt-4 flex items-center gap-3">
+                    <button
+                      onClick={() => handleApproveAdvertise(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleRejectSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => handlePermanentDeleteSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Delete Permanently'}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Collaborate Submissions Tab */}
+        {activeTab === 'collaborate' && (
+          <div className="space-y-4">
+            {submissionsLoading ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a] mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading submissions...</p>
+              </div>
+            ) : collaborateSubmissions.length === 0 ? (
+              <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                <Handshake size={48} className="mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600">No collaboration proposals yet</p>
+              </div>
+            ) : (
+              collaborateSubmissions.map((submission, index) => (
+                <div key={index} className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{submission.organizationName || 'Collaboration Request'}</h3>
+                      <p className="text-sm text-gray-900 font-medium">
+                        <Calendar size={14} className="inline mr-1" />
+                        {new Date(submission.submittedAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full font-medium">
+                      {submission.collaborationType || 'Collaboration'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                    <div className="flex items-center gap-2">
+                      <Users size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Contact:</span>
+                      <span className="font-medium text-gray-900">{submission.contactPerson}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Phone:</span>
+                      {submission.phone ? (
+                        <a href={`tel:${submission.phone}`} className="font-medium text-blue-700 hover:underline">{submission.phone}</a>
+                      ) : (
+                        <span className="font-medium text-gray-900">Not provided</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-gray-700" />
+                      <span className="text-gray-900 font-semibold">Email:</span>
+                      <a href={`mailto:${submission.email}`} className="font-medium text-blue-700 hover:underline">{submission.email}</a>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-900 font-semibold">Company:</span>
+                      <span className="font-medium text-gray-900">{submission.organizationName || 'Not provided'}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-2">Message:</h4>
+                    <p className="text-sm text-gray-900 mb-3">{submission.message || submission.projectDescription || 'No message provided.'}</p>
+                    
+                    {submission.timeline && (
+                      <div className="mb-2">
+                        <span className="text-sm font-semibold text-gray-900">Timeline: </span>
+                        <span className="text-sm text-gray-900">{submission.timeline}</span>
+                      </div>
+                    )}
+                    {submission.budget && (
+                      <div className="mb-2">
+                        <span className="text-sm font-semibold text-gray-900">Budget: </span>
+                        <span className="text-sm text-gray-900">{submission.budget}</span>
+                      </div>
+                    )}
+                    {submission.experience && (
+                      <div className="mt-3">
+                        <h4 className="font-semibold text-gray-900 mb-1">Experience:</h4>
+                        <p className="text-sm text-gray-900">{submission.experience}</p>
+                      </div>
+                    )}
+                    {renderVisitingCard(submission)}
+                  </div>
+                  
+                  <div className="mt-4 flex items-center gap-3">
+                    <button
+                      onClick={() => handleApproveCollaborate(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleRejectSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => handlePermanentDeleteSubmission(submission.id)}
+                      disabled={submissionActionId === submission.id}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors disabled:opacity-60"
+                    >
+                      {submissionActionId === submission.id ? 'Processing...' : 'Delete Permanently'}
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Priority Management Tab */}
+        {activeTab === 'priority' && (
+          <div>
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Company Priority Management</h2>
+              <button
+                onClick={() => setShowPriorityModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors"
+              >
+                <TrendingUp size={20} />
+                <span>Add Priority</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {prioritiesLoading ? (
+                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a] mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading priorities...</p>
+                </div>
+              ) : priorities.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <TrendingUp size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No priority companies set</p>
+                  <p className="text-gray-500 text-sm mt-2">Add companies to prioritize them in search results</p>
+                </div>
+              ) : (
+                priorities
+                  .sort((a, b) => a.position - b.position)
+                  .map((priority) => {
+                    const parsedExpiry = (() => {
+                      if (!priority.expiresAt) return null;
+                      if (typeof priority.expiresAt === 'string') return new Date(priority.expiresAt);
+                      if ((priority as any).expiresAt?.toDate) return (priority as any).expiresAt.toDate();
+                      return null;
+                    })();
+                    const isExpired = parsedExpiry ? new Date() > parsedExpiry : false;
+                    const daysLeft = parsedExpiry
+                      ? Math.ceil((parsedExpiry.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+                      : null;
+                    
+                    return (
+                    <div key={priority.id} className={`bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow ${isExpired ? 'opacity-60' : ''}`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="flex items-center justify-center w-8 h-8 bg-[#1e3a8a] text-white rounded-full text-sm font-bold">
+                              {priority.position}
+                            </span>
+                            <h3 className="text-xl font-bold text-gray-900">{priority.companyName}</h3>
+                            <span className={`px-3 py-1 text-sm rounded-full ${
+                              priority.priorityType === 'permanent' 
+                                ? 'bg-green-100 text-green-800' 
+                                : isExpired 
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {priority.priorityType === 'permanent' 
+                                ? 'Permanent' 
+                                : isExpired 
+                                  ? 'Expired' 
+                                  : `Temporary (${daysLeft}d left)`
+                              }
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600">Category:</span>
+                              <span className="font-medium">{priority.category}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Calendar size={16} className="text-gray-400" />
+                              <span className="text-gray-600">Added:</span>
+                              <span className="font-medium">
+                                {new Date(priority.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {priority.expiresAt && (
+                              <div className="flex items-center gap-2">
+                                <Calendar size={16} className="text-gray-400" />
+                                <span className="text-gray-600">Expires:</span>
+                                <span className={`font-medium ${isExpired ? 'text-red-600' : 'text-gray-900'}`}>
+                                  {parsedExpiry ? parsedExpiry.toLocaleDateString() : 'Invalid date'}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="ml-4 flex gap-2">
+                          <button
+                            onClick={() => editPriority(priority)}
+                            className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => priority.id && handleDeletePriority(priority.id)}
+                            className="px-3 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    );
+                  })
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Approved Data Tab */}
+        {activeTab === 'approved-data' && (
+          <div>
+            <div className="mb-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Approved Companies</h2>
+              <button
+                onClick={loadApprovedCompanies}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <RefreshCw size={18} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search by company name, contact person, email, phone, or products..."
+                  value={approvedSearchTerm}
+                  onChange={(e) => setApprovedSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {approvedLoading ? (
+                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e3a8a] mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading approved companies...</p>
+                </div>
+              ) : approvedCompanies.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                  <CheckCircle size={48} className="mx-auto text-gray-400 mb-4" />
+                  <p className="text-gray-600">No approved companies yet</p>
+                </div>
+              ) : (
+                (() => {
+                  const filteredCompanies = approvedCompanies.filter(company => {
+                    const searchLower = approvedSearchTerm.toLowerCase();
+                    return (
+                      company.companyName?.toLowerCase().includes(searchLower) ||
+                      company.contactPerson?.toLowerCase().includes(searchLower) ||
+                      company.email?.toLowerCase().includes(searchLower) ||
+                      company.phone?.toLowerCase().includes(searchLower) ||
+                      company.category?.toLowerCase().includes(searchLower) ||
+                      (Array.isArray(company.products) && company.products.some((p: string) => p.toLowerCase().includes(searchLower)))
+                    );
+                  });
+
+                  if (filteredCompanies.length === 0) {
+                    return (
+                      <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+                        <Search size={48} className="mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-600">No companies found matching "{approvedSearchTerm}"</p>
+                      </div>
+                    );
+                  }
+
+                  return filteredCompanies.map((company, index) => {
+                  const colors = [
+                    'bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500',
+                    'bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500',
+                    'bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500',
+                    'bg-gradient-to-r from-orange-50 to-amber-50 border-l-4 border-orange-500',
+                  ];
+                  const colorClass = colors[index % colors.length];
+                  
+                  return (
+                    <div key={company.id} className={`${colorClass} rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900">{company.companyName}</h3>
+                          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium mt-2">
+                            {company.category}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteCompany(company.id, company.companyName)}
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+                        >
+                          <AlertCircle size={18} />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {company.contactPerson && (
+                          <div className="flex items-center gap-2">
+                            <Users size={16} className="text-gray-600" />
+                            <span className="text-gray-700">Contact:</span>
+                            <span className="font-medium text-gray-900">{company.contactPerson}</span>
+                          </div>
+                        )}
+                        {company.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone size={16} className="text-gray-600" />
+                            <span className="text-gray-700">Phone:</span>
+                            <a href={`tel:${company.phone}`} className="font-medium text-blue-700 hover:underline">{company.phone}</a>
+                          </div>
+                        )}
+                        {company.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail size={16} className="text-gray-600" />
+                            <span className="text-gray-700">Email:</span>
+                            <a href={`mailto:${company.email}`} className="font-medium text-blue-700 hover:underline">{company.email}</a>
+                          </div>
+                        )}
+                        {company.gstNumber && (
+                          <div className="flex items-center gap-2">
+                            <FileText size={16} className="text-gray-600" />
+                            <span className="text-gray-700">GST:</span>
+                            <span className="font-medium text-gray-900">{company.gstNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {company.address && (
+                        <div className="mt-4 pt-4 border-t border-gray-300">
+                          <div className="flex items-start gap-2 mb-2">
+                            <MapPin size={16} className="text-gray-600 mt-0.5" />
+                            <p className="text-sm text-gray-800 font-medium">{company.address}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {company.description && (
+                        <p className="text-sm text-gray-800 mt-2">{company.description}</p>
+                      )}
+                      
+                      {company.products && Array.isArray(company.products) && company.products.length > 0 && (
+                        <div className="mt-3">
+                          <span className="text-sm font-bold text-gray-900">Products: </span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {company.products.map((product: string, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-3 py-1 bg-white/80 text-gray-900 rounded-full text-sm font-medium border border-gray-300"
+                              >
+                                {product}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {company.website && (
+                        <div className="mt-3">
+                          <a
+                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-700 hover:underline font-medium"
+                          >
+                            🌐 {company.website}
+                          </a>
+                        </div>
+                      )}
+                      
+                      <div className="mt-3 text-xs text-gray-500">
+                        <Calendar size={12} className="inline mr-1" />
+                        Added: {new Date(company.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                  });
+                })()
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Priority Modal */}
+      {showPriorityModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col my-8">
+            <div className="p-6 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingPriority ? 'Edit Company Priority' : 'Set Company Priority'}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowPriorityModal(false);
+                    setEditingPriority(null);
+                    setPriorityForm({
+                      companyName: '',
+                      category: '',
+                      position: '',
+                      priorityType: 'permanent',
+                      duration: '',
+                      durationType: 'days'
+                    });
+                  }}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Company Name *
+                </label>
+                <input
+                  type="text"
+                  value={priorityForm.companyName}
+                  onChange={(e) => setPriorityForm({...priorityForm, companyName: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 placeholder-gray-500"
+                  placeholder="Enter company name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Category *
+                </label>
+                <select
+                  value={priorityForm.category}
+                  onChange={(e) => setPriorityForm({...priorityForm, category: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none text-gray-900 bg-white font-medium"
+                  style={{ color: priorityForm.category ? '#111827' : '#6b7280' }}
+                >
+                  <option value="" disabled>Select Category</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category} style={{ color: '#111827' }}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Priority Position *
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={priorityForm.position}
+                  onChange={(e) => setPriorityForm({...priorityForm, position: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none text-gray-900 placeholder-gray-500"
+                  placeholder="Enter position (1 = highest priority)"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Priority Type *
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setPriorityForm({...priorityForm, priorityType: 'permanent'})}
+                    className={`p-3 rounded-lg border-2 transition-colors ${
+                      priorityForm.priorityType === 'permanent'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="font-semibold">Permanent</div>
+                      <div className="text-xs text-gray-600">Always prioritized</div>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPriorityForm({...priorityForm, priorityType: 'temporary'})}
+                    className={`p-3 rounded-lg border-2 transition-colors ${
+                      priorityForm.priorityType === 'temporary'
+                        ? 'border-yellow-500 bg-yellow-50 text-yellow-700'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="text-center">
+                      <div className="font-semibold">Temporary</div>
+                      <div className="text-xs text-gray-600">Time-limited priority</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Duration fields for temporary priority */}
+              {priorityForm.priorityType === 'temporary' && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Duration *
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      value={priorityForm.duration}
+                      onChange={(e) => setPriorityForm({...priorityForm, duration: e.target.value})}
+                      className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                      placeholder="Enter number"
+                    />
+                    <select
+                      value={priorityForm.durationType}
+                      onChange={(e) => setPriorityForm({...priorityForm, durationType: e.target.value})}
+                      className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent outline-none"
+                    >
+                      <option value="days">Days</option>
+                      <option value="months">Months</option>
+                      <option value="years">Years</option>
+                    </select>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Priority will automatically expire after this duration
+                  </p>
+                </div>
+              )}
+
+              <button
+                onClick={handlePrioritySubmit}
+                className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
+                <TrendingUp size={20} />
+                <span>{editingPriority ? 'Update Priority' : 'Set Priority'}</span>
+              </button>
+
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-2">How Priority Works:</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Position 1 = Highest priority (appears first)</li>
+                  <li>• Permanent: Always stays at set position until manually removed</li>
+                  <li>• Temporary: Automatically expires after specified duration</li>
+                  <li>• Companies appear in order of their position number</li>
+                  <li>• You can edit or remove priorities anytime</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col my-8">
+            <div className="p-6 border-b border-gray-200 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Upload Excel File</h2>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
+              {/* Category Selection */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Select Category
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-[#1e3a8a] outline-none text-gray-900 bg-white font-medium"
+                  style={{ color: selectedCategory ? '#111827' : '#6b7280' }}
+                >
+                  <option value="" disabled>Choose a category...</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category} style={{ color: '#111827' }}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* File Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Excel File
+                </label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#1e3a8a] transition-colors">
+                  <FileSpreadsheet size={48} className="mx-auto text-gray-400 mb-4" />
+                  <input
+                    type="file"
+                    accept=".xlsx,.xls"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="excel-upload"
+                  />
+                  <label
+                    htmlFor="excel-upload"
+                    className="cursor-pointer text-[#1e3a8a] hover:text-[#1e3a8a]/80 font-medium"
+                  >
+                    Click to select Excel file
+                  </label>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Supports .xlsx and .xls files
+                  </p>
+                  {selectedFile && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-medium text-blue-900">
+                        Selected: {selectedFile.name}
+                      </p>
+                      <p className="text-xs text-blue-600">
+                        Size: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Message */}
+              {uploadMessage && (
+                <div className={`p-4 rounded-lg flex items-center gap-3 ${
+                  uploadStatus === 'success' ? 'bg-green-50 text-green-800' :
+                  uploadStatus === 'error' ? 'bg-red-50 text-red-800' :
+                  'bg-blue-50 text-blue-800'
+                }`}>
+                  {uploadStatus === 'success' && <CheckCircle size={20} />}
+                  {uploadStatus === 'error' && <AlertCircle size={20} />}
+                  {uploadStatus === 'uploading' && (
+                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  <p className="text-sm">{uploadMessage}</p>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <button
+                onClick={handleUpload}
+                disabled={!selectedFile || !selectedCategory || uploadStatus === 'uploading'}
+                className="w-full bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {uploadStatus === 'uploading' ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload size={20} />
+                    <span>Replace {selectedCategory || 'Category'} Data</span>
+                  </>
+                )}
+              </button>
+
+              {/* Warning Notice */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={20} className="text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-900 mb-1">⚠️ Important Notice</h4>
+                    <p className="text-sm text-yellow-800">
+                      Uploading will <strong>DELETE ALL existing companies</strong> in the selected category and replace them with the new Excel data. This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-gray-50 rounded-lg p-4">
+                <h4 className="font-semibold text-gray-900 mb-2">Excel Format Requirements:</h4>
+                <p className="text-xs text-gray-500 mb-3">Use these exact column headers in your Excel file:</p>
+                <ul className="text-sm text-gray-700 space-y-1">
+                  <li>• <strong>COMPANY NAME</strong> (required)</li>
+                  <li>• <strong>CONTACT PERSON</strong> (optional)</li>
+                  <li>• <strong>PHONE NUMBER</strong> (required)</li>
+                  <li>• <strong>E-MAIL ID</strong> (required)</li>
+                  <li>• <strong>ADDRESS</strong> (required)</li>
+                  <li>• <strong>WEBSITE</strong> (optional) - Will display as clickable link</li>
+                  <li>• <strong>PRODUCTS</strong> (optional) - Comma-separated list</li>
+                  <li>• <strong>DESCRIPTION</strong> (optional)</li>
+                  <li>• <strong>CERTIFICATIONS</strong> (optional)</li>
+                  <li>• <strong>GST NUMBER</strong> (optional)</li>
+                </ul>
+                <p className="text-xs text-yellow-700 mt-3 bg-yellow-50 p-2 rounded">
+                  ⚠️ If WEBSITE or PRODUCTS columns are missing, those fields will be empty for all companies!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Visiting Card Modal */}
+      {showVisitingCardModal && selectedVisitingCard && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">Visiting Card Preview</h3>
+              <button
+                onClick={() => {
+                  setShowVisitingCardModal(false);
+                  setSelectedVisitingCard(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-auto max-h-[calc(90vh-180px)]">
+              <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center min-h-[400px]">
+                <img
+                  src={selectedVisitingCard.url}
+                  alt={selectedVisitingCard.name}
+                  className="max-w-full max-h-[600px] object-contain rounded-lg shadow-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="%236b7280"%3EImage not available%3C/text%3E%3C/svg%3E';
+                  }}
+                />
+              </div>
+              
+              <div className="mt-4 text-center text-sm text-gray-600">
+                <p className="font-medium">{selectedVisitingCard.name}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+              <button
+                onClick={handleDownloadVisitingCard}
+                className="px-6 py-3 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors flex items-center gap-2 font-medium"
+              >
+                <Download size={20} />
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  setShowVisitingCardModal(false);
+                  setSelectedVisitingCard(null);
+                }}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
