@@ -20,3 +20,5 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Force new deployment with environment variables
