@@ -8,11 +8,4 @@
   NODE_ENV = "production"
   SECRETS_SCAN_ENABLED = "false"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
-# Handle Next.js routing
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# Let Netlify handle Next.js automatically without plugin
