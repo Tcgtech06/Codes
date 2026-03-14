@@ -8,9 +8,6 @@
   NEXT_PUBLIC_API_URL = "/api/v1"
   NODE_ENV = "production"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
-
 # Handle API routes
 [[redirects]]
   from = "/api/*"

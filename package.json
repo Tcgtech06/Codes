@@ -43,7 +43,6 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "@netlify/plugin-nextjs": "^5.7.2",
     "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.2"
