@@ -4,6 +4,20 @@
 
 [build.environment]
   NODE_VERSION = "20.9.0"
+  NEXT_PUBLIC_API_URL = "https://knitinfo.in"
+  NODE_ENV = "production"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Handle API routes
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Handle client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
