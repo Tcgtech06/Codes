@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'knitinfo-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
 
 export interface AdminTokenPayload {
   username: string;

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 
-const ADMIN_PASSWORD = 'KnitInfo2024@Admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'fallback-password';
 
 function AdminLogin() {
   const [password, setPassword] = useState('');
