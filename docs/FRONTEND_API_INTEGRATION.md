@@ -298,9 +298,9 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 ### Backend (.env)
 ```env
 DATABASE_URL=postgresql://...
-JWT_SECRET=knitinfo-secret-key-2024
+JWT_SECRET=your-jwt-secret-key
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=KnitInfo2024@Admin
+ADMIN_PASSWORD=your-admin-password
 PORT=8080
 ```
 

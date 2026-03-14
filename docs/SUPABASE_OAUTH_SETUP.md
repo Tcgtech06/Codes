@@ -45,13 +45,13 @@ You should already have a Supabase project. If not:
      ```
      http://localhost:3000
      http://localhost:8080
-     https://fykzllskgxgunjrdkopp.supabase.co
+     https://your-project.supabase.co
      ```
    - Set authorized redirect URIs:
      ```
      http://localhost:3000/auth/callback
      http://localhost:8080/auth/callback
-     https://fykzllskgxgunjrdkopp.supabase.co/auth/v1/callback?provider=google
+     https://your-project.supabase.co/auth/v1/callback?provider=google
      ```
 6. Copy your Google **Client ID** and **Client Secret**
 7. Paste them into Supabase's Google provider settings
@@ -64,7 +64,7 @@ You should already have a Supabase project. If not:
 3. Create New OAuth App:
    - Application name: KnitInfo
    - Homepage URL: `http://localhost:8080`
-   - Authorization callback URL: `https://fykzllskgxgunjrdkopp.supabase.co/auth/v1/callback?provider=github`
+   - Authorization callback URL: `https://your-project.supabase.co/auth/v1/callback?provider=github`
 4. Copy **Client ID** and **Client Secret**
 5. Paste into Supabase's GitHub provider settings
 6. Click **Save**
@@ -75,15 +75,15 @@ Your Supabase credentials should already be in `.env.local`:
 
 **Backend (.env.local)**
 ```dotenv
-SUPABASE_URL=https://fykzllskgxgunjrdkopp.supabase.co
+SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_SUPABASE_URL=https://fykzllskgxgunjrdkopp.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 **Frontend (.env.local)**
 ```dotenv
-NEXT_PUBLIC_SUPABASE_URL=https://fykzllskgxgunjrdkopp.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
 ```

@@ -96,7 +96,7 @@ function AdminLogin() {
         <div className="mt-8 p-4 bg-gray-50 rounded-lg">
           <h3 className="text-sm font-semibold text-gray-700 mb-2">Password Information:</h3>
           <div className="text-xs text-gray-600 space-y-1">
-            <p>• Password: <code className="bg-gray-200 px-1 rounded">KnitInfo2024@Admin</code></p>
+            <p>• Password: <code className="bg-gray-200 px-1 rounded">Contact admin for password</code></p>
             <p>• Case sensitive</p>
             <p>• Contact admin for password reset</p>
           </div>
