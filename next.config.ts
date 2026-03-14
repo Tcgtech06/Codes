@@ -4,19 +4,17 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Configure Turbopack (Next.js 16 default)
-  turbopack: {
-    root: ".",
-    // Empty config to silence the warning and use Turbopack defaults
-    // Turbopack handles file watching better on Windows
+  // Disable experimental features for production builds
+  experimental: {
+    turbo: undefined, // Disable Turbopack for Netlify builds
   },
-  // Configure webpack as fallback
+  // Configure webpack for production
   webpack: (config, { isServer, dev }) => {
+    // Only apply dev optimizations in development
     if (dev && !isServer) {
-      // Optimize file watching for Windows
       config.watchOptions = {
-        poll: false, // Disable polling to prevent constant refreshes
-        aggregateTimeout: 300, // Delay before rebuilding (ms)
+        poll: false,
+        aggregateTimeout: 300,
         ignored: [
           '**/node_modules/**',
           '**/.git/**',
@@ -24,22 +22,16 @@ const nextConfig: NextConfig = {
           '**/.netlify/**',
           '**/out/**',
           '**/build/**',
-          '**/.env*', // Ignore env file changes
+          '**/.env*',
         ],
       };
       
-      // Prevent unnecessary rebuilds
       config.snapshot = {
         ...config.snapshot,
         managedPaths: [/^(.+?[\\/]node_modules[\\/])/],
       };
     }
     return config;
-  },
-  // Disable automatic static optimization issues
-  onDemandEntries: {
-    maxInactiveAge: 60 * 1000,
-    pagesBufferLength: 5,
   },
 };
 
