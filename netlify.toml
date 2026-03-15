@@ -1,6 +1,6 @@
 [build]
   command = "npm ci && npm run build"
-  publish = ".next"
+  publish = ".next/static"
 
 [build.environment]
   NODE_VERSION = "20.19.0"
@@ -8,5 +8,18 @@
   NODE_ENV = "production"
   SECRETS_SCAN_ENABLED = "false"
 
-[[plugins]]
-  package = "@netlify/plugin-nextjs"
+# Handle Next.js routing
+[[redirects]]
+  from = "/_next/static/*"
+  to = "/static/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/nextjs"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
