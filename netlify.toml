@@ -6,6 +6,8 @@
   NODE_VERSION = "20.19.0"
   NODE_ENV = "production"
   SECRETS_SCAN_ENABLED = "false"
+  NEXT_PUBLIC_SUPABASE_URL = "https://fykzllskgxgunjrdkopp.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5a3psbHNrZ3hndW5qcmRrb3BwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NTM0OTUsImV4cCI6MjA4NjEyOTQ5NX0.Zjf5Xj0Ah5gfnNA0uaOMzjwinF9ziuw5ek4mBmRm1iU"
 
 # Essential Next.js configuration for Netlify
 [[plugins]]
