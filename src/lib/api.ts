@@ -176,9 +176,13 @@ export const submissionsAPI = {
 
     const token = getAuthToken();
     const payload = new FormData();
+    const nonFileAttachments = Array.isArray(data.attachments)
+      ? data.attachments.filter((attachment: any) => attachment?.purpose !== 'visiting-card')
+      : [];
+
     payload.append('type', data.type);
     payload.append('formData', JSON.stringify(data.formData || {}));
-    payload.append('attachments', JSON.stringify(data.attachments || []));
+    payload.append('attachments', JSON.stringify(nonFileAttachments));
     payload.append('visitingCard', visitingCardFile);
 
     const headers: Record<string, string> = {};
