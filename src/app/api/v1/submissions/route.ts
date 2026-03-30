@@ -3,6 +3,8 @@ import supabase from '@/lib/supabase';
 import { verifyAdminFromRequest } from '@/lib/serverAuth';
 
 const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
+type AllowedType = typeof ALLOWED_TYPES[number];
+
 const ATTACHMENTS_BUCKET = process.env.SUPABASE_SUBMISSIONS_BUCKET || 'submission-attachments';
 
 const sanitizeFileName = (fileName: string): string =>
@@ -45,6 +47,10 @@ const uploadDataUrlAttachment = async (
     path: objectPath,
     type: mimeType,
   };
+};
+
+const isAllowedType = (value: any): value is AllowedType => {
+  return typeof value === 'string' && (ALLOWED_TYPES as readonly string[]).includes(value);
 };
 
 const createSignedAttachmentUrl = async (attachment: any) => {
@@ -117,7 +123,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const submissions = await Promise.all((data || []).map((row) => toSubmissionDto(row)));
+    const submissions = await Promise.all((data || []).map((row: any) => toSubmissionDto(row)));
     return NextResponse.json({ submissions });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -180,7 +186,7 @@ export async function POST(request: NextRequest) {
       attachments = Array.isArray(body?.attachments) ? body.attachments : [];
     }
 
-    if (!type || !ALLOWED_TYPES.includes(type)) {
+    if (!isAllowedType(type)) {
       return NextResponse.json({ error: 'Invalid submission type' }, { status: 400 });
     }
 
