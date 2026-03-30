@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import supabase from '@/lib/supabase';
 import { verifyAdminFromRequest } from '@/lib/serverAuth';
-import { uploadBase64Image } from '@/lib/storage';
 
 const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
 type AllowedType = typeof ALLOWED_TYPES[number];
@@ -15,6 +14,40 @@ const sanitizeFileName = (fileName: string): string =>
     .replace(/[^a-zA-Z0-9._-]/g, '')
     .toLowerCase();
 
+const uploadDataUrlAttachment = async (
+  dataUrl: string,
+  fileName: string,
+  submissionId: string,
+  type: string,
+  bucket: string
+) => {
+  const matches = dataUrl.match(/^data:(.*?);base64,(.*)$/);
+  if (!matches) {
+    return null;
+  }
+
+  const mimeType = matches[1] || 'application/octet-stream';
+  const base64Data = matches[2];
+  const fileBuffer = Buffer.from(base64Data, 'base64');
+
+  const safeName = sanitizeFileName(fileName || 'attachment');
+  const objectPath = `${type}/${submissionId}-${Date.now()}-${crypto.randomUUID()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage.from(bucket).upload(objectPath, fileBuffer, {
+    contentType: mimeType,
+    upsert: false,
+  });
+
+  if (uploadError) {
+    return null;
+  }
+
+  return {
+    bucket,
+    path: objectPath,
+    type: mimeType,
+  };
+};
 const isAllowedType = (value: any): value is AllowedType => {
   return typeof value === 'string' && (ALLOWED_TYPES as readonly string[]).includes(value);
 };
@@ -24,16 +57,27 @@ const createSignedAttachmentUrl = async (attachment: any) => {
     return attachment;
   }
 
-  if (attachment.url || !attachment.path) {
+  if (!attachment.path) {
     return attachment;
   }
 
   const bucket = attachment.bucket || ATTACHMENTS_BUCKET;
-  const { data } = await supabase.storage.from(bucket).createSignedUrl(attachment.path, 60 * 60 * 6);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(attachment.path, 60 * 60 * 6);
+
+  if (error) {
+    // Preserve existing URL when signing fails, instead of dropping image access.
+    return {
+      ...attachment,
+      signedUrl: attachment.signedUrl || attachment.url || null,
+      url: attachment.url || null,
+    };
+  }
 
   return {
     ...attachment,
-    url: data?.signedUrl || null,
+    signedUrl: data?.signedUrl || attachment.signedUrl || attachment.url || null,
+    // Always refresh signed URL so expired links in DB do not break admin preview.
+    url: data?.signedUrl || attachment.url || null,
   };
 };
 
@@ -169,33 +213,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
-    // Process attachments - upload base64 images to storage
+    // Process attachments and persist all image files in Storage.
     const processedAttachments = [];
     for (const attachment of attachments) {
-      console.log('Processing attachment:', attachment.name, 'purpose:', attachment.purpose);
-      
       if (attachment.data && typeof attachment.data === 'string' && attachment.data.startsWith('data:')) {
-        console.log('Uploading base64 image to storage...');
-        
-        // Upload base64 image to storage
-        const publicUrl = await uploadBase64Image(
+        const uploaded = await uploadDataUrlAttachment(
           attachment.data,
-          attachment.name,
-          submissionData.id
+          attachment.name || 'attachment',
+          submissionData.id,
+          type,
+          ATTACHMENTS_BUCKET
         );
 
-        if (publicUrl) {
-          console.log('Upload successful, URL:', publicUrl);
+        if (uploaded) {
           processedAttachments.push({
             name: attachment.name,
-            type: attachment.type,
+            type: attachment.type || uploaded.type,
             size: attachment.size,
             purpose: attachment.purpose,
-            url: publicUrl, // Store URL instead of base64
+            bucket: uploaded.bucket,
+            path: uploaded.path,
           });
         } else {
-          // If upload fails, store metadata without data
-          console.error('Upload failed for:', attachment.name);
           processedAttachments.push({
             name: attachment.name,
             type: attachment.type,
@@ -205,13 +244,9 @@ export async function POST(request: NextRequest) {
           });
         }
       } else {
-        // Keep attachment as is if it's not base64
-        console.log('Keeping attachment as-is (not base64)');
         processedAttachments.push(attachment);
       }
     }
-    
-    console.log('Processed attachments:', processedAttachments.length);
 
     // Update submission with processed attachments
     if (processedAttachments.length > 0) {

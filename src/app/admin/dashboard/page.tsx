@@ -97,6 +97,8 @@ interface SubmissionAttachment {
   size?: number;
   purpose?: string;
   url?: string | null;
+  signedUrl?: string | null;
+  data?: string;
   path?: string;
 }
 
@@ -180,63 +182,68 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleViewVisitingCard = (submissionId: string) => {
-    const submission = allSubmissions.find(s => s.id === submissionId);
-    
-    console.log('Full submission:', submission);
-    
-    if (!submission) {
-      alert('Submission not found');
-      return;
-    }
-    
-    // NEW FORMAT: Check if attachments exists (new submissions with storage)
-    let attachments = submission.attachments;
-    
-    console.log('Attachments:', attachments);
-    
-    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
-      // Get the visiting card attachment
-      let visitingCardAttachment = attachments.find(
-        (att: any) => att && att.purpose === 'visiting-card'
-      ) || attachments[0];
-      
-      console.log('Visiting card attachment:', visitingCardAttachment);
-      
-      if (visitingCardAttachment) {
-        // Check for image URL (from storage) or base64 data
-        const imageUrl = visitingCardAttachment.url || visitingCardAttachment.data;
-        
-        console.log('Image URL:', imageUrl ? imageUrl.substring(0, 100) : 'none');
-        
-        if (imageUrl && typeof imageUrl === 'string' && imageUrl.length > 0) {
-          setSelectedVisitingCard({ 
-            name: visitingCardAttachment.name || 'Visiting Card', 
-            url: imageUrl 
-          });
-          setShowVisitingCardModal(true);
-          return;
-        }
-      }
-    }
-    
-    // OLD FORMAT: This is an old submission created before storage was implemented
-    // The visiting card was supposed to be in attachments but the old code didn't save it properly
-    // These old submissions only have the filename but not the actual image data
-    alert('This is an old submission created before the storage system was implemented. The visiting card image was not saved. Please ask the user to resubmit with the new form.');
-    console.log('Old submission without image data - only filename exists');
+  const getAttachmentUrl = (attachment?: SubmissionAttachment | null) => {
+    if (!attachment) return '';
+    return (
+      attachment.signedUrl ||
+      attachment.url ||
+      (typeof attachment.data === 'string' ? attachment.data : '') ||
+      ''
+    );
   };
 
-  const handleDownloadVisitingCard = () => {
+  const isImageAttachment = (attachment?: SubmissionAttachment | null) => {
+    const mimeType = attachment?.type || '';
+    if (mimeType.startsWith('image/')) {
+      return true;
+    }
+
+    const url = getAttachmentUrl(attachment).toLowerCase();
+    if (url.startsWith('data:image/')) {
+      return true;
+    }
+
+    return /\.(png|jpe?g|gif|webp|bmp|svg|heic|heif)(\?|$)/.test(url);
+  };
+
+  const openVisitingCardPreview = (attachment: SubmissionAttachment, fallbackName?: string) => {
+    const imageUrl = getAttachmentUrl(attachment);
+    if (!imageUrl) {
+      alert('Image URL is not available for this submission.');
+      return;
+    }
+
+    setSelectedVisitingCard({
+      name: attachment.name || fallbackName || 'Visiting Card',
+      url: imageUrl,
+    });
+    setShowVisitingCardModal(true);
+  };
+
+  const handleDownloadVisitingCard = async () => {
     if (!selectedVisitingCard) return;
-    
-    // Create a temporary link and trigger download
-    const link = document.createElement('a');
-    link.href = selectedVisitingCard.url;
-    link.download = selectedVisitingCard.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+
+    try {
+      const response = await fetch(selectedVisitingCard.url);
+      if (!response.ok) {
+        throw new Error('Failed to fetch image');
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = selectedVisitingCard.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      // Fallback for signed URLs that disallow fetch due to CORS.
+      window.open(selectedVisitingCard.url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const checkDatabaseConnection = async () => {
@@ -275,6 +282,8 @@ export default function AdminDashboard() {
   const getVisitingCardAttachment = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
     const attachments = Array.isArray(submission.attachments) ? submission.attachments : [];
     return (
+      attachments.find((item) => item?.purpose === 'visiting-card' && Boolean(getAttachmentUrl(item) || item?.path)) ||
+      attachments.find((item) => item?.name === submission.visitingCardName && Boolean(getAttachmentUrl(item) || item?.path)) ||
       attachments.find((item) => item?.purpose === 'visiting-card') ||
       attachments.find((item) => item?.name === submission.visitingCardName) ||
       null
@@ -289,8 +298,9 @@ export default function AdminDashboard() {
       return null;
     }
 
-    const isImage = Boolean(attachment?.type?.startsWith('image/'));
-    const hasUrl = Boolean(attachment?.url);
+    const attachmentUrl = getAttachmentUrl(attachment);
+    const isImage = isImageAttachment(attachment) || attachment?.purpose === 'visiting-card';
+    const hasUrl = Boolean(attachmentUrl);
 
     return (
       <div className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
@@ -301,7 +311,7 @@ export default function AdminDashboard() {
 
         {isImage && hasUrl && (
           <img
-            src={attachment?.url || ''}
+            src={attachmentUrl}
             alt={`Visiting card ${cardName}`}
             className="mt-3 h-32 w-auto rounded border border-gray-200 object-contain"
             loading="lazy"
@@ -309,16 +319,29 @@ export default function AdminDashboard() {
         )}
 
         {hasUrl ? (
-          <a
-            href={attachment?.url || '#'}
-            target="_blank"
-            rel="noreferrer"
-            download={cardName}
-            className="mt-3 inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
-          >
-            {isImage ? <ImageIcon size={14} /> : <Download size={14} />}
-            {isImage ? 'Open Full Image' : 'Download File'}
-          </a>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {isImage && attachment && (
+              <button
+                type="button"
+                onClick={() => openVisitingCardPreview(attachment, cardName)}
+                className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+              >
+                <ImageIcon size={14} />
+                View Image
+              </button>
+            )}
+
+            <a
+              href={attachmentUrl || '#'}
+              target="_blank"
+              rel="noreferrer"
+              download={cardName}
+              className="inline-flex items-center gap-2 rounded-md bg-gray-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-black"
+            >
+              <Download size={14} />
+              Download
+            </a>
+          </div>
         ) : (
           <p className="mt-2 text-xs text-amber-700">Attachment URL is not available for this older submission.</p>
         )}
