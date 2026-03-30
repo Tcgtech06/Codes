@@ -14,6 +14,64 @@ const sanitizeFileName = (fileName: string): string =>
     .replace(/[^a-zA-Z0-9._-]/g, '')
     .toLowerCase();
 
+const resolveAttachmentPathFromStorage = async (
+  attachment: any,
+  submissionType?: string,
+  submissionId?: string
+) => {
+  const fileName = typeof attachment?.name === 'string' ? attachment.name : '';
+  if (!fileName) {
+    return null;
+  }
+
+  const safeName = sanitizeFileName(fileName);
+  if (!safeName) {
+    return null;
+  }
+
+  const candidateFolders = Array.from(
+    new Set(
+      [submissionType, 'visiting-cards', 'add-data', 'advertise', 'collaborate'].filter(
+        (value): value is string => typeof value === 'string' && value.length > 0
+      )
+    )
+  );
+
+  for (const folder of candidateFolders) {
+    const listOptions: { limit: number; search?: string } = { limit: 1000 };
+    if (submissionId) {
+      listOptions.search = submissionId;
+    } else {
+      listOptions.search = safeName;
+    }
+
+    const { data: items, error } = await supabase.storage
+      .from(ATTACHMENTS_BUCKET)
+      .list(folder, listOptions);
+
+    if (error || !Array.isArray(items) || items.length === 0) {
+      continue;
+    }
+
+    const matched = items.find((item: any) => {
+      const itemName = String(item?.name || '');
+      if (!itemName) return false;
+
+      if (itemName === safeName || itemName.endsWith(`-${safeName}`)) {
+        return true;
+      }
+
+      return Boolean(submissionId && itemName.includes(submissionId) && itemName.endsWith(safeName));
+    });
+
+    if (matched?.name) {
+      return `${folder}/${matched.name}`;
+    }
+  }
+
+  return null;
+};
+
 const uploadDataUrlAttachment = async (
   dataUrl: string,
   fileName: string,
@@ -52,22 +110,28 @@ const isAllowedType = (value: any): value is AllowedType => {
   return typeof value === 'string' && (ALLOWED_TYPES as readonly string[]).includes(value);
 };
 
-const createSignedAttachmentUrl = async (attachment: any) => {
+const createSignedAttachmentUrl = async (attachment: any, submissionType?: string, submissionId?: string) => {
   if (!attachment || typeof attachment !== 'object') {
     return attachment;
   }
 
-  if (!attachment.path) {
+  let resolvedPath = attachment.path;
+  if (!resolvedPath) {
+    resolvedPath = await resolveAttachmentPathFromStorage(attachment, submissionType, submissionId);
+  }
+
+  if (!resolvedPath) {
     return attachment;
   }
 
   const bucket = attachment.bucket || ATTACHMENTS_BUCKET;
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(attachment.path, 60 * 60 * 6);
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(resolvedPath, 60 * 60 * 6);
 
   if (error) {
     // Preserve existing URL when signing fails, instead of dropping image access.
     return {
       ...attachment,
+      path: resolvedPath,
       signedUrl: attachment.signedUrl || attachment.url || null,
       url: attachment.url || null,
     };
@@ -75,6 +139,7 @@ const createSignedAttachmentUrl = async (attachment: any) => {
 
   return {
     ...attachment,
+    path: resolvedPath,
     signedUrl: data?.signedUrl || attachment.signedUrl || attachment.url || null,
     // Always refresh signed URL so expired links in DB do not break admin preview.
     url: data?.signedUrl || attachment.url || null,
@@ -83,7 +148,9 @@ const createSignedAttachmentUrl = async (attachment: any) => {
 
 const toSubmissionDto = async (row: any) => {
   const rawAttachments = Array.isArray(row.attachments) ? row.attachments : [];
-  const attachments = await Promise.all(rawAttachments.map((item: any) => createSignedAttachmentUrl(item)));
+  const attachments = await Promise.all(
+    rawAttachments.map((item: any) => createSignedAttachmentUrl(item, row.type, row.id))
+  );
 
   return {
     id: row.id,
