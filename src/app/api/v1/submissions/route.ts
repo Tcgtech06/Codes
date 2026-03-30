@@ -48,7 +48,6 @@ const uploadDataUrlAttachment = async (
     type: mimeType,
   };
 };
-
 const isAllowedType = (value: any): value is AllowedType => {
   return typeof value === 'string' && (ALLOWED_TYPES as readonly string[]).includes(value);
 };
