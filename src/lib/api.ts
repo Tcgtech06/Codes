@@ -215,6 +215,30 @@ export const submissionsAPI = {
       method: 'POST',
     }),
 
+  uploadVisitingCard: async (id: string, file: File) => {
+    const token = getAuthToken();
+    const payload = new FormData();
+    payload.append('visitingCard', file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/submissions/${id}/visiting-card`, {
+      method: 'POST',
+      headers,
+      body: payload,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json() as Promise<{ message: string }>;
+  },
+
   delete: (id: string) =>
     apiCall<{ message: string }>(`/submissions/${id}`, {
       method: 'DELETE',

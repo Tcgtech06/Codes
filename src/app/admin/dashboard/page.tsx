@@ -46,6 +46,7 @@ interface AddDataSubmission {
   certifications?: string;
   gstNumber?: string;
   visitingCardName?: string;
+  visitingCardRepairedAt?: string;
   attachments?: SubmissionAttachment[];
   submittedAt: string;
   type: string;
@@ -64,6 +65,7 @@ interface AdvertiseSubmission {
   budget?: string;
   message?: string;
   visitingCardName?: string;
+  visitingCardRepairedAt?: string;
   attachments?: SubmissionAttachment[];
   submittedAt: string;
   type: string;
@@ -85,6 +87,7 @@ interface CollaborateSubmission {
   budget?: string;
   experience?: string;
   visitingCardName?: string;
+  visitingCardRepairedAt?: string;
   attachments?: SubmissionAttachment[];
   submittedAt: string;
   type: string;
@@ -99,6 +102,7 @@ interface SubmissionAttachment {
   url?: string | null;
   signedUrl?: string | null;
   data?: string;
+  bucket?: string;
   path?: string;
 }
 
@@ -117,6 +121,8 @@ export default function AdminDashboard() {
   const [approvedSearchTerm, setApprovedSearchTerm] = useState('');
   const [submissionsLoading, setSubmissionsLoading] = useState(true);
   const [submissionActionId, setSubmissionActionId] = useState<string | null>(null);
+  const [visitingCardUploadId, setVisitingCardUploadId] = useState<string | null>(null);
+  const [repairedSubmissionIds, setRepairedSubmissionIds] = useState<Set<string>>(new Set());
   const [showVisitingCardModal, setShowVisitingCardModal] = useState(false);
   const [selectedVisitingCard, setSelectedVisitingCard] = useState<{ name: string; url: string } | null>(null);
   const [priorityForm, setPriorityForm] = useState({
@@ -184,10 +190,31 @@ export default function AdminDashboard() {
 
   const getAttachmentUrl = (attachment?: SubmissionAttachment | null) => {
     if (!attachment) return '';
-    return (
+
+    const directUrl =
       attachment.signedUrl ||
       attachment.url ||
-      (typeof attachment.data === 'string' ? attachment.data : '') ||
+      (typeof attachment.data === 'string' ? attachment.data : '');
+
+    if (directUrl) {
+      return directUrl;
+    }
+
+    if (attachment.path) {
+      const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const bucket = attachment.bucket || 'submission-attachments';
+
+      if (baseUrl && bucket) {
+        const safePath = attachment.path
+          .split('/')
+          .map((part) => encodeURIComponent(part))
+          .join('/');
+
+        return `${baseUrl}/storage/v1/object/public/${bucket}/${safePath}`;
+      }
+    }
+
+    return (
       ''
     );
   };
@@ -246,6 +273,34 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleReuploadVisitingCard = async (submissionId: string, file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file for the visiting card.');
+      return;
+    }
+
+    try {
+      setVisitingCardUploadId(submissionId);
+      await submissionsAPI.uploadVisitingCard(submissionId, file);
+      setRepairedSubmissionIds((prev) => {
+        const next = new Set(prev);
+        next.add(submissionId);
+        return next;
+      });
+      alert('Visiting card updated successfully.');
+      await loadSubmissions();
+    } catch (error: any) {
+      console.error('Error uploading visiting card:', error);
+      alert(error?.message || 'Failed to upload visiting card.');
+    } finally {
+      setVisitingCardUploadId(null);
+    }
+  };
+
   const checkDatabaseConnection = async () => {
     setDbStatus(prev => ({ ...prev, checking: true }));
     try {
@@ -290,7 +345,7 @@ export default function AdminDashboard() {
     );
   };
 
-  const renderVisitingCard = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
+  const renderVisitingCard = (submission: { id: string; attachments?: SubmissionAttachment[]; visitingCardName?: string; visitingCardRepairedAt?: string }) => {
     const attachment = getVisitingCardAttachment(submission);
     const cardName = attachment?.name || submission.visitingCardName;
 
@@ -301,12 +356,18 @@ export default function AdminDashboard() {
     const attachmentUrl = getAttachmentUrl(attachment);
     const isImage = isImageAttachment(attachment) || attachment?.purpose === 'visiting-card';
     const hasUrl = Boolean(attachmentUrl);
+    const wasRepaired = Boolean(submission.visitingCardRepairedAt) || repairedSubmissionIds.has(submission.id);
 
     return (
       <div className="mt-3 rounded-lg border border-gray-200 bg-white p-3">
-        <div className="flex items-center gap-2 text-sm text-gray-800">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-800">
           <FileText size={14} className="text-gray-600" />
           <span className="font-medium">Visiting Card: {cardName}</span>
+          {wasRepaired && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-800">
+              Repaired
+            </span>
+          )}
         </div>
 
         {isImage && hasUrl && (
@@ -341,9 +402,50 @@ export default function AdminDashboard() {
               <Download size={14} />
               Download
             </a>
+
+            <label
+              htmlFor={`visiting-card-reupload-${submission.id}`}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+            >
+              <Upload size={14} />
+              {visitingCardUploadId === submission.id ? 'Uploading...' : 'Replace Image'}
+            </label>
+            <input
+              id={`visiting-card-reupload-${submission.id}`}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={visitingCardUploadId === submission.id}
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0] || null;
+                void handleReuploadVisitingCard(submission.id, selectedFile);
+                e.currentTarget.value = '';
+              }}
+            />
           </div>
         ) : (
-          <p className="mt-2 text-xs text-amber-700">Attachment URL is not available for this older submission.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <p className="text-xs text-amber-700">Attachment URL is not available for this submission.</p>
+            <label
+              htmlFor={`visiting-card-reupload-${submission.id}`}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700"
+            >
+              <Upload size={14} />
+              {visitingCardUploadId === submission.id ? 'Uploading...' : 'Upload Image'}
+            </label>
+            <input
+              id={`visiting-card-reupload-${submission.id}`}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              disabled={visitingCardUploadId === submission.id}
+              onChange={(e) => {
+                const selectedFile = e.target.files?.[0] || null;
+                void handleReuploadVisitingCard(submission.id, selectedFile);
+                e.currentTarget.value = '';
+              }}
+            />
+          </div>
         )}
       </div>
     );

@@ -6,6 +6,10 @@ const ALLOWED_TYPES = ['add-data', 'advertise', 'collaborate'] as const;
 type AllowedType = typeof ALLOWED_TYPES[number];
 
 const ATTACHMENTS_BUCKET = process.env.SUPABASE_SUBMISSIONS_BUCKET || 'submission-attachments';
+const LEGACY_ATTACHMENTS_BUCKET = process.env.SUPABASE_LEGACY_ATTACHMENTS_BUCKET || 'attachments';
+const ATTACHMENT_BUCKET_CANDIDATES = Array.from(
+  new Set([ATTACHMENTS_BUCKET, LEGACY_ATTACHMENTS_BUCKET].filter(Boolean))
+);
 
 const sanitizeFileName = (fileName: string): string =>
   fileName
@@ -37,35 +41,40 @@ const resolveAttachmentPathFromStorage = async (
     )
   );
 
-  for (const folder of candidateFolders) {
-    const listOptions: { limit: number; search?: string } = { limit: 1000 };
-    if (submissionId) {
-      listOptions.search = submissionId;
-    } else {
-      listOptions.search = safeName;
-    }
-
-    const { data: items, error } = await supabase.storage
-      .from(ATTACHMENTS_BUCKET)
-      .list(folder, listOptions);
-
-    if (error || !Array.isArray(items) || items.length === 0) {
-      continue;
-    }
-
-    const matched = items.find((item: any) => {
-      const itemName = String(item?.name || '');
-      if (!itemName) return false;
-
-      if (itemName === safeName || itemName.endsWith(`-${safeName}`)) {
-        return true;
+  for (const bucket of ATTACHMENT_BUCKET_CANDIDATES) {
+    for (const folder of candidateFolders) {
+      const listOptions: { limit: number; search?: string } = { limit: 1000 };
+      if (submissionId) {
+        listOptions.search = submissionId;
+      } else {
+        listOptions.search = safeName;
       }
 
-      return Boolean(submissionId && itemName.includes(submissionId) && itemName.endsWith(safeName));
-    });
+      const { data: items, error } = await supabase.storage
+        .from(bucket)
+        .list(folder, listOptions);
 
-    if (matched?.name) {
-      return `${folder}/${matched.name}`;
+      if (error || !Array.isArray(items) || items.length === 0) {
+        continue;
+      }
+
+      const matched = items.find((item: any) => {
+        const itemName = String(item?.name || '');
+        if (!itemName) return false;
+
+        if (itemName === safeName || itemName.endsWith(`-${safeName}`)) {
+          return true;
+        }
+
+        return Boolean(submissionId && itemName.includes(submissionId) && itemName.endsWith(safeName));
+      });
+
+      if (matched?.name) {
+        return {
+          bucket,
+          path: `${folder}/${matched.name}`,
+        };
+      }
     }
   }
 
@@ -115,34 +124,41 @@ const createSignedAttachmentUrl = async (attachment: any, submissionType?: strin
     return attachment;
   }
 
+  let resolvedBucket = attachment.bucket || ATTACHMENTS_BUCKET;
   let resolvedPath = attachment.path;
   if (!resolvedPath) {
-    resolvedPath = await resolveAttachmentPathFromStorage(attachment, submissionType, submissionId);
+    const resolvedAttachment = await resolveAttachmentPathFromStorage(attachment, submissionType, submissionId);
+    resolvedPath = resolvedAttachment?.path;
+    resolvedBucket = resolvedAttachment?.bucket || resolvedBucket;
   }
 
   if (!resolvedPath) {
     return attachment;
   }
 
-  const bucket = attachment.bucket || ATTACHMENTS_BUCKET;
-  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(resolvedPath, 60 * 60 * 6);
+  const existingUrl = attachment.url || attachment.signedUrl || attachment.publicUrl || null;
+  const { data, error } = await supabase.storage.from(resolvedBucket).createSignedUrl(resolvedPath, 60 * 60 * 6);
+  const { data: publicData } = supabase.storage.from(resolvedBucket).getPublicUrl(resolvedPath);
+  const fallbackPublicUrl = publicData?.publicUrl || null;
 
   if (error) {
-    // Preserve existing URL when signing fails, instead of dropping image access.
+    // Preserve existing URL and provide public URL fallback when signing fails.
     return {
       ...attachment,
+      bucket: resolvedBucket,
       path: resolvedPath,
-      signedUrl: attachment.signedUrl || attachment.url || null,
-      url: attachment.url || null,
+      signedUrl: attachment.signedUrl || existingUrl,
+      url: existingUrl || fallbackPublicUrl,
     };
   }
 
   return {
     ...attachment,
+    bucket: resolvedBucket,
     path: resolvedPath,
-    signedUrl: data?.signedUrl || attachment.signedUrl || attachment.url || null,
+    signedUrl: data?.signedUrl || attachment.signedUrl || existingUrl,
     // Always refresh signed URL so expired links in DB do not break admin preview.
-    url: data?.signedUrl || attachment.url || null,
+    url: data?.signedUrl || existingUrl || fallbackPublicUrl,
   };
 };
 
