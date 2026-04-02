@@ -115,6 +115,25 @@ const uploadDataUrlAttachment = async (
     type: mimeType,
   };
 };
+
+const cleanupUploadedAttachments = async (attachments: any[]) => {
+  const filesByBucket = new Map<string, string[]>();
+
+  for (const item of attachments) {
+    if (!item || typeof item !== 'object' || !item.path) {
+      continue;
+    }
+
+    const bucket = typeof item.bucket === 'string' && item.bucket ? item.bucket : ATTACHMENTS_BUCKET;
+    const existing = filesByBucket.get(bucket) || [];
+    filesByBucket.set(bucket, [...existing, item.path]);
+  }
+
+  for (const [bucket, paths] of filesByBucket.entries()) {
+    if (!paths.length) continue;
+    await supabase.storage.from(bucket).remove(paths);
+  }
+};
 const isAllowedType = (value: any): value is AllowedType => {
   return typeof value === 'string' && (ALLOWED_TYPES as readonly string[]).includes(value);
 };
@@ -339,7 +358,13 @@ export async function POST(request: NextRequest) {
         .eq('id', submissionData.id);
 
       if (updateError) {
-        console.error('Error updating attachments:', updateError);
+        // Roll back partial submission so users don't see a fake success without files.
+        await cleanupUploadedAttachments(processedAttachments);
+        await supabase.from('form_submissions').delete().eq('id', submissionData.id);
+        return NextResponse.json(
+          { error: `Failed to save submission attachments: ${updateError.message}` },
+          { status: 500 }
+        );
       }
     }
 
