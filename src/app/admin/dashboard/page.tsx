@@ -331,7 +331,11 @@ export default function AdminDashboard() {
     .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as AdvertiseSubmission));
   
   const collaborateSubmissions = allSubmissions
-    .filter(s => s.type === 'collaborate' && s.status === 'pending')
+    .filter(
+      (s) =>
+        (s.type === 'collaborate' || s.type === 'collaboration') &&
+        s.status === 'pending'
+    )
     .map(s => ({ id: s.id, ...s.formData, attachments: s.attachments || [], type: s.type, submittedAt: s.submittedAt, status: s.status } as CollaborateSubmission));
 
   const getVisitingCardAttachment = (submission: { attachments?: SubmissionAttachment[]; visitingCardName?: string }) => {
