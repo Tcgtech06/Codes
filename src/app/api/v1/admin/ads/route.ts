@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { uploadAdImage } from '@/lib/storage';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)!;
 
 export async function GET(request: NextRequest) {
   try {

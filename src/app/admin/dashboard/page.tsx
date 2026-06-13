@@ -1907,7 +1907,7 @@ export default function AdminDashboard() {
                   <select
                     value={adForm.type}
                     onChange={(e) => setAdForm({...adForm, type: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                   >
                     <option value="hero">Hero Slideshow</option>
                     <option value="strip">Ad Strip</option>
@@ -1918,7 +1918,7 @@ export default function AdminDashboard() {
                   <select
                     value={adForm.page}
                     onChange={(e) => setAdForm({...adForm, page: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                   >
                     <option value="home">Home Page</option>
                     <option value="catalogue">Catalogue Page</option>
@@ -1933,7 +1933,7 @@ export default function AdminDashboard() {
                   value={adForm.redirection_url}
                   onChange={(e) => setAdForm({...adForm, redirection_url: e.target.value})}
                   placeholder="https://example.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                 />
               </div>
               
@@ -1944,7 +1944,7 @@ export default function AdminDashboard() {
                   value={adForm.whatsapp_number}
                   onChange={(e) => setAdForm({...adForm, whatsapp_number: e.target.value})}
                   placeholder="+91..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                 />
               </div>
               
@@ -1954,7 +1954,7 @@ export default function AdminDashboard() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setAdImage(e.target.files?.[0] || null)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                   required
                 />
               </div>
