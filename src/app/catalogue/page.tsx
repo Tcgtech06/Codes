@@ -87,7 +87,7 @@ export default function Catalogue() {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
+      <div className="bg-slate-50 min-h-screen">
         {/* Animated Image Strip */}
         {adStrips.length > 0 ? (
           <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
@@ -137,7 +137,7 @@ export default function Catalogue() {
     );
   }
   return (
-    <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       {/* Animated Image Strip */}
       {adStrips.length > 0 ? (
         <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
@@ -184,7 +184,7 @@ export default function Catalogue() {
                   <div className={`p-4 rounded-full mb-4 ${color} bg-opacity-20`}>
                     <Icon size={32} className={color.split(' ')[1]} />
                   </div>
-                  <span className="font-semibold text-lg text-gray-800 group-hover:text-blue-600 transition-colors">
+                  <span className="font-semibold text-lg text-[#0f172a] group-hover:text-[#4ade80] transition-colors">
                     {category.name}
                   </span>
                   {category.count > 0 && (
