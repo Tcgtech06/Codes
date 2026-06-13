@@ -73,11 +73,13 @@ export default function Home() {
   const [isSwiping, setIsSwiping] = useState(false);
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Fetch books and categories
   // Fetch categories from API, use static books data
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const categoriesRes = await categoriesAPI.getAll();
         setCategories(categoriesRes.categories || []);
@@ -91,10 +93,37 @@ export default function Home() {
         import('@/data/books').then(({ books: staticBooks }) => {
           setBooks(staticBooks);
         });
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  // Background prefetching for other pages once current page is loaded
+  useEffect(() => {
+    if (!isLoading) {
+      const prefetchPages = async () => {
+        // Dynamically import router to prefetch pages
+        const { useRouter } = await import('next/navigation');
+        // Actually next/navigation useRouter can only be called in component body.
+        // But Next.js automatically prefetches <Link> elements in viewport.
+        // We will just let Next.js handle link prefetching naturally,
+        // but we can pre-load images here if needed.
+        const pagesToPreload = ['/about', '/contact', '/catalogue', '/dashboard'];
+        pagesToPreload.forEach(page => {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = page;
+          document.head.appendChild(link);
+        });
+      };
+      
+      // Delay prefetching so it doesn't block main thread right after load
+      const timeoutId = setTimeout(prefetchPages, 2000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -261,25 +290,43 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Our Physical Books</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {books.map((book, index) => (
-              <Link key={index} href={`/books/${book.id}`}>
-                <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer max-w-xs mx-auto">
-                  <div className="flex items-center justify-center p-6 md:p-8">
-                    <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain" />
-                  </div>
+            {isLoading ? (
+              // Skeleton Loader for Books
+              [...Array(3)].map((_, index) => (
+                <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col max-w-xs mx-auto w-full animate-pulse">
+                  <div className="h-48 md:h-64 bg-gray-200 w-full"></div>
                   <div className="p-6 flex-grow flex flex-col">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
-                    <p className="text-gray-500 mb-4">{book.edition}</p>
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-2xl font-bold text-gray-900">₹{book.price}</span>
-                      <button className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 transition-colors">
-                        Buy Now
-                      </button>
+                      <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-10 bg-gray-200 rounded w-1/3"></div>
                     </div>
                   </div>
                 </div>
-              </Link>
-            ))}
+              ))
+            ) : (
+              // Actual Books
+              books.map((book, index) => (
+                <Link key={index} href={`/books/${book.id}`}>
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer max-w-xs mx-auto">
+                    <div className="flex items-center justify-center p-6 md:p-8">
+                      <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain" />
+                    </div>
+                    <div className="p-6 flex-grow flex flex-col">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
+                      <p className="text-gray-500 mb-4">{book.edition}</p>
+                      <div className="mt-auto flex items-center justify-between">
+                        <span className="text-2xl font-bold text-gray-900">₹{book.price}</span>
+                        <button className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 transition-colors">
+                          Buy Now
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
           </div>
         </div>
       </section>
