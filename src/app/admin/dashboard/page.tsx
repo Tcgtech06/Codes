@@ -1934,25 +1934,32 @@ export default function AdminDashboard() {
             <form onSubmit={handleAdSubmit} className="space-y-4 max-w-2xl">
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Page Selection</label>
+                  <select
+                    value={adForm.page}
+                    onChange={(e) => {
+                      const newPage = e.target.value;
+                      // If switching to catalogue, force the type to be 'strip'
+                      const newType = newPage === 'catalogue' ? 'strip' : adForm.type;
+                      setAdForm({...adForm, page: newPage, type: newType});
+                    }}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
+                  >
+                    <option value="home">Home Page</option>
+                    <option value="catalogue">Catalogue Page</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ad Type</label>
                   <select
                     value={adForm.type}
                     onChange={(e) => setAdForm({...adForm, type: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                   >
-                    <option value="hero">Hero Slideshow</option>
+                    {adForm.page !== 'catalogue' && (
+                      <option value="hero">Hero Slideshow</option>
+                    )}
                     <option value="strip">Ad Strip</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Page Selection</label>
-                  <select
-                    value={adForm.page}
-                    onChange={(e) => setAdForm({...adForm, page: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
-                  >
-                    <option value="home">Home Page</option>
-                    <option value="catalogue">Catalogue Page</option>
                   </select>
                 </div>
               </div>
