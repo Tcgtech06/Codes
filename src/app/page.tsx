@@ -229,9 +229,9 @@ export default function Home() {
 
 
   return (
-    <div className="flex flex-col pb-12 bg-white">
+    <div className="flex flex-col pb-12 bg-transparent text-white">
       {/* Spacer for fixed mobile nav */}
-      <div className="md:hidden h-[58px] bg-white"></div>
+      <div className="md:hidden h-[58px] bg-transparent"></div>
 
       {/* Hero Section with Slideshow - 3D Carousel */}
       <div className="w-full md:max-w-7xl md:mx-auto md:px-4 md:py-4">
@@ -327,21 +327,21 @@ export default function Home() {
       </div>
 
       {/* Books Section */}
-      <section className="bg-slate-50 py-16">
+      <section className="bg-transparent py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Our Physical Books</h2>
+          <h2 className="text-2xl font-bold text-[#4ade80] mb-8 text-center">Our Physical Books</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {isLoading ? (
               // Skeleton Loader for Books
               [...Array(3)].map((_, index) => (
-                <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col max-w-xs mx-auto w-full animate-pulse">
-                  <div className="h-48 md:h-64 bg-gray-200 w-full"></div>
+                <div key={index} className="bg-[#1e293b] rounded-2xl overflow-hidden shadow-lg border border-[#334155] flex flex-col max-w-xs mx-auto w-full animate-pulse">
+                  <div className="h-48 md:h-64 bg-[#334155] w-full"></div>
                   <div className="p-6 flex-grow flex flex-col">
-                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+                    <div className="h-6 bg-[#334155] rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-[#334155] rounded w-1/2 mb-6"></div>
                     <div className="mt-auto flex items-center justify-between">
-                      <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                      <div className="h-10 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-8 bg-[#334155] rounded w-1/3"></div>
+                      <div className="h-10 bg-[#334155] rounded w-1/3"></div>
                     </div>
                   </div>
                 </div>
@@ -350,16 +350,16 @@ export default function Home() {
               // Actual Books
               books.map((book, index) => (
                 <Link key={index} href={`/books/${book.id}`}>
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer max-w-xs mx-auto">
-                    <div className="flex items-center justify-center p-6 md:p-8">
-                      <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain" />
+                  <div className="bg-[#1e293b] rounded-2xl overflow-hidden shadow-lg border border-[#334155] hover:border-[#4ade80] transition-colors flex flex-col cursor-pointer max-w-xs mx-auto">
+                    <div className="flex items-center justify-center p-6 md:p-8 bg-white/5">
+                      <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain drop-shadow-xl" />
                     </div>
                     <div className="p-6 flex-grow flex flex-col">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
-                      <p className="text-gray-500 mb-4">{book.edition}</p>
+                      <h3 className="text-xl font-bold text-white mb-2">{book.title}</h3>
+                      <p className="text-gray-400 mb-4">{book.edition}</p>
                       <div className="mt-auto flex items-center justify-between">
-                        <span className="text-2xl font-bold text-[#0f172a]">₹{book.price}</span>
-                        <button className="bg-[#0f172a] text-[#4ade80] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#0f172a]/90 transition-colors shadow-md">
+                        <span className="text-2xl font-bold text-[#4ade80]">₹{book.price}</span>
+                        <button className="bg-[#4ade80] text-[#0f172a] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#4ade80]/90 transition-colors shadow-md">
                           Buy Now
                         </button>
                       </div>
@@ -374,7 +374,7 @@ export default function Home() {
 
       {/* Animated Image Strip */}
       {adStrips.length > 0 ? (
-        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
+        <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-y border-[#334155]">
           <div className="flex animate-scroll-left gap-6">
             {/* Duplicate images for seamless loop */}
             {[...Array(4)].map((_, setIndex) => (
@@ -392,7 +392,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
+        <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-y border-[#334155]">
           <div className="flex animate-scroll-left gap-6">
             {[...Array(4)].map((_, setIndex) => (
               <div key={setIndex} className="flex gap-6 shrink-0">
@@ -407,19 +407,19 @@ export default function Home() {
       )}
 
       {/* Our Vision Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#0f172a] mb-4">Our Vision</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#0f172a] to-[#4ade80] mx-auto mb-6"></div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Our Vision</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#4ade80] to-transparent mx-auto mb-6"></div>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               Empowering the textile industry through innovation, connectivity, and excellence
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Vision Card 1 */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
+            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
               <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
                 <span className="text-3xl text-[#4ade80]">🌐</span>
               </div>
@@ -430,7 +430,7 @@ export default function Home() {
             </div>
 
             {/* Vision Card 2 */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
+            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
               <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
                 <span className="text-3xl text-[#4ade80]">💡</span>
               </div>
@@ -441,7 +441,7 @@ export default function Home() {
             </div>
 
             {/* Vision Card 3 */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
+            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
               <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
                 <span className="text-3xl text-[#4ade80]">🤝</span>
               </div>
@@ -452,7 +452,7 @@ export default function Home() {
             </div>
 
             {/* Vision Card 4 */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
+            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
               <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
                 <span className="text-3xl text-[#4ade80]">📈</span>
               </div>
@@ -463,7 +463,7 @@ export default function Home() {
             </div>
 
             {/* Vision Card 5 */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
+            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
               <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
                 <span className="text-3xl text-[#4ade80]">🎓</span>
               </div>
@@ -474,7 +474,7 @@ export default function Home() {
             </div>
 
             {/* Vision Card 6 */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
+            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
               <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
                 <span className="text-3xl text-[#4ade80]">🌱</span>
               </div>
