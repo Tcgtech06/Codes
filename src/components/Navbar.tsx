@@ -48,17 +48,17 @@ const Navbar = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-8">
-            <Link href="/" className="text-gray-700 hover:text-[#4ade80] font-medium transition-colors">Home</Link>
-            <Link href="/catalogue" className="text-gray-700 hover:text-[#4ade80] font-medium transition-colors">Catalogue</Link>
-            <Link href="/about" className="text-gray-700 hover:text-[#4ade80] font-medium transition-colors">About Us</Link>
-            <Link href="/contact" className="text-gray-700 hover:text-[#4ade80] font-medium transition-colors">Contact Us</Link>
+            <Link href="/" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Home</Link>
+            <Link href="/catalogue" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Catalogue</Link>
+            <Link href="/about" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">About Us</Link>
+            <Link href="/contact" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Contact Us</Link>
             {signedIn ? (
               <>
-                <Link href="/dashboard" className="text-gray-700 hover:text-[#4ade80] font-medium transition-colors">{displayName}</Link>
-                <Link href="/logout" className="text-gray-700 hover:text-[#4ade80] font-medium transition-colors">Logout</Link>
+                <Link href="/dashboard" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">{displayName}</Link>
+                <Link href="/logout" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Logout</Link>
               </>
             ) : (
-              <Link href="/sign-in" className="bg-[#0f172a] text-white hover:bg-[#4ade80] hover:text-[#0f172a] px-5 py-2 rounded-lg font-medium transition-colors shadow-md">Sign In</Link>
+              <Link href="/sign-in" className="text-gray-700 hover:text-[#1e3a8a] font-medium transition-colors">Sign In</Link>
             )}
           </div>
         </div>

@@ -229,9 +229,9 @@ export default function Home() {
 
 
   return (
-    <div className="flex flex-col pb-12 bg-transparent text-white">
+    <div className="flex flex-col pb-12 bg-gradient-to-b from-blue-50 to-green-50">
       {/* Spacer for fixed mobile nav */}
-      <div className="md:hidden h-[58px] bg-transparent"></div>
+      <div className="md:hidden h-[58px] bg-blue-50"></div>
 
       {/* Hero Section with Slideshow - 3D Carousel */}
       <div className="w-full md:max-w-7xl md:mx-auto md:px-4 md:py-4">
@@ -317,7 +317,7 @@ export default function Home() {
                 key={index}
                 onClick={() => setCurrentSlide(index)}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  index === currentSlide ? 'w-6 bg-[#4ade80]' : 'w-2 bg-[#0f172a]/50 hover:bg-[#4ade80]'
+                  index === currentSlide ? 'w-6 bg-blue-600' : 'w-2 bg-gray-400 hover:bg-blue-400'
                 }`}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -327,21 +327,21 @@ export default function Home() {
       </div>
 
       {/* Books Section */}
-      <section className="bg-transparent py-16">
+      <section className="bg-blue-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-[#4ade80] mb-8 text-center">Our Physical Books</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Our Physical Books</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {isLoading ? (
               // Skeleton Loader for Books
               [...Array(3)].map((_, index) => (
-                <div key={index} className="bg-[#1e293b] rounded-2xl overflow-hidden shadow-lg border border-[#334155] flex flex-col max-w-xs mx-auto w-full animate-pulse">
-                  <div className="h-48 md:h-64 bg-[#334155] w-full"></div>
+                <div key={index} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col max-w-xs mx-auto w-full animate-pulse">
+                  <div className="h-48 md:h-64 bg-gray-200 w-full"></div>
                   <div className="p-6 flex-grow flex flex-col">
-                    <div className="h-6 bg-[#334155] rounded w-3/4 mb-4"></div>
-                    <div className="h-4 bg-[#334155] rounded w-1/2 mb-6"></div>
+                    <div className="h-6 bg-gray-200 rounded w-3/4 mb-4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
                     <div className="mt-auto flex items-center justify-between">
-                      <div className="h-8 bg-[#334155] rounded w-1/3"></div>
-                      <div className="h-10 bg-[#334155] rounded w-1/3"></div>
+                      <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+                      <div className="h-10 bg-gray-200 rounded w-1/3"></div>
                     </div>
                   </div>
                 </div>
@@ -350,16 +350,16 @@ export default function Home() {
               // Actual Books
               books.map((book, index) => (
                 <Link key={index} href={`/books/${book.id}`}>
-                  <div className="bg-[#1e293b] rounded-2xl overflow-hidden shadow-lg border border-[#334155] hover:border-[#4ade80] transition-colors flex flex-col cursor-pointer max-w-xs mx-auto">
-                    <div className="flex items-center justify-center p-6 md:p-8 bg-white/5">
-                      <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain drop-shadow-xl" />
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow flex flex-col cursor-pointer max-w-xs mx-auto">
+                    <div className="flex items-center justify-center p-6 md:p-8">
+                      <img src={book.image} alt={book.title} className="w-4/5 h-auto object-contain" />
                     </div>
                     <div className="p-6 flex-grow flex flex-col">
-                      <h3 className="text-xl font-bold text-white mb-2">{book.title}</h3>
-                      <p className="text-gray-400 mb-4">{book.edition}</p>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">{book.title}</h3>
+                      <p className="text-gray-500 mb-4">{book.edition}</p>
                       <div className="mt-auto flex items-center justify-between">
-                        <span className="text-2xl font-bold text-[#4ade80]">₹{book.price}</span>
-                        <button className="bg-[#4ade80] text-[#0f172a] px-4 py-2 rounded-lg text-sm font-bold hover:bg-[#4ade80]/90 transition-colors shadow-md">
+                        <span className="text-2xl font-bold text-gray-900">₹{book.price}</span>
+                        <button className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1e3a8a]/90 transition-colors">
                           Buy Now
                         </button>
                       </div>
@@ -374,7 +374,7 @@ export default function Home() {
 
       {/* Animated Image Strip */}
       {adStrips.length > 0 ? (
-        <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-y border-[#334155]">
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
           <div className="flex animate-scroll-left gap-6">
             {/* Duplicate images for seamless loop */}
             {[...Array(4)].map((_, setIndex) => (
@@ -392,7 +392,7 @@ export default function Home() {
           </div>
         </div>
       ) : (
-        <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-y border-[#334155]">
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
           <div className="flex animate-scroll-left gap-6">
             {[...Array(4)].map((_, setIndex) => (
               <div key={setIndex} className="flex gap-6 shrink-0">
@@ -407,97 +407,96 @@ export default function Home() {
       )}
 
       {/* Our Vision Section */}
-      <section className="py-20 bg-transparent">
+      <section className="py-20 bg-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Our Vision</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#4ade80] to-transparent mx-auto mb-6"></div>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Our Vision</h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto mb-6"></div>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Empowering the textile industry through innovation, connectivity, and excellence
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Vision Card 1 */}
-            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
-              <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl text-[#4ade80]">🌐</span>
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center mb-6">
+                <span className="text-3xl">🌐</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Global Connectivity</h3>
-              <p className="text-gray-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Global Connectivity</h3>
+              <p className="text-gray-600 leading-relaxed">
                 To create the world&apos;s most comprehensive textile industry network, connecting suppliers, manufacturers, and buyers across continents seamlessly.
               </p>
             </div>
 
             {/* Vision Card 2 */}
-            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
-              <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl text-[#4ade80]">💡</span>
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center mb-6">
+                <span className="text-3xl">💡</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Innovation Leadership</h3>
-              <p className="text-gray-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Innovation Leadership</h3>
+              <p className="text-gray-600 leading-relaxed">
                 To pioneer digital transformation in the textile sector, leveraging cutting-edge technology to simplify business operations and enhance productivity.
               </p>
             </div>
 
             {/* Vision Card 3 */}
-            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
-              <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl text-[#4ade80]">🤝</span>
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mb-6">
+                <span className="text-3xl">🤝</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Trust & Transparency</h3>
-              <p className="text-gray-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Trust & Transparency</h3>
+              <p className="text-gray-600 leading-relaxed">
                 To build a trusted ecosystem where every business transaction is transparent, verified, and mutually beneficial for all stakeholders.
               </p>
             </div>
 
             {/* Vision Card 4 */}
-            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
-              <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl text-[#4ade80]">📈</span>
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-red-600 rounded-full flex items-center justify-center mb-6">
+                <span className="text-3xl">📈</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Industry Growth</h3>
-              <p className="text-gray-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Industry Growth</h3>
+              <p className="text-gray-600 leading-relaxed">
                 To accelerate the growth of textile businesses by providing access to resources, market intelligence, and strategic partnerships.
               </p>
             </div>
 
             {/* Vision Card 5 */}
-            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
-              <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl text-[#4ade80]">🎓</span>
+            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-gradient-to-r from-teal-600 to-cyan-600 rounded-full flex items-center justify-center mb-6">
+                <span className="text-3xl">🎓</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Knowledge Sharing</h3>
-              <p className="text-gray-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Knowledge Sharing</h3>
+              <p className="text-gray-600 leading-relaxed">
                 To become the premier knowledge hub for the textile industry, offering insights, trends, and best practices to empower informed decision-making.
               </p>
             </div>
 
             {/* Vision Card 6 */}
-            <div className="bg-[#1e293b] rounded-2xl p-8 shadow-lg hover:shadow-[#4ade80]/20 transition-all duration-300 transform hover:-translate-y-2 border-b-4 border-[#4ade80]">
-              <div className="w-16 h-16 bg-[#4ade80]/20 rounded-full flex items-center justify-center mb-6">
-                <span className="text-3xl text-[#4ade80]">🌱</span>
+            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="w-16 h-16 bg-gradient-to-r from-yellow-600 to-amber-600 rounded-full flex items-center justify-center mb-6">
+                <span className="text-3xl">🌱</span>
               </div>
-              <h3 className="text-xl font-bold text-white mb-4">Sustainable Future</h3>
-              <p className="text-gray-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Sustainable Future</h3>
+              <p className="text-gray-600 leading-relaxed">
                 To promote sustainable practices in the textile industry, supporting eco-friendly businesses and encouraging responsible manufacturing.
               </p>
             </div>
           </div>
 
           {/* Vision Statement Box */}
-          <div className="mt-12 bg-gradient-to-r from-[#0f172a] to-[#1e3a8a] rounded-2xl p-8 md:p-12 text-white text-center shadow-2xl border border-[#4ade80]/30 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#4ade80]/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl"></div>
-            <div className="max-w-4xl mx-auto relative z-10">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4 text-[#4ade80]">Our Commitment</h3>
+          <div className="mt-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-8 md:p-12 text-white text-center shadow-2xl">
+            <div className="max-w-4xl mx-auto">
+              <h3 className="text-2xl md:text-3xl font-bold mb-4">Our Commitment</h3>
               <p className="text-lg md:text-xl leading-relaxed opacity-95">
                 We envision a future where every textile business, regardless of size or location, has equal access to opportunities, resources, and global markets. Through KnitInfo, we&apos;re not just building a directory – we&apos;re creating a movement that transforms how the textile industry connects, collaborates, and grows together.
               </p>
               <div className="mt-6 flex flex-wrap justify-center gap-4 text-sm md:text-base">
-                <span className="px-4 py-2 bg-[#4ade80]/20 text-[#4ade80] rounded-full backdrop-blur-sm border border-[#4ade80]/30 font-semibold">Innovation</span>
-                <span className="px-4 py-2 bg-[#4ade80]/20 text-[#4ade80] rounded-full backdrop-blur-sm border border-[#4ade80]/30 font-semibold">Excellence</span>
-                <span className="px-4 py-2 bg-[#4ade80]/20 text-[#4ade80] rounded-full backdrop-blur-sm border border-[#4ade80]/30 font-semibold">Integrity</span>
-                <span className="px-4 py-2 bg-[#4ade80]/20 text-[#4ade80] rounded-full backdrop-blur-sm border border-[#4ade80]/30 font-semibold">Growth</span>
+                <span className="px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">Innovation</span>
+                <span className="px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">Excellence</span>
+                <span className="px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">Integrity</span>
+                <span className="px-4 py-2 bg-white/20 rounded-full backdrop-blur-sm">Growth</span>
               </div>
             </div>
           </div>
@@ -564,24 +563,24 @@ export default function Home() {
       </section>
 
       {/* Live Visitor Statistics Section */}
-      <section className="bg-[#0f172a] text-white py-16 overflow-hidden relative">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1e3a8a]/40 via-[#0f172a] to-[#0f172a]"></div>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[#4ade80]/10 rounded-full -translate-y-32 translate-x-32 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-[#4ade80]/10 rounded-full translate-y-24 -translate-x-24 blur-3xl"></div>
+      <section className="bg-gradient-to-br from-[#1e3a8a] via-blue-700 to-indigo-900 text-white py-16 overflow-hidden relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-900/20"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24"></div>
 
         <div className="relative z-10 max-w-6xl mx-auto px-6">
           <div className="text-center mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">Live Platform <span className="text-[#4ade80]">Statistics</span></h2>
-            <p className="text-gray-400 text-lg">Real-time insights into our growing textile community</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">Live Platform Statistics</h2>
+            <p className="text-blue-200 text-lg">Real-time insights into our growing textile community</p>
           </div>
 
           <ClientOnlyStats />
 
           {/* Additional Info */}
           <div className="mt-8 text-center">
-            <div className="inline-flex items-center gap-2 bg-[#0f172a]/50 backdrop-blur-sm rounded-full px-4 py-2 border border-[#4ade80]/30 shadow-lg shadow-[#4ade80]/10">
-              <div className="w-2 h-2 bg-[#4ade80] rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-300">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/20">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-blue-200">
                 Statistics update every 30 seconds
               </span>
             </div>

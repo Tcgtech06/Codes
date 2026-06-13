@@ -54,9 +54,9 @@ export default function MobileMenu() {
             </div>
 
             {signedIn && (
-              <div className="p-4 bg-[#0f172a]/5 border-b flex items-center gap-3">
-                <div className="w-12 h-12 bg-[#0f172a] rounded-full flex items-center justify-center">
-                  <User size={24} className="text-[#4ade80]" />
+              <div className="p-4 bg-[#1e3a8a]/5 border-b flex items-center gap-3">
+                <div className="w-12 h-12 bg-[#1e3a8a] rounded-full flex items-center justify-center">
+                  <User size={24} className="text-white" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Welcome</p>

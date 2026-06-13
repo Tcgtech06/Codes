@@ -195,7 +195,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-[#0f172a] text-white overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col bg-gray-50 overflow-x-hidden`}
       >
         <AuthProvider>
           {false && isMobile && showSplash && <SplashScreen onFinish={handleSplashFinish} />}

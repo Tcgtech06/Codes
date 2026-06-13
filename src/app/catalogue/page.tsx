@@ -87,10 +87,10 @@ export default function Catalogue() {
 
   if (loading) {
     return (
-      <div className="bg-transparent min-h-screen text-white">
+      <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
         {/* Animated Image Strip */}
         {adStrips.length > 0 ? (
-          <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-b border-[#334155]">
+          <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
             <div className="flex animate-scroll-left gap-6">
               {/* Duplicate images for seamless loop */}
               {[...Array(4)].map((_, setIndex) => (
@@ -108,7 +108,7 @@ export default function Catalogue() {
             </div>
           </div>
         ) : (
-          <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-b border-[#334155]">
+          <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
             <div className="flex animate-scroll-left gap-6">
               {[...Array(4)].map((_, setIndex) => (
                 <div key={setIndex} className="flex gap-6 shrink-0">
@@ -123,12 +123,12 @@ export default function Catalogue() {
         )}
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-3xl font-bold text-[#4ade80] mb-8">Full Catalogue</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Full Catalogue</h1>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
             {[...Array(10)].map((_, i) => (
-              <div key={i} className="bg-[#1e293b] rounded-xl shadow-sm p-6 animate-pulse border border-[#334155]">
-                <div className="w-16 h-16 bg-[#334155] rounded-full mx-auto mb-4"></div>
-                <div className="h-4 bg-[#334155] rounded w-3/4 mx-auto"></div>
+              <div key={i} className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
               </div>
             ))}
           </div>
@@ -137,10 +137,10 @@ export default function Catalogue() {
     );
   }
   return (
-    <div className="bg-transparent min-h-screen text-white">
+    <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
       {/* Animated Image Strip */}
       {adStrips.length > 0 ? (
-        <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-b border-[#334155]">
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
           <div className="flex animate-scroll-left gap-6">
             {/* Duplicate images for seamless loop */}
             {[...Array(4)].map((_, setIndex) => (
@@ -158,7 +158,7 @@ export default function Catalogue() {
           </div>
         </div>
       ) : (
-        <div className="w-full overflow-hidden bg-[#1e293b] py-2 md:py-4 border-b border-[#334155]">
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
           <div className="flex animate-scroll-left gap-6">
             {[...Array(4)].map((_, setIndex) => (
               <div key={setIndex} className="flex gap-6 shrink-0">
@@ -173,22 +173,22 @@ export default function Catalogue() {
       )}
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold text-[#4ade80] mb-8">Full Catalogue</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">Full Catalogue</h1>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {categories.map((category) => {
             const Icon = iconMap[category.name] || Layers;
             const color = colorMap[category.name] || 'bg-gray-100 text-gray-600';
             return (
               <Link key={category.id} href={`/catalogue/${category.slug}`} className="group">
-                <div className="bg-[#1e293b] rounded-xl shadow-sm hover:shadow-[#4ade80]/20 hover:border-[#4ade80] transition-all p-6 flex flex-col items-center text-center border border-[#334155] h-full">
+                <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col items-center text-center border border-gray-100 h-full">
                   <div className={`p-4 rounded-full mb-4 ${color} bg-opacity-20`}>
                     <Icon size={32} className={color.split(' ')[1]} />
                   </div>
-                  <span className="font-semibold text-lg text-white group-hover:text-[#4ade80] transition-colors">
+                  <span className="font-semibold text-lg text-gray-800 group-hover:text-blue-600 transition-colors">
                     {category.name}
                   </span>
                   {category.count > 0 && (
-                    <span className="text-sm text-gray-400 mt-1">
+                    <span className="text-sm text-gray-500 mt-1">
                       {category.count} companies
                     </span>
                   )}
