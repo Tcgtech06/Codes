@@ -5,19 +5,12 @@ import { createNotification } from '@/lib/notifications';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)!;
 
-async function verifyAdmin(token: string) {
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  
-  if (error || !user) return null;
-  
-  const { data: adminUser } = await supabase
-    .from('admin_users')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-  
-  return adminUser ? user : null;
+import { verifyAdminFromRequest } from '@/lib/serverAuth';
+
+async function verifyAdmin(request: NextRequest) {
+  const authResult = verifyAdminFromRequest(request);
+  if (!authResult.isValid) return null;
+  return authResult.payload?.username || 'admin';
 }
 
 export async function PUT(
@@ -31,7 +24,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await verifyAdmin(authHeader.replace('Bearer ', ''));
+    const user = await verifyAdmin(request);
     if (!user) {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
     }
@@ -41,7 +34,7 @@ export async function PUT(
 
     const { data, error } = await supabase
       .from('companies')
-      .update({ ...body, updated_by: user.id })
+      .update({ ...body, updated_by: user || 'admin' })
       .eq('id', id)
       .select()
       .single();
@@ -67,7 +60,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = await verifyAdmin(authHeader.replace('Bearer ', ''));
+    const user = await verifyAdmin(request);
     if (!user) {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
     }

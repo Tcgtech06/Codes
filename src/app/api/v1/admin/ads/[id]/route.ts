@@ -4,23 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY)!;
 
+import { verifyAdminFromRequest } from '@/lib/serverAuth';
+
 async function verifyAdmin(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader) return null;
-
-  const token = authHeader.replace('Bearer ', '');
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) return null;
-
-  const { data: adminUser } = await supabase
-    .from('admin_users')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  return adminUser ? supabase : null;
+  const authResult = verifyAdminFromRequest(request);
+  if (!authResult.isValid) return null;
+  return createClient(supabaseUrl, supabaseServiceKey);
 }
 
 export async function DELETE(
