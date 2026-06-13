@@ -2029,12 +2029,12 @@ export default function AdminDashboard() {
                 {ads.map((ad) => (
                   <div key={ad.id} className={`border rounded-lg p-4 ${ad.is_active ? 'border-gray-200' : 'border-red-200 bg-red-50'}`}>
                     <img src={ad.image_url} alt="Ad Preview" className="w-full h-32 object-contain bg-gray-100 rounded-md mb-4" />
-                    <div className="space-y-2 text-sm">
-                      <p><span className="font-semibold">Type:</span> {ad.type}</p>
-                      <p><span className="font-semibold">Page:</span> {ad.page}</p>
-                      {ad.redirection_url && <p className="truncate"><span className="font-semibold">Link:</span> <a href={ad.redirection_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{ad.redirection_url}</a></p>}
-                      {ad.whatsapp_number && <p><span className="font-semibold">WhatsApp:</span> {ad.whatsapp_number}</p>}
-                      <p><span className="font-semibold">Status:</span> {ad.is_active ? 'Active' : 'Hidden'}</p>
+                    <div className="space-y-2 text-sm text-black">
+                      <p><span className="font-semibold text-gray-900">Type:</span> {ad.type}</p>
+                      <p><span className="font-semibold text-gray-900">Page:</span> {ad.page}</p>
+                      {ad.redirection_url && <p className="truncate"><span className="font-semibold text-gray-900">Link:</span> <a href={ad.redirection_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{ad.redirection_url}</a></p>}
+                      {ad.whatsapp_number && <p><span className="font-semibold text-gray-900">WhatsApp:</span> {ad.whatsapp_number}</p>}
+                      <p><span className="font-semibold text-gray-900">Status:</span> {ad.is_active ? 'Active' : 'Hidden'}</p>
                     </div>
                     <div className="mt-4 flex gap-2">
                       <button
