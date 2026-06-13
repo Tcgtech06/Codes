@@ -89,7 +89,7 @@ export default function Catalogue() {
     return (
       <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
         {/* Animated Image Strip */}
-        {adStrips.length > 0 ? (
+        {adStrips.length > 0 && (
           <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
             <div className="flex animate-scroll-left gap-6">
               {/* Duplicate images for seamless loop */}
@@ -103,19 +103,6 @@ export default function Catalogue() {
                       <img src={strip.src} alt={`Advertisement ${i+1}`} className="h-12 md:h-20 w-auto object-contain shrink-0" />
                     </div>
                   ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
-            <div className="flex animate-scroll-left gap-6">
-              {[...Array(4)].map((_, setIndex) => (
-                <div key={setIndex} className="flex gap-6 shrink-0">
-                  <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                  <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                  <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                  <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
                 </div>
               ))}
             </div>
@@ -139,7 +126,7 @@ export default function Catalogue() {
   return (
     <div className="bg-gradient-to-b from-blue-50 to-green-50 min-h-screen">
       {/* Animated Image Strip */}
-      {adStrips.length > 0 ? (
+      {adStrips.length > 0 && (
         <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
           <div className="flex animate-scroll-left gap-6">
             {/* Duplicate images for seamless loop */}
@@ -153,19 +140,6 @@ export default function Catalogue() {
                     <img src={strip.src} alt={`Advertisement ${i+1}`} className="h-12 md:h-20 w-auto object-contain shrink-0" />
                   </div>
                 ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-b border-gray-200">
-          <div className="flex animate-scroll-left gap-6">
-            {[...Array(4)].map((_, setIndex) => (
-              <div key={setIndex} className="flex gap-6 shrink-0">
-                <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
               </div>
             ))}
           </div>

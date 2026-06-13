@@ -74,7 +74,7 @@ export default function Home() {
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [slides, setSlides] = useState<any[]>(DEFAULT_SLIDES);
+  const [slides, setSlides] = useState<any[]>([]);
   const [adStrips, setAdStrips] = useState<any[]>([]);
 
   // Fetch books, categories, and ads
@@ -94,14 +94,12 @@ export default function Home() {
           const activeAds = adsRes.ads || [];
           
           const heroAds = activeAds.filter((ad: any) => ad.type === 'hero');
-          if (heroAds.length > 0) {
-            setSlides(heroAds.map((ad: any) => ({
-              src: ad.image_url,
-              alt: 'Advertisement',
-              link: ad.redirection_url,
-              whatsapp: ad.whatsapp_number
-            })));
-          }
+          setSlides(heroAds.map((ad: any) => ({
+            src: ad.image_url,
+            alt: 'Advertisement',
+            link: ad.redirection_url,
+            whatsapp: ad.whatsapp_number
+          })));
 
           const stripAds = activeAds.filter((ad: any) => ad.type === 'strip');
           if (stripAds.length > 0) {
@@ -234,6 +232,7 @@ export default function Home() {
       <div className="md:hidden h-[58px] bg-blue-50"></div>
 
       {/* Hero Section with Slideshow - 3D Carousel */}
+      {slides.length > 0 && (
       <div className="w-full md:max-w-7xl md:mx-auto md:px-4 md:py-4">
         <section
           className="relative w-full aspect-video overflow-hidden select-none bg-gray-50 md:rounded-lg"
@@ -325,6 +324,7 @@ export default function Home() {
           </div>
         </section>
       </div>
+      )}
 
       {/* Books Section */}
       <section className="bg-blue-50 py-16">
@@ -373,7 +373,7 @@ export default function Home() {
       </section>
 
       {/* Animated Image Strip */}
-      {adStrips.length > 0 ? (
+      {adStrips.length > 0 && (
         <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
           <div className="flex animate-scroll-left gap-6">
             {/* Duplicate images for seamless loop */}
@@ -387,19 +387,6 @@ export default function Home() {
                     <img src={strip.src} alt={`Advertisement ${i+1}`} className="h-12 md:h-20 w-auto object-contain shrink-0" />
                   </div>
                 ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
-          <div className="flex animate-scroll-left gap-6">
-            {[...Array(4)].map((_, setIndex) => (
-              <div key={setIndex} className="flex gap-6 shrink-0">
-                <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-                <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
               </div>
             ))}
           </div>
