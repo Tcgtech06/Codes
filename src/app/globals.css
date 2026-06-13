@@ -317,3 +317,8 @@ body {
   background-size: 200px 100%;
   animation: skeleton-loading 1.5s infinite;
 }
+
+/* 3D Transform Utilities */
+.transform-style-3d {
+  transform-style: preserve-3d;
+}

@@ -173,76 +173,87 @@ export default function Home() {
       {/* Spacer for fixed mobile nav */}
       <div className="md:hidden h-[58px] bg-blue-50"></div>
 
-      {/* Hero Section with Slideshow - Adjusted for desktop */}
+      {/* Hero Section with Slideshow - 3D Carousel */}
       <div className="w-full md:max-w-7xl md:mx-auto md:px-4 md:py-4">
         <section
-          className="relative w-full overflow-hidden select-none bg-white md:rounded-lg"
-          style={{ paddingBottom: '56.25%', touchAction: 'pan-y pinch-zoom' }}
+          className="relative w-full aspect-video overflow-hidden select-none bg-gray-50 md:rounded-lg"
+          style={{ touchAction: 'pan-y pinch-zoom', perspective: '1200px' }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
         >
-          <style jsx>{`
-            @media (min-width: 768px) {
-              section {
-                padding-bottom: 30% !important;
-              }
-            }
-          `}</style>
-        {slides.map((slide, index) => (
-          <div
-            key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
-              }`}
-          >
-            <Image
-              src={slide.src}
-              alt={slide.alt}
-              fill
-              className="object-contain"
-              priority={index === 0}
-            />
+          <div className="absolute inset-0 flex items-center justify-center transform-style-3d">
+            {slides.map((slide, index) => {
+              const total = slides.length;
+              let offset = index - currentSlide;
+              
+              if (offset > Math.floor(total / 2)) offset -= total;
+              if (offset < -Math.floor(total / 2)) offset += total;
+              
+              const isCenter = offset === 0;
+              const zIndex = total - Math.abs(offset);
+              
+              const translateX = offset * 40;
+              const rotateY = -offset * 30;
+              const translateZ = -Math.abs(offset) * 200;
+              const opacity = Math.abs(offset) > 2 ? 0 : isCenter ? 1 : 0.6;
+              
+              return (
+                <div
+                  key={index}
+                  className="absolute w-[85%] h-[90%] md:w-[70%] md:h-[95%] transition-all duration-700 ease-in-out cursor-pointer"
+                  style={{
+                    transform: `translateX(${translateX}%) translateZ(${translateZ}px) rotateY(${rotateY}deg)`,
+                    opacity,
+                    zIndex,
+                    pointerEvents: isCenter ? 'auto' : 'none'
+                  }}
+                  onClick={() => !isCenter && setCurrentSlide(index)}
+                >
+                  <div className="relative w-full h-full bg-white shadow-2xl rounded-xl overflow-hidden border border-gray-100/50">
+                    <Image
+                      src={slide.src}
+                      alt={slide.alt}
+                      fill
+                      className="object-contain"
+                      priority={index === 0}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-        ))}
 
-        {/* Arrow Navigation - Desktop Only */}
-        <button
-          onClick={prevSlide}
-          className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition-all"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft size={24} className="text-gray-800" />
-        </button>
-        <button
-          onClick={nextSlide}
-          className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition-all"
-          aria-label="Next slide"
-        >
-          <ChevronRight size={24} className="text-gray-800" />
-        </button>
+          {/* Arrow Navigation - Desktop Only */}
+          <button
+            onClick={prevSlide}
+            className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition-all"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft size={24} className="text-gray-800" />
+          </button>
+          <button
+            onClick={nextSlide}
+            className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition-all"
+            aria-label="Next slide"
+          >
+            <ChevronRight size={24} className="text-gray-800" />
+          </button>
 
-        {/* Slide Indicators */}
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-20 flex" style={{ gap: '4px' }}>
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              style={{
-                width: index === currentSlide ? '12px' : '4px',
-                height: '4px',
-                backgroundColor: index === currentSlide ? 'white' : 'rgba(255, 255, 255, 0.6)',
-                borderRadius: '9999px',
-                transition: 'all 0.3s',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer'
-              }}
-              className="md:!w-2 md:!h-2"
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      </section>
+          {/* Slide Indicators */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentSlide ? 'w-6 bg-blue-600' : 'w-2 bg-gray-400 hover:bg-blue-400'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        </section>
       </div>
 
       {/* Books Section */}
