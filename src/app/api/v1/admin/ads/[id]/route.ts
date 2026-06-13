@@ -37,6 +37,8 @@ export async function DELETE(
   }
 }
 
+import { uploadAdImage } from '@/lib/storage';
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -48,11 +50,37 @@ export async function PATCH(
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const contentType = request.headers.get('content-type') || '';
+    let updateData: any = {};
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      const type = formData.get('type') as string;
+      if (type) updateData.type = type;
+      
+      const page = formData.get('page') as string;
+      if (page) updateData.page = page;
+      
+      const redirection_url = formData.get('redirection_url') as string;
+      if (redirection_url !== null) updateData.redirection_url = redirection_url;
+      
+      const whatsapp_number = formData.get('whatsapp_number') as string;
+      if (whatsapp_number !== null) updateData.whatsapp_number = whatsapp_number;
+      
+      const imageFile = formData.get('image') as File | null;
+      if (imageFile) {
+        const imageUrl = await uploadAdImage(imageFile, updateData.type || 'hero');
+        if (imageUrl) {
+          updateData.image_url = imageUrl;
+        }
+      }
+    } else {
+      updateData = await request.json();
+    }
 
     const { data, error } = await supabase
       .from('ads')
-      .update(body)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

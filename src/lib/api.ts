@@ -347,6 +347,35 @@ export const adsAPI = {
     return response.json() as Promise<{ ad: any }>;
   },
 
+  update: async (id: string, data: { type: string; page: string; image?: File; redirection_url?: string; whatsapp_number?: string }) => {
+    const token = getAuthToken();
+    const payload = new FormData();
+    
+    payload.append('type', data.type);
+    payload.append('page', data.page);
+    if (data.image) payload.append('image', data.image);
+    if (data.redirection_url !== undefined) payload.append('redirection_url', data.redirection_url);
+    if (data.whatsapp_number !== undefined) payload.append('whatsapp_number', data.whatsapp_number);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/ads/${id}`, {
+      method: 'PATCH',
+      headers,
+      body: payload,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json() as Promise<{ ad: any }>;
+  },
+
   delete: (id: string) =>
     apiCall<{ message: string }>(`/admin/ads/${id}`, {
       method: 'DELETE',

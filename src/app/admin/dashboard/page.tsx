@@ -153,6 +153,7 @@ export default function AdminDashboard() {
     whatsapp_number: ''
   });
   const [adImage, setAdImage] = useState<File | null>(null);
+  const [editingAdId, setEditingAdId] = useState<string | null>(null);
 
   const loadAds = async () => {
     setAdsLoading(true);
@@ -169,24 +170,54 @@ export default function AdminDashboard() {
 
   const handleAdSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adImage) return alert('Please select an image for the ad');
+    if (!editingAdId && !adImage) return alert('Please select an image for the ad');
     
     try {
       const { adsAPI } = await import('@/lib/api');
-      await adsAPI.create({
-        type: adForm.type,
-        page: adForm.page,
-        image: adImage,
-        redirection_url: adForm.redirection_url,
-        whatsapp_number: adForm.whatsapp_number
-      });
-      alert('Ad uploaded successfully!');
+      if (editingAdId) {
+        await adsAPI.update(editingAdId, {
+          type: adForm.type,
+          page: adForm.page,
+          image: adImage || undefined,
+          redirection_url: adForm.redirection_url,
+          whatsapp_number: adForm.whatsapp_number
+        });
+        alert('Ad updated successfully!');
+      } else {
+        await adsAPI.create({
+          type: adForm.type,
+          page: adForm.page,
+          image: adImage!,
+          redirection_url: adForm.redirection_url,
+          whatsapp_number: adForm.whatsapp_number
+        });
+        alert('Ad uploaded successfully!');
+      }
       setAdImage(null);
-      setAdForm({ ...adForm, redirection_url: '', whatsapp_number: '' });
+      setEditingAdId(null);
+      setAdForm({ type: 'hero', page: 'home', redirection_url: '', whatsapp_number: '' });
       await loadAds();
     } catch (error: any) {
-      alert(`Failed to upload ad: ${error.message}`);
+      alert(`Failed to ${editingAdId ? 'update' : 'upload'} ad: ${error.message}`);
     }
+  };
+
+  const handleEditAd = (ad: any) => {
+    setEditingAdId(ad.id);
+    setAdForm({
+      type: ad.type,
+      page: ad.page,
+      redirection_url: ad.redirection_url || '',
+      whatsapp_number: ad.whatsapp_number || ''
+    });
+    setAdImage(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEditAd = () => {
+    setEditingAdId(null);
+    setAdForm({ type: 'hero', page: 'home', redirection_url: '', whatsapp_number: '' });
+    setAdImage(null);
   };
 
   const handleDeleteAd = async (id: string) => {
@@ -1899,7 +1930,7 @@ export default function AdminDashboard() {
       {activeTab === 'ads' && (
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Upload Advertisement</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-6">{editingAdId ? 'Edit Advertisement' : 'Upload Advertisement'}</h2>
             <form onSubmit={handleAdSubmit} className="space-y-4 max-w-2xl">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1949,23 +1980,34 @@ export default function AdminDashboard() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ad Image *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ad Image {editingAdId ? '(Leave empty to keep current)' : '*'}</label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={(e) => setAdImage(e.target.files?.[0] || null)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
-                  required
+                  required={!editingAdId}
                 />
               </div>
               
-              <button
-                type="submit"
-                className="px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors"
-                disabled={adsLoading}
-              >
-                Upload Ad
-              </button>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors"
+                  disabled={adsLoading}
+                >
+                  {editingAdId ? 'Update Ad' : 'Upload Ad'}
+                </button>
+                {editingAdId && (
+                  <button
+                    type="button"
+                    onClick={cancelEditAd}
+                    className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
             </form>
           </div>
           
@@ -1988,6 +2030,12 @@ export default function AdminDashboard() {
                       <p><span className="font-semibold">Status:</span> {ad.is_active ? 'Active' : 'Hidden'}</p>
                     </div>
                     <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => handleEditAd(ad)}
+                        className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 rounded-md text-white text-sm font-medium transition-colors"
+                      >
+                        Edit
+                      </button>
                       <button
                         onClick={() => handleToggleAdStatus(ad.id, ad.is_active)}
                         className={`flex-1 py-2 px-3 rounded-md text-white text-sm font-medium transition-colors ${
