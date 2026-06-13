@@ -307,3 +307,54 @@ export const notificationsAPI = {
       method: 'DELETE',
     }),
 };
+
+// Ads API
+export const adsAPI = {
+  getAll: (params?: { type?: string; page?: string; all?: boolean }) => {
+    const query = new URLSearchParams();
+    if (params?.type) query.append('type', params.type);
+    if (params?.page) query.append('page', params.page);
+    if (params?.all !== undefined) query.append('all', String(params.all));
+    return apiCall<{ ads: any[] }>(`/admin/ads?${query}`);
+  },
+
+  create: async (data: { type: string; page: string; image: File; redirection_url?: string; whatsapp_number?: string }) => {
+    const token = getAuthToken();
+    const payload = new FormData();
+    
+    payload.append('type', data.type);
+    payload.append('page', data.page);
+    payload.append('image', data.image);
+    if (data.redirection_url) payload.append('redirection_url', data.redirection_url);
+    if (data.whatsapp_number) payload.append('whatsapp_number', data.whatsapp_number);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/ads`, {
+      method: 'POST',
+      headers,
+      body: payload,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      throw new Error(error.error || `HTTP ${response.status}`);
+    }
+
+    return response.json() as Promise<{ ad: any }>;
+  },
+
+  delete: (id: string) =>
+    apiCall<{ message: string }>(`/admin/ads/${id}`, {
+      method: 'DELETE',
+    }),
+
+  updateStatus: (id: string, is_active: boolean) =>
+    apiCall<{ ad: any }>(`/admin/ads/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ is_active }),
+    }),
+};

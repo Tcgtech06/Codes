@@ -83,3 +83,37 @@ export async function uploadBase64Image(
     return null;
   }
 }
+
+export async function uploadAdImage(
+  file: File,
+  adType: string
+): Promise<string | null> {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${adType}-${Date.now()}.${fileExt}`;
+    const filePath = `ads/${fileName}`;
+
+    // Upload file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from('attachments')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) {
+      console.error('Error uploading ad image to storage:', error);
+      return null;
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('attachments')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  } catch (error) {
+    console.error('Error in uploadAdImage:', error);
+    return null;
+  }
+}

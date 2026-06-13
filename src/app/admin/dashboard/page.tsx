@@ -113,7 +113,7 @@ export default function AdminDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadMessage, setUploadMessage] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority' | 'approved-data'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'add-data' | 'advertise' | 'collaborate' | 'priority' | 'approved-data' | 'ads'>('overview');
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [allSubmissions, setAllSubmissions] = useState<any[]>([]);
   const [approvedCompanies, setApprovedCompanies] = useState<any[]>([]);
@@ -143,6 +143,73 @@ export default function AdminDashboard() {
     database: 'Unknown',
     checking: true
   });
+  
+  const [ads, setAds] = useState<any[]>([]);
+  const [adsLoading, setAdsLoading] = useState(false);
+  const [adForm, setAdForm] = useState({
+    type: 'hero', // 'hero' or 'strip'
+    page: 'home', // 'home' or 'catalogue'
+    redirection_url: '',
+    whatsapp_number: ''
+  });
+  const [adImage, setAdImage] = useState<File | null>(null);
+
+  const loadAds = async () => {
+    setAdsLoading(true);
+    try {
+      const { adsAPI } = await import('@/lib/api');
+      const response = await adsAPI.getAll({ all: true });
+      setAds(response.ads || []);
+    } catch (error) {
+      console.error('Error loading ads:', error);
+    } finally {
+      setAdsLoading(false);
+    }
+  };
+
+  const handleAdSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adImage) return alert('Please select an image for the ad');
+    
+    try {
+      const { adsAPI } = await import('@/lib/api');
+      await adsAPI.create({
+        type: adForm.type,
+        page: adForm.page,
+        image: adImage,
+        redirection_url: adForm.redirection_url,
+        whatsapp_number: adForm.whatsapp_number
+      });
+      alert('Ad uploaded successfully!');
+      setAdImage(null);
+      setAdForm({ ...adForm, redirection_url: '', whatsapp_number: '' });
+      await loadAds();
+    } catch (error: any) {
+      alert(`Failed to upload ad: ${error.message}`);
+    }
+  };
+
+  const handleDeleteAd = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this ad?')) return;
+    try {
+      const { adsAPI } = await import('@/lib/api');
+      await adsAPI.delete(id);
+      await loadAds();
+    } catch (error: any) {
+      alert(`Failed to delete ad: ${error.message}`);
+    }
+  };
+
+  const handleToggleAdStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { adsAPI } = await import('@/lib/api');
+      await adsAPI.updateStatus(id, !currentStatus);
+      await loadAds();
+    } catch (error: any) {
+      alert(`Failed to update ad status: ${error.message}`);
+    }
+  };
+
   const router = useRouter();
 
   // Use local storage hooks
@@ -482,6 +549,7 @@ export default function AdminDashboard() {
       loadSubmissions();
       loadApprovedCompanies();
       checkDatabaseConnection();
+      loadAds();
       
       // Check database connection every 30 seconds
       const interval = setInterval(checkDatabaseConnection, 30000);
@@ -967,6 +1035,16 @@ export default function AdminDashboard() {
               }`}
             >
               Priority ({priorities.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('ads')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'ads'
+                  ? 'text-[#1e3a8a] border-b-2 border-[#1e3a8a]'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Ads ({ads.length})
             </button>
           </div>
         </div>
@@ -1813,6 +1891,122 @@ export default function AdminDashboard() {
                 </ul>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ads Tab Content */}
+      {activeTab === 'ads' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Upload Advertisement</h2>
+            <form onSubmit={handleAdSubmit} className="space-y-4 max-w-2xl">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ad Type</label>
+                  <select
+                    value={adForm.type}
+                    onChange={(e) => setAdForm({...adForm, type: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                  >
+                    <option value="hero">Hero Slideshow</option>
+                    <option value="strip">Ad Strip</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Page Selection</label>
+                  <select
+                    value={adForm.page}
+                    onChange={(e) => setAdForm({...adForm, page: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                  >
+                    <option value="home">Home Page</option>
+                    <option value="catalogue">Catalogue Page</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Redirection URL (Optional)</label>
+                <input
+                  type="url"
+                  value={adForm.redirection_url}
+                  onChange={(e) => setAdForm({...adForm, redirection_url: e.target.value})}
+                  placeholder="https://example.com"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (Optional)</label>
+                <input
+                  type="tel"
+                  value={adForm.whatsapp_number}
+                  onChange={(e) => setAdForm({...adForm, whatsapp_number: e.target.value})}
+                  placeholder="+91..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ad Image *</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setAdImage(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent"
+                  required
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="px-6 py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e3a8a]/90 transition-colors"
+                disabled={adsLoading}
+              >
+                Upload Ad
+              </button>
+            </form>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Manage Ads</h2>
+            {adsLoading ? (
+              <p>Loading ads...</p>
+            ) : ads.length === 0 ? (
+              <p className="text-gray-500">No ads uploaded yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {ads.map((ad) => (
+                  <div key={ad.id} className={`border rounded-lg p-4 ${ad.is_active ? 'border-gray-200' : 'border-red-200 bg-red-50'}`}>
+                    <img src={ad.image_url} alt="Ad Preview" className="w-full h-32 object-contain bg-gray-100 rounded-md mb-4" />
+                    <div className="space-y-2 text-sm">
+                      <p><span className="font-semibold">Type:</span> {ad.type}</p>
+                      <p><span className="font-semibold">Page:</span> {ad.page}</p>
+                      {ad.redirection_url && <p className="truncate"><span className="font-semibold">Link:</span> <a href={ad.redirection_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{ad.redirection_url}</a></p>}
+                      {ad.whatsapp_number && <p><span className="font-semibold">WhatsApp:</span> {ad.whatsapp_number}</p>}
+                      <p><span className="font-semibold">Status:</span> {ad.is_active ? 'Active' : 'Hidden'}</p>
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={() => handleToggleAdStatus(ad.id, ad.is_active)}
+                        className={`flex-1 py-2 px-3 rounded-md text-white text-sm font-medium transition-colors ${
+                          ad.is_active ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'
+                        }`}
+                      >
+                        {ad.is_active ? 'Hide' : 'Show'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAd(ad.id)}
+                        className="flex-1 py-2 px-3 bg-red-600 hover:bg-red-700 rounded-md text-white text-sm font-medium transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

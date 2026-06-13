@@ -55,12 +55,12 @@ const stories = [
   { title: 'Global Textile Conference', date: 'November-2018', image: '/s6.JPG' },
 ];
 
-const slides = [
-  { src: '/ad1.jpg', alt: 'Advertisement 1' },
-  { src: '/ad2.jpg', alt: 'Advertisement 2' },
-  { src: '/ad3.jpg', alt: 'Advertisement 3' },
-  { src: '/ad4.jpg', alt: 'Advertisement 4' },
-  { src: '/ad5.jpg', alt: 'Advertisement 5' },
+const DEFAULT_SLIDES = [
+  { src: '/ad1.jpg', alt: 'Advertisement 1', link: null, whatsapp: null },
+  { src: '/ad2.jpg', alt: 'Advertisement 2', link: null, whatsapp: null },
+  { src: '/ad3.jpg', alt: 'Advertisement 3', link: null, whatsapp: null },
+  { src: '/ad4.jpg', alt: 'Advertisement 4', link: null, whatsapp: null },
+  { src: '/ad5.jpg', alt: 'Advertisement 5', link: null, whatsapp: null },
 ];
 
 export default function Home() {
@@ -74,15 +74,46 @@ export default function Home() {
   const [books, setBooks] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [slides, setSlides] = useState<any[]>(DEFAULT_SLIDES);
+  const [adStrips, setAdStrips] = useState<any[]>([]);
 
-  // Fetch books and categories
-  // Fetch categories from API, use static books data
+  // Fetch books, categories, and ads
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const categoriesRes = await categoriesAPI.getAll();
+        const { categoriesAPI, adsAPI } = await import('@/lib/api');
+        
+        // Fetch Categories
+        const categoriesRes = await categoriesAPI.getAll().catch(() => ({ categories: [] }));
         setCategories(categoriesRes.categories || []);
+        
+        // Fetch Ads
+        try {
+          const adsRes = await adsAPI.getAll({ page: 'home' });
+          const activeAds = adsRes.ads || [];
+          
+          const heroAds = activeAds.filter((ad: any) => ad.type === 'hero');
+          if (heroAds.length > 0) {
+            setSlides(heroAds.map((ad: any) => ({
+              src: ad.image_url,
+              alt: 'Advertisement',
+              link: ad.redirection_url,
+              whatsapp: ad.whatsapp_number
+            })));
+          }
+
+          const stripAds = activeAds.filter((ad: any) => ad.type === 'strip');
+          if (stripAds.length > 0) {
+            setAdStrips(stripAds.map((ad: any) => ({
+              src: ad.image_url,
+              link: ad.redirection_url,
+              whatsapp: ad.whatsapp_number
+            })));
+          }
+        } catch (adError) {
+          console.error('Error fetching ads:', adError);
+        }
         
         // Use static books data from local file
         const { books: staticBooks } = await import('@/data/books');
@@ -237,7 +268,17 @@ export default function Home() {
                     zIndex,
                     pointerEvents: isCenter ? 'auto' : 'none'
                   }}
-                  onClick={() => !isCenter && setCurrentSlide(index)}
+                  onClick={() => {
+                    if (!isCenter) {
+                      setCurrentSlide(index);
+                    } else {
+                      if (slide.link) {
+                        window.open(slide.link, '_blank', 'noopener,noreferrer');
+                      } else if (slide.whatsapp) {
+                        window.open(`https://wa.me/${slide.whatsapp.replace(/[^0-9]/g, '')}`, '_blank', 'noopener,noreferrer');
+                      }
+                    }
+                  }}
                 >
                   <div className="relative w-full h-full bg-white shadow-2xl rounded-xl overflow-hidden border border-gray-100/50">
                     <Image
@@ -332,19 +373,38 @@ export default function Home() {
       </section>
 
       {/* Animated Image Strip */}
-      <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
-        <div className="flex animate-scroll-left gap-6">
-          {/* Duplicate images for seamless loop */}
-          {[...Array(4)].map((_, setIndex) => (
-            <div key={setIndex} className="flex gap-6 shrink-0">
-              <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-              <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-              <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-              <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
-            </div>
-          ))}
+      {adStrips.length > 0 ? (
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
+          <div className="flex animate-scroll-left gap-6">
+            {/* Duplicate images for seamless loop */}
+            {[...Array(4)].map((_, setIndex) => (
+              <div key={setIndex} className="flex gap-6 shrink-0">
+                {adStrips.map((strip, i) => (
+                  <div key={i} className="cursor-pointer shrink-0" onClick={() => {
+                    if (strip.link) window.open(strip.link, '_blank', 'noopener,noreferrer');
+                    else if (strip.whatsapp) window.open(`https://wa.me/${strip.whatsapp.replace(/[^0-9]/g, '')}`, '_blank', 'noopener,noreferrer');
+                  }}>
+                    <img src={strip.src} alt={`Advertisement ${i+1}`} className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="w-full overflow-hidden bg-white py-2 md:py-4 border-y border-gray-200">
+          <div className="flex animate-scroll-left gap-6">
+            {[...Array(4)].map((_, setIndex) => (
+              <div key={setIndex} className="flex gap-6 shrink-0">
+                <img src="/adst1.jpg" alt="Advertisement 1" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                <img src="/adst2.jpg" alt="Advertisement 2" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                <img src="/adst3.jpg" alt="Advertisement 3" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+                <img src="/adst4.jpg" alt="Advertisement 4" className="h-12 md:h-20 w-auto object-contain shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Our Vision Section */}
       <section className="py-20 bg-green-50">
