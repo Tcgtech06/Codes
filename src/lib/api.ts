@@ -24,6 +24,7 @@ async function apiCall<T>(
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    cache: 'no-store',
     ...options,
     headers,
   });
