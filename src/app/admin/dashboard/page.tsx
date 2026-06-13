@@ -153,6 +153,7 @@ export default function AdminDashboard() {
     whatsapp_number: ''
   });
   const [adImages, setAdImages] = useState<File[]>([]);
+  const [bulkAdDetails, setBulkAdDetails] = useState<{url: string, whatsapp: string}[]>([]);
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
 
   const loadAds = async () => {
@@ -184,18 +185,21 @@ export default function AdminDashboard() {
         });
         alert('Ad updated successfully!');
       } else {
-        for (const img of adImages) {
+        for (let i = 0; i < adImages.length; i++) {
+          const img = adImages[i];
+          const details = bulkAdDetails[i] || { url: '', whatsapp: '' };
           await adsAPI.create({
             type: adForm.type,
             page: adForm.page,
             image: img,
-            redirection_url: adForm.redirection_url,
-            whatsapp_number: adForm.whatsapp_number
+            redirection_url: details.url,
+            whatsapp_number: details.whatsapp
           });
         }
         alert(`${adImages.length} Ad(s) uploaded successfully!`);
       }
       setAdImages([]);
+      setBulkAdDetails([]);
       setEditingAdId(null);
       setAdForm({ type: 'hero', page: 'home', redirection_url: '', whatsapp_number: '' });
       await loadAds();
@@ -220,6 +224,7 @@ export default function AdminDashboard() {
     setEditingAdId(null);
     setAdForm({ type: 'hero', page: 'home', redirection_url: '', whatsapp_number: '' });
     setAdImages([]);
+    setBulkAdDetails([]);
   };
 
   const handleDeleteAd = async (id: string) => {
@@ -1966,27 +1971,31 @@ export default function AdminDashboard() {
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Redirection URL (Optional)</label>
-                <input
-                  type="url"
-                  value={adForm.redirection_url}
-                  onChange={(e) => setAdForm({...adForm, redirection_url: e.target.value})}
-                  placeholder="https://example.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (Optional)</label>
-                <input
-                  type="tel"
-                  value={adForm.whatsapp_number}
-                  onChange={(e) => setAdForm({...adForm, whatsapp_number: e.target.value})}
-                  placeholder="+91..."
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
-                />
-              </div>
+              {editingAdId && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Redirection URL (Optional)</label>
+                    <input
+                      type="url"
+                      value={adForm.redirection_url}
+                      onChange={(e) => setAdForm({...adForm, redirection_url: e.target.value})}
+                      placeholder="https://example.com"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number (Optional)</label>
+                    <input
+                      type="tel"
+                      value={adForm.whatsapp_number}
+                      onChange={(e) => setAdForm({...adForm, whatsapp_number: e.target.value})}
+                      placeholder="+91..."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
+                    />
+                  </div>
+                </>
+              )}
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1997,7 +2006,13 @@ export default function AdminDashboard() {
                   type="file"
                   accept="image/*"
                   multiple={!editingAdId}
-                  onChange={(e) => setAdImages(Array.from(e.target.files || []))}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setAdImages(files);
+                    if (!editingAdId) {
+                      setBulkAdDetails(files.map(() => ({ url: '', whatsapp: '' })));
+                    }
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
                   required={!editingAdId && adImages.length === 0}
                 />
@@ -2005,6 +2020,47 @@ export default function AdminDashboard() {
                   <p className="text-sm text-[#4ade80] mt-2 font-semibold">{adImages.length} image(s) selected.</p>
                 )}
               </div>
+              
+              {!editingAdId && adImages.length > 0 && (
+                <div className="space-y-4 border-t pt-4 mt-4">
+                  <h3 className="font-semibold text-gray-800">Set Details for Each Image</h3>
+                  {adImages.map((file, idx) => (
+                    <div key={idx} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <p className="font-medium text-sm text-gray-700 mb-3 truncate">Image {idx + 1}: {file.name}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">Redirection URL</label>
+                          <input
+                            type="url"
+                            value={bulkAdDetails[idx]?.url || ''}
+                            onChange={(e) => {
+                              const newDetails = [...bulkAdDetails];
+                              newDetails[idx] = { ...newDetails[idx], url: e.target.value };
+                              setBulkAdDetails(newDetails);
+                            }}
+                            className="w-full px-3 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-[#1e3a8a] text-sm text-black bg-white"
+                            placeholder="https://example.com"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">WhatsApp Number</label>
+                          <input
+                            type="tel"
+                            value={bulkAdDetails[idx]?.whatsapp || ''}
+                            onChange={(e) => {
+                              const newDetails = [...bulkAdDetails];
+                              newDetails[idx] = { ...newDetails[idx], whatsapp: e.target.value };
+                              setBulkAdDetails(newDetails);
+                            }}
+                            className="w-full px-3 py-1.5 border border-gray-300 rounded focus:ring-2 focus:ring-[#1e3a8a] text-sm text-black bg-white"
+                            placeholder="+91..."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               
               <div className="flex gap-4">
                 <button
