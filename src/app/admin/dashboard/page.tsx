@@ -152,7 +152,7 @@ export default function AdminDashboard() {
     redirection_url: '',
     whatsapp_number: ''
   });
-  const [adImage, setAdImage] = useState<File | null>(null);
+  const [adImages, setAdImages] = useState<File[]>([]);
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
 
   const loadAds = async () => {
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
 
   const handleAdSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingAdId && !adImage) return alert('Please select an image for the ad');
+    if (!editingAdId && adImages.length === 0) return alert('Please select at least one image for the ad');
     
     try {
       const { adsAPI } = await import('@/lib/api');
@@ -178,22 +178,24 @@ export default function AdminDashboard() {
         await adsAPI.update(editingAdId, {
           type: adForm.type,
           page: adForm.page,
-          image: adImage || undefined,
+          image: adImages.length > 0 ? adImages[0] : undefined,
           redirection_url: adForm.redirection_url,
           whatsapp_number: adForm.whatsapp_number
         });
         alert('Ad updated successfully!');
       } else {
-        await adsAPI.create({
-          type: adForm.type,
-          page: adForm.page,
-          image: adImage!,
-          redirection_url: adForm.redirection_url,
-          whatsapp_number: adForm.whatsapp_number
-        });
-        alert('Ad uploaded successfully!');
+        for (const img of adImages) {
+          await adsAPI.create({
+            type: adForm.type,
+            page: adForm.page,
+            image: img,
+            redirection_url: adForm.redirection_url,
+            whatsapp_number: adForm.whatsapp_number
+          });
+        }
+        alert(`${adImages.length} Ad(s) uploaded successfully!`);
       }
-      setAdImage(null);
+      setAdImages([]);
       setEditingAdId(null);
       setAdForm({ type: 'hero', page: 'home', redirection_url: '', whatsapp_number: '' });
       await loadAds();
@@ -210,14 +212,14 @@ export default function AdminDashboard() {
       redirection_url: ad.redirection_url || '',
       whatsapp_number: ad.whatsapp_number || ''
     });
-    setAdImage(null);
+    setAdImages([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const cancelEditAd = () => {
     setEditingAdId(null);
     setAdForm({ type: 'hero', page: 'home', redirection_url: '', whatsapp_number: '' });
-    setAdImage(null);
+    setAdImages([]);
   };
 
   const handleDeleteAd = async (id: string) => {
@@ -1987,14 +1989,21 @@ export default function AdminDashboard() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ad Image {editingAdId ? '(Leave empty to keep current)' : '*'}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Ad Image(s) {editingAdId ? '(Leave empty to keep current)' : '*'}
+                  {!editingAdId && <span className="text-xs text-gray-500 ml-2">(You can select multiple images)</span>}
+                </label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setAdImage(e.target.files?.[0] || null)}
+                  multiple={!editingAdId}
+                  onChange={(e) => setAdImages(Array.from(e.target.files || []))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a8a] focus:border-transparent text-black bg-white"
-                  required={!editingAdId}
+                  required={!editingAdId && adImages.length === 0}
                 />
+                {adImages.length > 0 && !editingAdId && (
+                  <p className="text-sm text-[#4ade80] mt-2 font-semibold">{adImages.length} image(s) selected.</p>
+                )}
               </div>
               
               <div className="flex gap-4">
