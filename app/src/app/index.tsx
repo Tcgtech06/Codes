@@ -193,7 +193,7 @@ export default function App() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
-                          <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#10B981" />
+                          <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                         </View>
                         <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                           <Text style={{ color: '#B45309', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
@@ -218,7 +218,7 @@ export default function App() {
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
-                        <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#10B981" />
+                        <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                       </View>
                       <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.5</Text>
                     </View>
