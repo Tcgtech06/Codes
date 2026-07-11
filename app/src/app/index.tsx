@@ -190,7 +190,12 @@ export default function App() {
                   {/* Example Card */}
                   <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
-                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
+                        <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                          <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>Ad</Text>
+                        </View>
+                      </View>
                       <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.8</Text>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
@@ -252,6 +257,12 @@ export default function App() {
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
                   <Text style={{ color: t.textSecondary, fontSize: 14 }}>Knitting Units</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                  <Text style={{ color: '#166534', fontSize: 14, fontWeight: '500' }}>TCG Tech Services</Text>
+                  <View style={{ backgroundColor: '#86EFAC', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                    <Text style={{ color: '#14532D', fontSize: 9, fontWeight: 'bold' }}>Ad</Text>
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
                   <Text style={{ color: t.textSecondary, fontSize: 14 }}>Compact Yarn</Text>
