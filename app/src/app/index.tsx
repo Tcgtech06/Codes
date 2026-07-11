@@ -197,13 +197,10 @@ export default function App() {
                           <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
                           <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                         </View>
-                        <Text style={{ color: '#F59E0B', textShadowColor: 'rgba(245, 158, 11, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4, fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
+                        <View style={{ backgroundColor: '#FFE600', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, shadowColor: '#FFE600', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }}>
+                          <Text style={{ color: '#000000', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
+                        </View>
                       </View>
-                      <View style={{ backgroundColor: '#EDE9FE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={{ fontSize: 10 }}>🤝</Text>
-                        <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
-                      </View>
-                    </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
@@ -222,10 +219,6 @@ export default function App() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
                         <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
-                      </View>
-                      <View style={{ backgroundColor: '#EDE9FE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={{ fontSize: 10 }}>🤝</Text>
-                        <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
                       </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
@@ -272,7 +265,9 @@ export default function App() {
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
                   <Text style={{ color: '#166534', fontSize: 14, fontWeight: '500' }}>TCG Tech Services</Text>
-                  <Text style={{ color: '#F59E0B', textShadowColor: 'rgba(245, 158, 11, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4, fontSize: 9, fontWeight: 'bold' }}>Sponsored</Text>
+                  <View style={{ backgroundColor: '#FFE600', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4, shadowColor: '#FFE600', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 3, elevation: 3 }}>
+                    <Text style={{ color: '#000000', fontSize: 9, fontWeight: 'bold' }}>Sponsored</Text>
+                  </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
                   <Text style={{ color: t.textSecondary, fontSize: 14 }}>Compact Yarn</Text>
@@ -346,17 +341,13 @@ export default function App() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Stats / Badges */}
-              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-                <View style={{ backgroundColor: '#EDE9FE', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ fontSize: 14 }}>🤝</Text>
-                  <Text style={{ color: '#7C3AED', fontSize: 12, fontWeight: 'bold' }}>Trusted Partner</Text>
-                </View>
-                {selectedCompany?.ad && (
-                  <View style={{ paddingHorizontal: 12, paddingVertical: 6 }}>
-                    <Text style={{ color: '#F59E0B', textShadowColor: 'rgba(245, 158, 11, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4, fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
+              {selectedCompany?.ad && (
+                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                  <View style={{ backgroundColor: '#FFE600', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, shadowColor: '#FFE600', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 4 }}>
+                    <Text style={{ color: '#000000', fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
                   </View>
-                )}
-              </View>
+                </View>
+              )}
 
               {/* Products/Services */}
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
