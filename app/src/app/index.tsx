@@ -191,7 +191,10 @@ export default function App() {
                   <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
+                          <Ionicons name="checkmark-circle" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
+                        </View>
                         <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                           <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>Ad</Text>
                         </View>
@@ -213,7 +216,10 @@ export default function App() {
                   {/* Example Card 2 */}
                   <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
-                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
+                        <Ionicons name="checkmark-circle" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
+                      </View>
                       <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.5</Text>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
