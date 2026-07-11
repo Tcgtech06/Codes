@@ -5,25 +5,25 @@ import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 const tLight = {
-  name: 'TCG Corporate',
-  bg: '#F9FAFB', // Clean light background
+  name: 'Pastel Mint',
+  bg: '#F9FAFB', // Off-white/Slate background
   cardBg: '#FFFFFF',
-  textPrimary: '#1F2937', // Dark grey text
+  textPrimary: '#1F2937', 
   textSecondary: '#6B7280',
-  accent1: '#60A5FA', // Pastel Blue
-  accent2: '#F59E0B', // TCG Yellow (For ratings/stars)
+  accent1: '#34D399', // Pastel Mint / Sage Green (Soothing)
+  accent2: '#FBBF24', // Soft Gold
   border: '#E5E7EB',
   sidebarBg: '#FFFFFF'
 };
 
 const tDark = {
-  name: 'TCG Dark',
-  bg: '#111827', // Deep grey/black
-  cardBg: '#1F2937', // Slightly lighter grey for cards
+  name: 'Mint Dark',
+  bg: '#111827',
+  cardBg: '#1F2937',
   textPrimary: '#F9FAFB',
   textSecondary: '#9CA3AF',
-  accent1: '#93C5FD', // Lighter Pastel Blue
-  accent2: '#FBBF24', // TCG Yellow
+  accent1: '#10B981', // Slightly deeper emerald for dark mode contrast
+  accent2: '#FBBF24',
   border: '#374151',
   sidebarBg: '#111827'
 };
