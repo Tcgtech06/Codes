@@ -201,8 +201,9 @@ export default function App() {
                           <Text style={{ color: '#B45309', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
                         </View>
                       </View>
-                      <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                        <Text style={{ color: '#059669', fontSize: 10, fontWeight: 'bold' }}>98% Match</Text>
+                      <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <MaterialIcons name="handshake" size={12} color="#D97706" />
+                        <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
                       </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
@@ -224,8 +225,9 @@ export default function App() {
                         <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
                         <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                       </View>
-                      <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                        <Text style={{ color: '#059669', fontSize: 10, fontWeight: 'bold' }}>92% Match</Text>
+                      <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <MaterialIcons name="handshake" size={12} color="#D97706" />
+                        <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
                       </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
@@ -349,14 +351,25 @@ export default function App() {
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Stats / Badges */}
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-                <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                  <Text style={{ color: '#059669', fontSize: 12, fontWeight: 'bold' }}>{selectedCompany?.match} Match</Text>
+                <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <MaterialIcons name="handshake" size={16} color="#D97706" />
+                  <Text style={{ color: '#D97706', fontSize: 12, fontWeight: 'bold' }}>Trusted Partner</Text>
                 </View>
                 {selectedCompany?.ad && (
                   <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
                     <Text style={{ color: '#B45309', fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
                   </View>
                 )}
+              </View>
+
+              {/* Products/Services */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+                {selectedCompany?.products?.map((prod: string, i: number) => (
+                  <View key={i} style={{ backgroundColor: t.bg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: t.border }}>
+                    <Text style={{ color: t.textSecondary, fontSize: 14 }}>{prod}</Text>
+                  </View>
+                ))}
               </View>
 
               {/* Details List */}
@@ -390,16 +403,6 @@ export default function App() {
                     <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.address}</Text>
                   </View>
                 </TouchableOpacity>
-              </View>
-
-              {/* Products/Services */}
-              <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-                {selectedCompany?.products?.map((prod: string, i: number) => (
-                  <View key={i} style={{ backgroundColor: t.bg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: t.border }}>
-                    <Text style={{ color: t.textSecondary, fontSize: 14 }}>{prod}</Text>
-                  </View>
-                ))}
               </View>
             </ScrollView>
           </View>
