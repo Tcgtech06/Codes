@@ -174,8 +174,8 @@ export default function App() {
 
               {/* User Message */}
               <View style={styles.userMessageRow}>
-                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4 }]}>
-                  <Text style={{ color: '#0F172A', fontSize: 16, lineHeight: 24 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }]}>
+                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 22 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
@@ -185,15 +185,15 @@ export default function App() {
                   <Ionicons name="sparkles" size={16} color={t.accent1} />
                 </View>
                 <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                  <Text style={{ color: t.textPrimary, fontSize: 16, lineHeight: 26, marginBottom: 15 }}>Avinashi Road-la 3 nalla Dyeing Units iruku:</Text>
+                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 26 : 22, marginBottom: 15 }}>Avinashi Road-la 3 nalla Dyeing Units iruku:</Text>
 
                   {/* Example Card */}
-                  <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg }, isWebOrTablet && { maxWidth: 350 }]}>
+                  <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
-                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 16 }}>Sri Balaji Dyeing</Text>
-                      <Text style={{ color: t.accent2, fontWeight: 'bold' }}>★ 4.8</Text>
+                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
+                      <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.8</Text>
                     </View>
-                    <Text style={{ color: t.textSecondary, fontSize: 14, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
+                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
@@ -206,12 +206,12 @@ export default function App() {
                   </View>
 
                   {/* Example Card 2 */}
-                  <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg }, isWebOrTablet && { maxWidth: 350 }]}>
+                  <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
-                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 16 }}>KGM Dyeing Mill</Text>
-                      <Text style={{ color: t.accent2, fontWeight: 'bold' }}>★ 4.5</Text>
+                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
+                      <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.5</Text>
                     </View>
-                    <Text style={{ color: t.textSecondary, fontSize: 14, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
+                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
                       <TouchableOpacity style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
@@ -232,9 +232,9 @@ export default function App() {
                       <Ionicons name="sparkles" size={16} color={t.accent1} />
                     </View>
                   )}
-                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4 }] : { flex: 1, paddingLeft: 12, paddingTop: 4 }}>
+                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }] : { flex: 1, paddingLeft: 12, paddingTop: 4 }}>
                     {msg.type === 'text' ? (
-                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: 16, lineHeight: 24 }}>{msg.text}</Text>
+                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 22 }}>{msg.text}</Text>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Ionicons name="play-circle" size={32} color={msg.role === 'user' ? '#0F172A' : t.textPrimary} />
