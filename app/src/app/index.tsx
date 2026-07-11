@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -193,10 +193,10 @@ export default function App() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
-                          <Ionicons name="checkmark-circle" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
+                          <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#10B981" />
                         </View>
                         <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                          <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>Ad</Text>
+                          <Text style={{ color: '#B45309', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
                         </View>
                       </View>
                       <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.8</Text>
@@ -218,7 +218,7 @@ export default function App() {
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
-                        <Ionicons name="checkmark-circle" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
+                        <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#10B981" />
                       </View>
                       <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.5</Text>
                     </View>
@@ -266,8 +266,8 @@ export default function App() {
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
                   <Text style={{ color: '#166534', fontSize: 14, fontWeight: '500' }}>TCG Tech Services</Text>
-                  <View style={{ backgroundColor: '#86EFAC', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
-                    <Text style={{ color: '#14532D', fontSize: 9, fontWeight: 'bold' }}>Ad</Text>
+                  <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                    <Text style={{ color: '#B45309', fontSize: 9, fontWeight: 'bold' }}>Sponsored</Text>
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
