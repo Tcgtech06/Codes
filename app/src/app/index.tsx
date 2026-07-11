@@ -2,13 +2,13 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Modal, Linking } from 'react-native';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 const tLight = {
   name: 'Pastel Mint',
   bg: '#F9FAFB', // Off-white/Slate background
   cardBg: '#FFFFFF',
-  textPrimary: '#1F2937', 
+  textPrimary: '#1F2937',
   textSecondary: '#6B7280',
   accent1: '#34D399', // Pastel Mint / Sage Green (Soothing)
   accent2: '#FBBF24', // Soft Gold
@@ -197,11 +197,11 @@ export default function App() {
                           <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
                           <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                         </View>
-                        <Text style={{ color: '#F59E0B', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
+                        <Text style={{ color: '#F59E0B', textShadowColor: 'rgba(245, 158, 11, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4, fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
                       </View>
-                      <View style={{ backgroundColor: '#FFE4E6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <View style={{ backgroundColor: '#EDE9FE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ fontSize: 10 }}>🤝</Text>
-                        <Text style={{ color: '#E11D48', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
+                        <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
                       </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
@@ -223,9 +223,9 @@ export default function App() {
                         <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
                         <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                       </View>
-                      <View style={{ backgroundColor: '#FFE4E6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <View style={{ backgroundColor: '#EDE9FE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ fontSize: 10 }}>🤝</Text>
-                        <Text style={{ color: '#E11D48', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
+                        <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: 'bold' }}>Trusted</Text>
                       </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
@@ -272,7 +272,7 @@ export default function App() {
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
                   <Text style={{ color: '#166534', fontSize: 14, fontWeight: '500' }}>TCG Tech Services</Text>
-                  <Text style={{ color: '#F59E0B', fontSize: 9, fontWeight: 'bold' }}>Sponsored</Text>
+                  <Text style={{ color: '#F59E0B', textShadowColor: 'rgba(245, 158, 11, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4, fontSize: 9, fontWeight: 'bold' }}>Sponsored</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
                   <Text style={{ color: t.textSecondary, fontSize: 14 }}>Compact Yarn</Text>
@@ -347,13 +347,13 @@ export default function App() {
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Stats / Badges */}
               <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-                <View style={{ backgroundColor: '#FFE4E6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ backgroundColor: '#EDE9FE', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={{ fontSize: 14 }}>🤝</Text>
-                  <Text style={{ color: '#E11D48', fontSize: 12, fontWeight: 'bold' }}>Trusted Partner</Text>
+                  <Text style={{ color: '#7C3AED', fontSize: 12, fontWeight: 'bold' }}>Trusted Partner</Text>
                 </View>
                 {selectedCompany?.ad && (
                   <View style={{ paddingHorizontal: 12, paddingVertical: 6 }}>
-                    <Text style={{ color: '#F59E0B', fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
+                    <Text style={{ color: '#F59E0B', textShadowColor: 'rgba(245, 158, 11, 0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4, fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
                   </View>
                 )}
               </View>
@@ -419,7 +419,7 @@ export default function App() {
         <Pressable onPress={() => setShowPhoneOptions(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
           <View style={{ backgroundColor: t.cardBg, padding: 24, borderRadius: 20, width: '80%', maxWidth: 320 }}>
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 20, textAlign: 'center' }}>Contact via</Text>
-            
+
             <TouchableOpacity onPress={() => { Linking.openURL(`tel:${showPhoneOptions}`); setShowPhoneOptions(null); }} style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: t.bg, borderRadius: 12, marginBottom: 15 }}>
               <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.2)', alignItems: 'center', justifyContent: 'center', marginRight: 15 }}>
                 <Ionicons name="call" size={20} color="#3B82F6" />
