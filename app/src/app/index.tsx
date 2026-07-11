@@ -2,7 +2,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Modal, Linking } from 'react-native';
 
 const tLight = {
   name: 'Pastel Mint',
@@ -50,6 +50,8 @@ export default function App() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number }[]>([]);
   const hasText = inputText.trim().length > 0;
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
 
   useEffect(() => {
     let interval: any;
@@ -188,7 +190,7 @@ export default function App() {
                   <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 26 : 22, marginBottom: 15 }}>Avinashi Road-la 3 nalla Dyeing Units iruku:</Text>
 
                   {/* Example Card */}
-                  <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
+                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -199,40 +201,44 @@ export default function App() {
                           <Text style={{ color: '#B45309', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
                         </View>
                       </View>
-                      <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.8</Text>
+                      <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                        <Text style={{ color: '#059669', fontSize: 10, fontWeight: 'bold' }}>98% Match</Text>
+                      </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
+                      <TouchableOpacity onPress={() => Linking.openURL('tel:+919876543210')} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
                         <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Call Now</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
+                      <TouchableOpacity onPress={() => Linking.openURL('https://wa.me/919876543210')} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
                         <Text style={{ color: t.accent1, fontSize: 14, fontWeight: '600' }}>WhatsApp</Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
+                  </TouchableOpacity>
 
                   {/* Example Card 2 */}
-                  <View style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
+                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                         <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
                         <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
                       </View>
-                      <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>★ 4.5</Text>
+                      <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                        <Text style={{ color: '#059669', fontSize: 10, fontWeight: 'bold' }}>92% Match</Text>
+                      </View>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
+                      <TouchableOpacity onPress={() => Linking.openURL('tel:+919123456789')} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
                         <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Call Now</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
+                      <TouchableOpacity onPress={() => Linking.openURL('https://wa.me/919123456789')} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
                         <Text style={{ color: t.accent1, fontSize: 14, fontWeight: '600' }}>WhatsApp</Text>
                       </TouchableOpacity>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 </View>
               </View>
               {/* Dynamic Messages */}
@@ -323,6 +329,105 @@ export default function App() {
           </KeyboardAvoidingView>
         </View>
       </View>
+      {/* Company Details Modal */}
+      <Modal visible={!!selectedCompany} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary }}>{selectedCompany?.name}</Text>
+                  {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
+                </View>
+                <Text style={{ color: t.textSecondary, fontSize: 14 }}>{selectedCompany?.address}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15 }}>
+                <Ionicons name="close" size={24} color={t.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Stats / Badges */}
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+                <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+                  <Text style={{ color: '#059669', fontSize: 12, fontWeight: 'bold' }}>{selectedCompany?.match} Match</Text>
+                </View>
+                {selectedCompany?.ad && (
+                  <View style={{ backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+                    <Text style={{ color: '#B45309', fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Details List */}
+              <View style={{ gap: 15, marginBottom: 24 }}>
+                <TouchableOpacity onPress={() => { setShowPhoneOptions(selectedCompany?.phone); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(52, 211, 153, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="call" size={20} color={t.accent1} />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Contact Number</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.phone}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => Linking.openURL(`mailto:${selectedCompany?.email}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="mail" size={20} color="#3B82F6" />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Email Address</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.email}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => Linking.openURL(`https://maps.google.com/?q=${selectedCompany?.address}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(239, 68, 68, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="location" size={20} color="#EF4444" />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Location</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.address}</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Products/Services */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+                {selectedCompany?.products?.map((prod: string, i: number) => (
+                  <View key={i} style={{ backgroundColor: t.bg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: t.border }}>
+                    <Text style={{ color: t.textSecondary, fontSize: 14 }}>{prod}</Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Phone Action Sheet Mini Modal */}
+      <Modal visible={!!showPhoneOptions} transparent animationType="fade">
+        <Pressable onPress={() => setShowPhoneOptions(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: t.cardBg, padding: 24, borderRadius: 20, width: '80%', maxWidth: 320 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 20, textAlign: 'center' }}>Contact via</Text>
+            
+            <TouchableOpacity onPress={() => { Linking.openURL(`tel:${showPhoneOptions}`); setShowPhoneOptions(null); }} style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: t.bg, borderRadius: 12, marginBottom: 15 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.2)', alignItems: 'center', justifyContent: 'center', marginRight: 15 }}>
+                <Ionicons name="call" size={20} color="#3B82F6" />
+              </View>
+              <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>Dial Pad</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => { Linking.openURL(`https://wa.me/${showPhoneOptions?.replace(/[^0-9]/g, '')}`); setShowPhoneOptions(null); }} style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: t.bg, borderRadius: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(37, 211, 102, 0.2)', alignItems: 'center', justifyContent: 'center', marginRight: 15 }}>
+                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+              </View>
+              <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
