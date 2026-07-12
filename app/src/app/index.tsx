@@ -242,49 +242,49 @@ export default function App() {
         {/* Main Chat Area */}
         <View style={[styles.mainContent, { backgroundColor: t.bg }]}>
 
-          {/* Main Header */}
-          {(!hideHeader || isWebOrTablet) && (
-            <View style={[styles.mobileHeader, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {isWebOrTablet ? (
-                  <TouchableOpacity onPress={() => setDesktopSidebarOpen(true)} style={{ opacity: desktopSidebarOpen ? 0 : 1 }}>
-                    <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary, fontSize: 20 }]}>Tiruppur AI</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity onPress={() => setSidebarOpen(true)} style={{ opacity: sidebarOpen ? 0 : 1, marginRight: 10 }}>
-                    <HotDogMenu isMobile={true} />
-                  </TouchableOpacity>
-                )}
-                {!isWebOrTablet && (
-                  <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
-                )}
-              </View>
-
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
-                <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
-                  <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
-                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Upload</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
-                  <Ionicons name="megaphone-outline" size={20} color={t.accent2} />
-                  <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
-                  <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
-                  <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
+            {/* Main Header (Absolute) */}
+            {(!hideHeader || isWebOrTablet) && (
+              <View style={[styles.mobileHeader, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {isWebOrTablet ? (
+                    <TouchableOpacity onPress={() => setDesktopSidebarOpen(true)} style={{ opacity: desktopSidebarOpen ? 0 : 1 }}>
+                      <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary, fontSize: 20 }]}>Tiruppur AI</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => setSidebarOpen(true)} style={{ opacity: sidebarOpen ? 0 : 1, marginRight: 10 }}>
+                      <HotDogMenu isMobile={true} />
+                    </TouchableOpacity>
+                  )}
+                  {!isWebOrTablet && (
+                    <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
+                  )}
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
+                  <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
+                    <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
+                    <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Upload</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
+                    <Ionicons name="megaphone-outline" size={20} color={t.accent2} />
+                    <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
+                    <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
+                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
             <ScrollView
-              contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }]}
+              contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }, { paddingTop: isWebOrTablet ? 60 : 90 }]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
             >
@@ -564,7 +564,7 @@ const styles = StyleSheet.create({
   historyText: { fontSize: 14, flex: 1 },
 
   mainContent: { flex: 1 },
-  mobileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingTop: Platform.OS === 'web' ? 12 : 40, borderBottomWidth: 1 },
+  mobileHeader: { position: 'absolute', top: 0, width: '100%', zIndex: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingTop: Platform.OS === 'web' ? 12 : 40, borderBottomWidth: 1 },
   mobileHeaderTitle: { fontSize: 16, fontWeight: 'bold' },
 
   chatArea: { padding: 10, paddingBottom: 150 },
