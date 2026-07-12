@@ -19,15 +19,15 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'Pastel Yellow & Yellow',
-  bg: '#FEF9C3', // Pastel Yellow background
-  cardBg: '#FEF9C3', // Pastel Yellow bubbles
-  textPrimary: '#064E3B', // Dark green text
-  textSecondary: '#047857',
+  name: 'SaaS Slate',
+  bg: '#F8FAFC', // Cool Gray background
+  cardBg: '#FFFFFF', // White bubbles
+  textPrimary: '#0F172A', // Slate 900 text
+  textSecondary: '#475569', // Slate 600 text
   accent1: '#3B82F6', // Blue for user bubbles & buttons
   accent2: '#60A5FA', // Secondary blue
-  border: '#D1FAE5',
-  sidebarBg: '#FFFFFF'
+  border: '#E2E8F0', // Slate 200 border
+  sidebarBg: '#F8FAFC'
 };
 
 const tDark = {
