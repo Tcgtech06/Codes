@@ -2,7 +2,15 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Vibration } from 'react-native';
+
+export const SEARCH_RESULTS = [
+  { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
+  { id: '2', name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] },
+  { id: '3', name: 'Royal Colors', verified: false, ad: false, match: '89%', address: 'Avinashi Road, Tiruppur', phone: '+919876543211', email: 'info@royalcolors.com', products: ['Knitwear Dyeing', 'Woven Dyeing'] },
+  { id: '4', name: 'Tiruppur Tech Dyes', verified: true, ad: false, match: '85%', address: 'Avinashi Road, Tiruppur', phone: '+919876543212', email: 'hello@techdyes.com', products: ['Eco-friendly Dyeing', 'Bleaching'] },
+  { id: '5', name: 'Modern Dyeing Works', verified: false, ad: false, match: '80%', address: 'Avinashi Road, Tiruppur', phone: '+919876543213', email: 'contact@moderndyeing.com', products: ['Cotton Dyeing'] }
+];
 
 const tLight = {
   name: 'Pastel Mint',
@@ -187,52 +195,39 @@ export default function App() {
                   <Ionicons name="sparkles" size={16} color={t.accent1} />
                 </View>
                 <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la 3 nalla Dyeing Units iruku:</Text>
+                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la {SEARCH_RESULTS.length} nalla Dyeing Units iruku:</Text>
 
-                  {/* Example Card */}
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { maxWidth: 350 }]}>
-                    <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
-                      <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
-                    </View>
-                    <View style={styles.cardHeader}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  {SEARCH_RESULTS.slice(0, 4).map(company => (
+                    <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { maxWidth: 350 }]}>
+                      {company.ad && (
+                        <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
+                          <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+                        </View>
+                      )}
+                      <View style={styles.cardHeader}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>Sri Balaji Dyeing</Text>
-                          <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />
+                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
+                          {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />}
                         </View>
                       </View>
-                    </View>
-                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>Avinashi Road, Tiruppur</Text>
+                      <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>{company.address}</Text>
 
-                    <View style={styles.cardActions}>
-                      <TouchableOpacity onPress={() => Linking.openURL('tel:+919876543210')} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
-                        <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Call Now</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => Linking.openURL('https://wa.me/919876543210')} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
-                        <Text style={{ color: t.accent1, fontSize: 14, fontWeight: '600' }}>WhatsApp</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
-
-                  {/* Example Card 2 */}
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { maxWidth: 350 }]}>
-                    <View style={styles.cardHeader}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>KGM Dyeing Mill</Text>
-                        <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />
+                      <View style={styles.cardActions}>
+                        <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
+                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Call Now</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
+                          <Text style={{ color: t.accent1, fontSize: 14, fontWeight: '600' }}>WhatsApp</Text>
+                        </TouchableOpacity>
                       </View>
-                    </View>
-                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>Avinashi Road, Tiruppur</Text>
+                    </TouchableOpacity>
+                  ))}
 
-                    <View style={styles.cardActions}>
-                      <TouchableOpacity onPress={() => Linking.openURL('tel:+919123456789')} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
-                        <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Call Now</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => Linking.openURL('https://wa.me/919123456789')} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
-                        <Text style={{ color: t.accent1, fontSize: 14, fontWeight: '600' }}>WhatsApp</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </TouchableOpacity>
+                  {SEARCH_RESULTS.length > 4 && (
+                    <TouchableOpacity onPress={() => router.push('/search-results')} style={{ marginTop: 10, paddingVertical: 12, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center', ...(isWebOrTablet ? { maxWidth: 350 } : {}) }}>
+                      <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
               {/* Dynamic Messages */}
@@ -295,7 +290,7 @@ export default function App() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
                   {/* Mic Button (Left of Send Button) */}
                   <TouchableOpacity
-                    onPress={() => setIsRecording(!isRecording)}
+                    onPress={() => { Vibration.vibrate(50); setIsRecording(!isRecording); }}
                     style={[
                       styles.actionIconBtn,
                       !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
