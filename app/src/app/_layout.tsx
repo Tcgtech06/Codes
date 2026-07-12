@@ -14,6 +14,7 @@ export default function TabLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="add-data" />
         <Stack.Screen name="advertise" />
+        <Stack.Screen name="admin" />
       </Stack>
     </>
   );

@@ -2,7 +2,8 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, Vibration, View } from 'react-native';
+import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 export const SEARCH_RESULTS = [
   { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
@@ -97,12 +98,15 @@ export default function App() {
   const [hideHeader, setHideHeader] = useState(false);
   const lastScrollY = useRef(0);
 
+  const modalScrollY = useRef(0);
   const cardAnims = useRef([...Array(10)].map(() => new Animated.Value(0))).current;
 
   const modalPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 10,
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 15 && gestureState.vy > 0.2 && modalScrollY.current <= 0;
+      },
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dy > 50) {
           setSelectedCompany(null);
@@ -140,24 +144,34 @@ export default function App() {
     const anim = cardAnims[index] || cardAnims[0];
     return (
       <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
-        <TouchableOpacity activeOpacity={0.8} onPress={() => { Vibration.vibrate(50); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
           {company.ad && (
             <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
               <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
             </View>
           )}
-          <View style={styles.cardHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            <View style={{ position: 'relative', marginRight: 12 }}>
+              <Image 
+                source={{ uri: `https://picsum.photos/seed/${company.id}logo/100` }} 
+                style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }} 
+              />
+              {company.verified && (
+                <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
+                  <MaterialIcons name="verified" size={16} color="#3B82F6" />
+                </View>
+              )}
+            </View>
+            <View style={{ flex: 1 }}>
               <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
-              {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />}
+              <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
             </View>
           </View>
-          <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>{company.address}</Text>
           <View style={styles.cardActions}>
-            <TouchableOpacity onPress={() => { Vibration.vibrate(50); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
               <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { Vibration.vibrate(50); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`); }} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
               <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
             </TouchableOpacity>
           </View>
@@ -168,7 +182,7 @@ export default function App() {
 
   const handleSend = () => {
     if (!hasText) return;
-    Vibration.vibrate(50);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newMsg = { id: Date.now().toString(), role: 'user', type: 'text', text: inputText } as any;
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
@@ -426,7 +440,7 @@ export default function App() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
                   {/* Mic Button (Left of Send Button) */}
                   <TouchableOpacity
-                    onPress={() => { Vibration.vibrate(50); setIsRecording(!isRecording); }}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsRecording(!isRecording); }}
                     style={[
                       styles.actionIconBtn,
                       !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
@@ -459,9 +473,9 @@ export default function App() {
       <Modal visible={!!selectedCompany} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={() => setSelectedCompany(null)} />
-          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
+          <View {...modalPanResponder.panHandlers} style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
             
-            <View {...modalPanResponder.panHandlers}>
+            <View>
               <View style={{ width: '100%', alignItems: 'center', paddingBottom: 15, paddingTop: 5 }}>
                 <View style={{ width: 40, height: 5, backgroundColor: t.border, borderRadius: 3 }} />
               </View>
@@ -473,14 +487,20 @@ export default function App() {
               )}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
-                  <Image 
-                    source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }} 
-                    style={{ width: 60, height: 60, borderRadius: 12, marginRight: 15, backgroundColor: t.border }} 
-                  />
+                  <View style={{ position: 'relative', marginRight: 15 }}>
+                    <Image 
+                      source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }} 
+                      style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }} 
+                    />
+                    {selectedCompany?.verified && (
+                      <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
+                        <MaterialIcons name="verified" size={20} color="#3B82F6" />
+                      </View>
+                    )}
+                  </View>
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
-                      {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
                   </View>
@@ -491,7 +511,11 @@ export default function App() {
               </View>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              showsVerticalScrollIndicator={false}
+              onScroll={(e) => { modalScrollY.current = e.nativeEvent.contentOffset.y; }}
+              scrollEventThrottle={16}
+            >
               {/* Products/Services */}
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
