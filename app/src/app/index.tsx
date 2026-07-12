@@ -1,9 +1,9 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-import * as Haptics from 'expo-haptics';
 
 export const SEARCH_RESULTS = [
   { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
@@ -20,8 +20,8 @@ export const SEARCH_RESULTS = [
 
 const tLight = {
   name: 'Pastel Green & White',
-  bg: '#ECFDF5', // Pastel Green background
-  cardBg: '#FFFFFF', // Pastel White bubbles
+  bg: '#FEF2F2', // Pastel Red background
+  cardBg: '#FFFFFF', // White bubbles
   textPrimary: '#064E3B', // Dark green text
   textSecondary: '#047857',
   accent1: '#3B82F6', // Blue for user bubbles & buttons
@@ -154,9 +154,9 @@ export default function App() {
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
             <View style={{ position: 'relative', marginRight: 12 }}>
-              <Image 
-                source={{ uri: `https://picsum.photos/seed/${company.id}logo/100` }} 
-                style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }} 
+              <Image
+                source={{ uri: `https://picsum.photos/seed/${company.id}logo/100` }}
+                style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }}
               />
               {company.verified && (
                 <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
@@ -460,8 +460,8 @@ export default function App() {
                     {showLangMenu && (
                       <View style={{ position: 'absolute', bottom: 45, left: -20, backgroundColor: t.cardBg, borderRadius: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 100 }}>
                         {['EN', 'TA', 'HI'].map(lang => (
-                          <TouchableOpacity 
-                            key={lang} 
+                          <TouchableOpacity
+                            key={lang}
                             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setLanguage(lang as any); setShowLangMenu(false); }}
                             style={{ paddingHorizontal: 12, paddingVertical: 10, backgroundColor: language === lang ? 'rgba(16, 185, 129, 0.1)' : 'transparent', borderRadius: 8, marginBottom: 2 }}
                           >
@@ -508,7 +508,7 @@ export default function App() {
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={() => setSelectedCompany(null)} />
           <View {...modalPanResponder.panHandlers} style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
-            
+
             <View>
               <View style={{ width: '100%', alignItems: 'center', paddingBottom: 15, paddingTop: 5 }}>
                 <View style={{ width: 40, height: 5, backgroundColor: t.border, borderRadius: 3 }} />
@@ -522,9 +522,9 @@ export default function App() {
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
                   <View style={{ position: 'relative', marginRight: 15 }}>
-                    <Image 
-                      source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }} 
-                      style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }} 
+                    <Image
+                      source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }}
+                      style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }}
                     />
                     {selectedCompany?.verified && (
                       <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
@@ -545,7 +545,7 @@ export default function App() {
               </View>
             </View>
 
-            <ScrollView 
+            <ScrollView
               showsVerticalScrollIndicator={false}
               onScroll={(e) => { modalScrollY.current = e.nativeEvent.contentOffset.y; }}
               scrollEventThrottle={16}
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   chipsRow: { flexDirection: 'row', marginBottom: 10 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
   inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 30, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 12 : 10, paddingBottom: Platform.OS === 'ios' ? 12 : 10, textAlignVertical: 'center', fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
+  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6, textAlignVertical: 'bottom', fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
   actionIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   disclaimer: { textAlign: 'center', fontSize: 11, marginTop: 10 }
 });
