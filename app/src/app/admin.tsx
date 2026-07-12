@@ -1,8 +1,8 @@
-import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, useWindowDimensions, TextInput, Platform, Image, Linking } from 'react-native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Stack, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, Linking, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 // Temporary Mock Data
 const MOCK_PENDING = [
@@ -19,12 +19,12 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isWebOrTablet = width > 768;
-  
+
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
-  
+
   const [activeTab, setActiveTab] = useState('overview'); // overview, pending, ads, companies
-  
+
   const [ads, setAds] = useState(MOCK_ADS_INITIAL);
   const [showAddAd, setShowAddAd] = useState(false);
   const [newAd, setNewAd] = useState({ title: '', link: '', image: '' });
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
     setNewAd({ title: '', link: '', image: '' });
     setShowAddAd(false);
   };
-  
+
   const deleteAd = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setAds(ads.filter(a => a.id !== id));
@@ -73,9 +73,9 @@ export default function AdminDashboard() {
   const renderTabs = () => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabContainer}>
       {['overview', 'pending', 'ads', 'companies'].map((tab) => (
-        <TouchableOpacity 
+        <TouchableOpacity
           key={tab}
-          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }} 
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
           style={[styles.tab, activeTab === tab && { borderBottomColor: t.accent1 }]}
         >
           <Text style={[styles.tabText, activeTab === tab ? { color: t.accent1, fontWeight: 'bold' } : { color: t.textSecondary }]}>
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
   const renderOverview = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Platform Analytics</Text>
-      
+
       {/* Stats Cards */}
       <View style={{ flexDirection: isWebOrTablet ? 'row' : 'column', gap: 12, marginBottom: 24 }}>
         <View style={[styles.card, { flex: 1, backgroundColor: t.accent1 }]}>
@@ -162,18 +162,18 @@ export default function AdminDashboard() {
         <View style={[styles.card, { backgroundColor: '#F8FAFC', borderColor: t.accent1 }]}>
           <Text style={[styles.cardTitle, { color: t.accent1 }]}>Upload New Banner Ad</Text>
           <Text style={[styles.cardSub, { marginBottom: 16 }]}>Recommended Size: 1080x400px (Banner) or 1080x1080px (Square)</Text>
-          
-          <TextInput 
-            placeholder="Ad Campaign Title" 
-            style={styles.input} 
+
+          <TextInput
+            placeholder="Ad Campaign Title"
+            style={styles.input}
             value={newAd.title}
-            onChangeText={(t) => setNewAd({...newAd, title: t})}
+            onChangeText={(t) => setNewAd({ ...newAd, title: t })}
           />
-          <TextInput 
-            placeholder="Hyperlink or WhatsApp URL (e.g. https://wa.me/...)" 
-            style={styles.input} 
+          <TextInput
+            placeholder="Hyperlink or WhatsApp URL (e.g. https://wa.me/...)"
+            style={styles.input}
             value={newAd.link}
-            onChangeText={(t) => setNewAd({...newAd, link: t})}
+            onChangeText={(t) => setNewAd({ ...newAd, link: t })}
             autoCapitalize="none"
           />
           <TouchableOpacity style={{ backgroundColor: t.border, padding: 12, borderRadius: 8, alignItems: 'center', marginBottom: 16, borderStyle: 'dashed', borderWidth: 2, borderColor: t.textSecondary }}>
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
           </TouchableOpacity>
         </View>
       )}
-      
+
       {ads.map(ad => (
         <View key={ad.id} style={styles.card}>
           <Image source={{ uri: ad.image }} style={{ width: '100%', height: 120, borderRadius: 8, marginBottom: 12, backgroundColor: t.border }} />
@@ -213,8 +213,8 @@ export default function AdminDashboard() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
-      <Stack.Screen options={{ 
-        headerShown: true, 
+      <Stack.Screen options={{
+        headerShown: true,
         title: isAuthenticated ? 'Master Admin Panel' : 'Admin Login',
         headerStyle: { backgroundColor: t.bg },
         headerTintColor: t.textPrimary,
@@ -224,7 +224,7 @@ export default function AdminDashboard() {
           </TouchableOpacity>
         )
       }} />
-      
+
       {!isAuthenticated ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={[styles.card, { width: '100%', maxWidth: 400, padding: 24, alignItems: 'center' }]}>
@@ -233,16 +233,16 @@ export default function AdminDashboard() {
             </View>
             <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary, marginBottom: 8 }}>Admin Login</Text>
             <Text style={{ color: t.textSecondary, marginBottom: 24, textAlign: 'center' }}>Enter your master password to access the platform controls.</Text>
-            
-            <TextInput 
-              style={[styles.input, { width: '100%' }]} 
-              placeholder="Enter Password (admin)" 
-              secureTextEntry 
+
+            <TextInput
+              style={[styles.input, { width: '100%' }]}
+              placeholder="Enter Password (admin)"
+              secureTextEntry
               value={password}
               onChangeText={setPassword}
               onSubmitEditing={handleLogin}
             />
-            
+
             <TouchableOpacity onPress={handleLogin} style={{ backgroundColor: t.accent1, width: '100%', padding: 14, borderRadius: 8, alignItems: 'center', marginTop: 8 }}>
               <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Secure Login</Text>
             </TouchableOpacity>
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.container, isWebOrTablet && { alignSelf: 'center', width: '100%', maxWidth: 800 }]}>
           {renderTabs()}
-          
+
           {activeTab === 'overview' && renderOverview()}
           {activeTab === 'pending' && renderPending()}
           {activeTab === 'ads' && renderAds()}
@@ -263,7 +263,7 @@ export default function AdminDashboard() {
                 <Text style={styles.cardSub}>Search and edit all approved company records here.</Text>
                 <View style={{ marginTop: 12, flexDirection: 'row', backgroundColor: t.bg, borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: t.border }}>
                   <Ionicons name="search" size={20} color={t.textSecondary} style={{ marginHorizontal: 8 }} />
-                  <TextInput placeholder="Search companies..." style={{ flex: 1, outlineStyle: 'none' }} />
+                  <TextInput placeholder="Search companies..." style={{ flex: 1, outlineStyle: 'none' as any }} />
                 </View>
               </View>
             </View>
