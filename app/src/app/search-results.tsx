@@ -2,7 +2,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useRef } from 'react';
-import { Linking, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Linking, Modal, PanResponder, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, Image } from 'react-native';
 import { SEARCH_RESULTS } from './index';
 
 const tLight = {
@@ -37,6 +37,18 @@ export default function SearchResults() {
   const [hideHeader, setHideHeader] = useState(false);
   const lastScrollY = useRef(0);
 
+  const modalPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 10,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 50) {
+          setSelectedCompany(null);
+        }
+      },
+    })
+  ).current;
+
   const handleScroll = (event: any) => {
     if (isWebOrTablet) return;
     const currentY = event.nativeEvent.contentOffset.y;
@@ -55,9 +67,9 @@ export default function SearchResults() {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: t.bg },
-    header: { paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 50 : 30, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: t.cardBg, borderBottomWidth: 1, borderBottomColor: t.border },
+    header: { position: 'absolute', top: 0, width: '100%', zIndex: 50, paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 50 : (Platform.OS === 'web' ? 20 : 40), paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: t.cardBg, borderBottomWidth: 1, borderBottomColor: t.border },
     headerTitle: { fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginLeft: 12 },
-    content: { padding: 20 },
+    content: { padding: 20, paddingTop: Platform.OS === 'ios' ? 110 : 90 },
     companyCard: { marginBottom: 15, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     cardActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
@@ -116,23 +128,36 @@ export default function SearchResults() {
 
       <Modal visible={!!selectedCompany} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
-            {selectedCompany?.ad && (
-              <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
-                <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
+            
+            <View {...modalPanResponder.panHandlers}>
+              <View style={{ width: '100%', alignItems: 'center', paddingBottom: 15, paddingTop: 5 }}>
+                <View style={{ width: 40, height: 5, backgroundColor: t.border, borderRadius: 3 }} />
               </View>
-            )}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary }}>{selectedCompany?.name}</Text>
-                  {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
+
+              {selectedCompany?.ad && (
+                <View style={{ position: 'absolute', top: 12, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
+                  <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
                 </View>
-                <Text style={{ color: t.textSecondary, fontSize: 14 }}>{selectedCompany?.address}</Text>
+              )}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
+                  <Image 
+                    source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }} 
+                    style={{ width: 60, height: 60, borderRadius: 12, marginRight: 15, backgroundColor: t.border }} 
+                  />
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
+                      {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
+                    </View>
+                    <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20, marginTop: selectedCompany?.ad ? 28 : 0 }}>
+                  <Ionicons name="close" size={24} color={t.textPrimary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20, marginTop: selectedCompany?.ad ? 28 : 0 }}>
-                <Ionicons name="close" size={24} color={t.textPrimary} />
-              </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>

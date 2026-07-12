@@ -2,14 +2,19 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, Vibration, View } from 'react-native';
+import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, Vibration, View } from 'react-native';
 
 export const SEARCH_RESULTS = [
   { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
   { id: '2', name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] },
   { id: '3', name: 'Royal Colors', verified: false, ad: false, match: '89%', address: 'Avinashi Road, Tiruppur', phone: '+919876543211', email: 'info@royalcolors.com', products: ['Knitwear Dyeing', 'Woven Dyeing'] },
   { id: '4', name: 'Tiruppur Tech Dyes', verified: true, ad: false, match: '85%', address: 'Avinashi Road, Tiruppur', phone: '+919876543212', email: 'hello@techdyes.com', products: ['Eco-friendly Dyeing', 'Bleaching'] },
-  { id: '5', name: 'Modern Dyeing Works', verified: false, ad: false, match: '80%', address: 'Avinashi Road, Tiruppur', phone: '+919876543213', email: 'contact@moderndyeing.com', products: ['Cotton Dyeing'] }
+  { id: '5', name: 'Modern Dyeing Works', verified: false, ad: false, match: '80%', address: 'Avinashi Road, Tiruppur', phone: '+919876543213', email: 'contact@moderndyeing.com', products: ['Cotton Dyeing'] },
+  { id: '6', name: 'Evergreen Textiles', verified: true, ad: false, match: '78%', address: 'PN Road, Tiruppur', phone: '+919876543214', email: 'sales@evergreentextiles.com', products: ['Compact Yarn', 'Fabric Printing'] },
+  { id: '7', name: 'Classic Knits', verified: true, ad: true, match: '75%', address: 'Mangalam Road, Tiruppur', phone: '+919876543215', email: 'contact@classicknits.com', products: ['Knitting', 'Compacting'] },
+  { id: '8', name: 'Pioneer Dyeing', verified: false, ad: false, match: '70%', address: 'Kangayam Road, Tiruppur', phone: '+919876543216', email: 'info@pioneerdyeing.com', products: ['Yarn Dyeing'] },
+  { id: '9', name: 'Vibrant Colors', verified: true, ad: false, match: '68%', address: 'Dharapuram Road, Tiruppur', phone: '+919876543217', email: 'hello@vibrantcolors.com', products: ['Woven Dyeing', 'Garment Dyeing'] },
+  { id: '10', name: 'Sunrise Garments', verified: false, ad: false, match: '65%', address: 'Palladam Road, Tiruppur', phone: '+919876543218', email: 'contact@sunrisegarments.com', products: ['Cotton Dyeing', 'Washing'] }
 ];
 
 const tLight = {
@@ -93,6 +98,18 @@ export default function App() {
   const lastScrollY = useRef(0);
 
   const cardAnims = useRef([...Array(10)].map(() => new Animated.Value(0))).current;
+
+  const modalPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => gestureState.dy > 10,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 50) {
+          setSelectedCompany(null);
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     Animated.stagger(150, cardAnims.map(anim => Animated.timing(anim, { toValue: 1, duration: 600, useNativeDriver: true }))).start();
@@ -284,6 +301,7 @@ export default function App() {
             )}
 
             <ScrollView
+              style={{ flex: 1 }}
               contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }, { paddingTop: isWebOrTablet ? 60 : 90 }]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
@@ -441,23 +459,36 @@ export default function App() {
       <Modal visible={!!selectedCompany} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={() => setSelectedCompany(null)} />
-          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
-            {selectedCompany?.ad && (
-              <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
-                <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
+            
+            <View {...modalPanResponder.panHandlers}>
+              <View style={{ width: '100%', alignItems: 'center', paddingBottom: 15, paddingTop: 5 }}>
+                <View style={{ width: 40, height: 5, backgroundColor: t.border, borderRadius: 3 }} />
               </View>
-            )}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-              <View style={{ flex: 1, paddingRight: 10 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary }}>{selectedCompany?.name}</Text>
-                  {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
+
+              {selectedCompany?.ad && (
+                <View style={{ position: 'absolute', top: 12, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
+                  <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
                 </View>
-                <Text style={{ color: t.textSecondary, fontSize: 14 }}>{selectedCompany?.address}</Text>
+              )}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
+                  <Image 
+                    source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }} 
+                    style={{ width: 60, height: 60, borderRadius: 12, marginRight: 15, backgroundColor: t.border }} 
+                  />
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
+                      {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
+                    </View>
+                    <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20, marginTop: selectedCompany?.ad ? 28 : 0 }}>
+                  <Ionicons name="close" size={24} color={t.textPrimary} />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20, marginTop: selectedCompany?.ad ? 28 : 0 }}>
-                <Ionicons name="close" size={24} color={t.textPrimary} />
-              </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -567,7 +598,7 @@ const styles = StyleSheet.create({
   mobileHeader: { position: 'absolute', top: 0, width: '100%', zIndex: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingTop: Platform.OS === 'web' ? 12 : 40, borderBottomWidth: 1 },
   mobileHeaderTitle: { fontSize: 16, fontWeight: 'bold' },
 
-  chatArea: { padding: 10, paddingBottom: 150 },
+  chatArea: { padding: 10, paddingBottom: 20 },
   messageBubble: { padding: 12, borderRadius: 16, maxWidth: '92%' },
   userMessageRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 20 },
   aiMessageRow: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 20, gap: 8 },
@@ -580,7 +611,7 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
   actionBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
 
-  bottomContainer: { position: 'absolute', bottom: 0, width: '100%', paddingBottom: Platform.OS === 'ios' ? 25 : 15, backgroundColor: 'transparent' },
+  bottomContainer: { width: '100%', paddingBottom: Platform.OS === 'ios' ? 20 : 10, backgroundColor: 'transparent' },
   chipsRow: { flexDirection: 'row', marginBottom: 10 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
   inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 20, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
