@@ -53,9 +53,9 @@ const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
       </View>
       <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
         <Animated.View style={{ width: 200, height: 20, borderRadius: 6, backgroundColor: t.border, opacity, marginBottom: 15 }} />
-        <View style={isWebOrTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: 16 } : { gap: 12 }}>
+        <View style={isWebOrTablet ? { flexDirection: 'row', gap: 16, maxWidth: 816 } : { gap: 12 }}>
           {[1, 2].map(i => (
-            <Animated.View key={i} style={{ width: isWebOrTablet ? '47%' : '100%', height: 140, borderRadius: 12, backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, opacity }} />
+            <Animated.View key={i} style={[{ height: 140, borderRadius: 12, backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, opacity }, isWebOrTablet ? { flex: 1, maxWidth: 400 } : { width: '100%' }]} />
           ))}
         </View>
       </View>
@@ -93,6 +93,12 @@ export default function App() {
   const [hideFooter, setHideFooter] = useState(false);
   const lastScrollY = useRef(0);
 
+  const cardAnims = useRef([...Array(10)].map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    Animated.stagger(150, cardAnims.map(anim => Animated.timing(anim, { toValue: 1, duration: 600, useNativeDriver: true }))).start();
+  }, []);
+
   const handleScroll = (event: any) => {
     if (isWebOrTablet) return; // Only apply hide logic on mobile
     const currentY = event.nativeEvent.contentOffset.y;
@@ -117,13 +123,16 @@ export default function App() {
     }
   };
 
-  const renderCard = (company: any) => (
-    <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
-      {company.ad && (
-        <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
-          <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
-        </View>
-      )}
+  const renderCard = (company: any, index: number) => {
+    const anim = cardAnims[index] || cardAnims[0];
+    return (
+    <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
+        {company.ad && (
+          <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
+            <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+          </View>
+        )}
       <View style={styles.cardHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
@@ -139,8 +148,10 @@ export default function App() {
           <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
+  };
 
   const handleSend = () => {
     if (!hasText) return;
@@ -300,11 +311,11 @@ export default function App() {
                   {isWebOrTablet ? (
                     <View style={{ gap: 16, maxWidth: 816 }}>
                       <View style={{ flexDirection: 'row', gap: 16 }}>
-                        {SEARCH_RESULTS.slice(0, 2).map(renderCard)}
+                        {SEARCH_RESULTS.slice(0, 2).map((c, i) => renderCard(c, i))}
                       </View>
                       {SEARCH_RESULTS.length > 2 && (
                         <View style={{ flexDirection: 'row', gap: 16 }}>
-                          {SEARCH_RESULTS.slice(2, 4).map(renderCard)}
+                          {SEARCH_RESULTS.slice(2, 4).map((c, i) => renderCard(c, i + 2))}
                           {SEARCH_RESULTS.length === 3 && <View style={{ flex: 1, maxWidth: 400 }} />}
                         </View>
                       )}
@@ -318,7 +329,7 @@ export default function App() {
                     </View>
                   ) : (
                     <View>
-                      {SEARCH_RESULTS.slice(0, 4).map(renderCard)}
+                      {SEARCH_RESULTS.slice(0, 4).map((c, i) => renderCard(c, i))}
                       {SEARCH_RESULTS.length > 4 && (
                         <View style={{ marginTop: 10 }}>
                           <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
@@ -364,7 +375,7 @@ export default function App() {
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
                     <Text style={{ color: '#166534', fontSize: 12, fontWeight: '500' }}>TCG Tech Services</Text>
-                    <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, marginLeft: 2 }}>
+                    <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, marginLeft: 2, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 2, elevation: 1 }}>
                       <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
                     </View>
                   </TouchableOpacity>
