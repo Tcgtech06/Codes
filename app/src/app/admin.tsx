@@ -3,6 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Linking, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { BarChart, LineChart, PieChart } from 'react-native-chart-kit';
 
 // Temporary Mock Data
 const MOCK_PENDING = [
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
+  const [chartType, setChartType] = useState('bar');
 
   const [activeTab, setActiveTab] = useState('overview'); // overview, pending, ads, companies
 
@@ -106,17 +108,24 @@ export default function AdminDashboard() {
         </View>
       </View>
 
-      {/* Simple CSS Bar Chart */}
+      {/* Dynamic Charts */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Traffic (Last 7 Days)</Text>
-        <Text style={[styles.cardSub, { marginBottom: 20 }]}>Unique visitors across all platforms</Text>
-        <View style={{ height: 150, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, paddingHorizontal: 10 }}>
-          {[40, 60, 45, 80, 55, 90, 75].map((val, idx) => (
-            <View key={idx} style={{ flex: 1, alignItems: 'center' }}>
-              <View style={{ width: '100%', height: `${val}%`, backgroundColor: t.accent1, borderTopLeftRadius: 4, borderTopRightRadius: 4, opacity: idx === 6 ? 1 : 0.6 }} />
-              <Text style={{ fontSize: 10, color: t.textSecondary, marginTop: 8 }}>Day {idx + 1}</Text>
-            </View>
-          ))}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <View>
+            <Text style={styles.cardTitle}>Traffic Overview</Text>
+            <Text style={styles.cardSub}>Platform metrics</Text>
+          </View>
+          <View style={{ flexDirection: 'row', backgroundColor: t.bg, borderRadius: 8, padding: 4 }}>
+             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setChartType('bar'); }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: chartType === 'bar' ? '#fff' : 'transparent', borderRadius: 4, shadowColor: '#000', shadowOffset: {width:0, height:1}, shadowOpacity: chartType === 'bar' ? 0.05 : 0 }}><Text style={{fontSize:12, fontWeight: chartType==='bar'?'bold':'normal', color: chartType==='bar'?t.accent1:t.textSecondary}}>Bar</Text></TouchableOpacity>
+             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setChartType('line'); }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: chartType === 'line' ? '#fff' : 'transparent', borderRadius: 4, shadowColor: '#000', shadowOffset: {width:0, height:1}, shadowOpacity: chartType === 'line' ? 0.05 : 0 }}><Text style={{fontSize:12, fontWeight: chartType==='line'?'bold':'normal', color: chartType==='line'?t.accent1:t.textSecondary}}>Line</Text></TouchableOpacity>
+             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setChartType('pie'); }} style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: chartType === 'pie' ? '#fff' : 'transparent', borderRadius: 4, shadowColor: '#000', shadowOffset: {width:0, height:1}, shadowOpacity: chartType === 'pie' ? 0.05 : 0 }}><Text style={{fontSize:12, fontWeight: chartType==='pie'?'bold':'normal', color: chartType==='pie'?t.accent1:t.textSecondary}}>Pie</Text></TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{ alignItems: 'center', overflow: 'hidden' }}>
+          {chartType === 'bar' && <BarChart data={{ labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], datasets: [{ data: [40, 60, 45, 80, 55, 90, 75] }] }} width={isWebOrTablet ? 700 : width - 64} height={220} yAxisLabel="" yAxisSuffix="" chartConfig={{ backgroundColor: '#fff', backgroundGradientFrom: '#fff', backgroundGradientTo: '#fff', color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, labelColor: () => t.textSecondary, barPercentage: 0.6 }} style={{ borderRadius: 8, marginVertical: 8 }} />}
+          {chartType === 'line' && <LineChart data={{ labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], datasets: [{ data: [40, 60, 45, 80, 55, 90, 75] }] }} width={isWebOrTablet ? 700 : width - 64} height={220} yAxisLabel="" yAxisSuffix="" chartConfig={{ backgroundColor: '#fff', backgroundGradientFrom: '#fff', backgroundGradientTo: '#fff', color: (opacity = 1) => `rgba(14, 165, 233, ${opacity})`, labelColor: () => t.textSecondary }} bezier style={{ borderRadius: 8, marginVertical: 8 }} />}
+          {chartType === 'pie' && <PieChart data={[ { name: 'Users', population: 12450, color: t.accent1, legendFontColor: t.textSecondary }, { name: 'Clicks', population: 3240, color: t.accent2, legendFontColor: t.textSecondary }, { name: 'Companies', population: 480, color: t.textPrimary, legendFontColor: t.textSecondary } ]} width={isWebOrTablet ? 700 : width - 64} height={220} chartConfig={{ color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})` }} accessor="population" backgroundColor="transparent" paddingLeft="15" absolute />}
         </View>
       </View>
     </View>
