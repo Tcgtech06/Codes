@@ -37,8 +37,8 @@ export default function SearchResults() {
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: t.bg },
-    header: { paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 40, paddingBottom: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: t.cardBg, borderBottomWidth: 1, borderBottomColor: t.border },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: t.textPrimary, marginLeft: 16 },
+    header: { paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 50 : 30, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: t.cardBg, borderBottomWidth: 1, borderBottomColor: t.border },
+    headerTitle: { fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginLeft: 12 },
     content: { padding: 20 },
     companyCard: { marginBottom: 15, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -50,10 +50,16 @@ export default function SearchResults() {
     <SafeAreaView style={styles.container}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
-          <Ionicons name="arrow-back" size={24} color={t.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>All Dyeing Units ({SEARCH_RESULTS.length})</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginLeft: -4 }}>
+            <Ionicons name="arrow-back" size={20} color={t.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>All Results ({SEARCH_RESULTS.length})</Text>
+        </View>
+        <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.3)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>AD</Text>
+          <Text style={{ color: t.textPrimary, fontSize: 12, fontWeight: '600' }}>TCG Tech Ads</Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>

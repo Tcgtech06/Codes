@@ -324,7 +324,7 @@ export default function App() {
                       )}
                     </View>
                   ) : (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: -16, marginRight: -20 }} contentContainerStyle={{ gap: 12, paddingLeft: 16, paddingRight: 36 }}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: -12 }} contentContainerStyle={{ gap: 12, paddingRight: 20 }}>
                       {SEARCH_RESULTS.slice(0, 4).map((c, i) => renderCard(c, i))}
                       {SEARCH_RESULTS.length > 4 && (
                         <View style={{ justifyContent: 'center' }}>
