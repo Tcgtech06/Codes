@@ -482,7 +482,7 @@ export default function App() {
 
               {/* Details List */}
               <View style={{ gap: 15, marginBottom: 24 }}>
-                <TouchableOpacity onPress={() => { setShowPhoneOptions(selectedCompany?.phone); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                <TouchableOpacity onPress={() => Linking.openURL(`tel:${selectedCompany?.phone}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
                   <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(52, 211, 153, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="call" size={20} color={t.accent1} />
                   </View>
