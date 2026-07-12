@@ -90,7 +90,6 @@ export default function App() {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const [hideHeader, setHideHeader] = useState(false);
-  const [hideFooter, setHideFooter] = useState(false);
   const lastScrollY = useRef(0);
 
   const cardAnims = useRef([...Array(10)].map(() => new Animated.Value(0))).current;
@@ -104,20 +103,17 @@ export default function App() {
     const currentY = event.nativeEvent.contentOffset.y;
     if (currentY <= 0) {
       setHideHeader(false);
-      setHideFooter(false);
       lastScrollY.current = currentY;
       return;
     }
     const diff = currentY - lastScrollY.current;
     if (Math.abs(diff) > 10) {
       if (diff > 0) {
-        // Swiping up (scrolling down)
+        // Swiping up (scrolling down) - Hide header
         setHideHeader(true);
-        setHideFooter(false);
       } else {
-        // Swiping down (scrolling up)
+        // Swiping down (scrolling up) - Show header
         setHideHeader(false);
-        setHideFooter(true);
       }
       lastScrollY.current = currentY;
     }
@@ -366,7 +362,6 @@ export default function App() {
             </ScrollView>
 
             {/* Bottom Input Area */}
-            {(!hideFooter || isWebOrTablet) && (
             <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: !hasText ? 12 : 8, borderTopWidth: 1, borderTopColor: t.border }]}>
               {!hasText && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
@@ -431,7 +426,6 @@ export default function App() {
               </View>
               <Text style={[styles.disclaimer, { color: t.textSecondary }]}>Tiruppur AI can make mistakes. Verify important information.</Text>
             </View>
-            )}
           </KeyboardAvoidingView>
         </View>
       </View>
@@ -459,13 +453,6 @@ export default function App() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Facility Images */}
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-                {[1, 2, 3, 4].map((i) => (
-                  <Image key={i} source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}${i}/200` }} style={{ width: '48%', height: 100, borderRadius: 12, backgroundColor: t.border, flexGrow: 1 }} />
-                ))}
-              </View>
-
               {/* Products/Services */}
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
@@ -516,6 +503,14 @@ export default function App() {
                     <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.address}</Text>
                   </View>
                 </TouchableOpacity>
+              </View>
+
+              {/* Facility Images */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Facility Overview</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <Image key={i} source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}${i}/200` }} style={{ width: '48%', height: 100, borderRadius: 12, backgroundColor: t.border, flexGrow: 1 }} />
+                ))}
               </View>
             </ScrollView>
           </View>
