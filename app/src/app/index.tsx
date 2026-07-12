@@ -31,14 +31,14 @@ const tLight = {
 };
 
 const tDark = {
-  name: 'Minimalist Dark',
-  bg: '#0F172A',
-  cardBg: '#1E293B',
-  textPrimary: '#F8FAFC',
-  textSecondary: '#94A3B8',
-  accent1: '#FFFFFF', // White accent in dark mode
-  accent2: '#10B981',
-  border: '#334155',
+  name: 'Midnight Slate',
+  bg: '#0F172A', // Slate 900
+  cardBg: '#1E293B', // Slate 800
+  textPrimary: '#F8FAFC', // Slate 50
+  textSecondary: '#94A3B8', // Slate 400
+  accent1: '#3B82F6', // Blue for user bubbles & buttons
+  accent2: '#60A5FA', // Secondary blue
+  border: '#334155', // Slate 700
   sidebarBg: '#0F172A'
 };
 
@@ -173,9 +173,9 @@ export default function App() {
             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
               <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: '#DCFCE7', borderColor: '#86EFAC', borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8, flexDirection: 'row', gap: 6 }]}>
-              <Ionicons name="logo-whatsapp" size={isWebOrTablet ? 18 : 16} color="#16A34A" />
-              <Text style={{ color: '#16A34A', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#DCFCE7', borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : '#86EFAC', borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8, flexDirection: 'row', gap: 6 }]}>
+              <Ionicons name="logo-whatsapp" size={isWebOrTablet ? 18 : 16} color={isDarkMode ? "#4ADE80" : "#16A34A"} />
+              <Text style={{ color: isDarkMode ? "#4ADE80" : "#16A34A", fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
