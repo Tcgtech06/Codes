@@ -176,8 +176,8 @@ export default function App() {
 
               {/* User Message */}
               <View style={styles.userMessageRow}>
-                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }]}>
-                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 22 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
+                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
@@ -187,21 +187,22 @@ export default function App() {
                   <Ionicons name="sparkles" size={16} color={t.accent1} />
                 </View>
                 <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 26 : 22, marginBottom: 15 }}>Avinashi Road-la 3 nalla Dyeing Units iruku:</Text>
+                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la 3 nalla Dyeing Units iruku:</Text>
 
                   {/* Example Card */}
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
+                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { maxWidth: 350 }]}>
+                    <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
+                      <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+                    </View>
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>Sri Balaji Dyeing</Text>
-                          <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
-                        </View>
-                        <View style={{ backgroundColor: '#FFE600', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, shadowColor: '#FFE600', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }}>
-                          <Text style={{ color: '#000000', fontSize: 10, fontWeight: 'bold' }}>Sponsored</Text>
+                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>Sri Balaji Dyeing</Text>
+                          <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />
                         </View>
                       </View>
-                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
+                    </View>
+                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
                       <TouchableOpacity onPress={() => Linking.openURL('tel:+919876543210')} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
@@ -214,14 +215,14 @@ export default function App() {
                   </TouchableOpacity>
 
                   {/* Example Card 2 */}
-                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12 }, isWebOrTablet && { maxWidth: 350 }]}>
+                  <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany({ name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] })} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { maxWidth: 350 }]}>
                     <View style={styles.cardHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>KGM Dyeing Mill</Text>
-                        <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />
+                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>KGM Dyeing Mill</Text>
+                        <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />
                       </View>
                     </View>
-                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 6 }}>Avinashi Road, Tiruppur</Text>
+                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>Avinashi Road, Tiruppur</Text>
 
                     <View style={styles.cardActions}>
                       <TouchableOpacity onPress={() => Linking.openURL('tel:+919123456789')} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
@@ -242,9 +243,9 @@ export default function App() {
                       <Ionicons name="sparkles" size={16} color={t.accent1} />
                     </View>
                   )}
-                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }] : { flex: 1, paddingLeft: 12, paddingTop: 4 }}>
+                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
                     {msg.type === 'text' ? (
-                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 22 }}>{msg.text}</Text>
+                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>{msg.text}</Text>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Ionicons name="play-circle" size={32} color={msg.role === 'user' ? '#0F172A' : t.textPrimary} />
@@ -258,15 +259,15 @@ export default function App() {
             </ScrollView>
 
             {/* Bottom Input Area */}
-            <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }]}>
+            <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: 12, borderTopWidth: 1, borderTopColor: t.border }]}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
                   <Text style={{ color: t.textSecondary, fontSize: 14 }}>Knitting Units</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0FDF4', borderColor: '#86EFAC', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
                   <Text style={{ color: '#166534', fontSize: 14, fontWeight: '500' }}>TCG Tech Services</Text>
-                  <View style={{ backgroundColor: '#FFE600', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4, shadowColor: '#FFE600', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 3, elevation: 3 }}>
-                    <Text style={{ color: '#000000', fontSize: 9, fontWeight: 'bold' }}>Sponsored</Text>
+                  <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginLeft: 4 }}>
+                    <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
                   </View>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
@@ -325,29 +326,27 @@ export default function App() {
       {/* Company Details Modal */}
       <Modal visible={!!selectedCompany} transparent animationType="slide">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%' }}>
+          <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
+            {selectedCompany?.ad && (
+              <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
+                <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+              </View>
+            )}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-              <View>
+              <View style={{ flex: 1, paddingRight: 10 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                   <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary }}>{selectedCompany?.name}</Text>
                   {selectedCompany?.verified && <MaterialIcons name="verified" size={20} color="#3B82F6" />}
                 </View>
                 <Text style={{ color: t.textSecondary, fontSize: 14 }}>{selectedCompany?.address}</Text>
               </View>
-              <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15 }}>
+              <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20, marginTop: selectedCompany?.ad ? 28 : 0 }}>
                 <Ionicons name="close" size={24} color={t.textPrimary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               {/* Stats / Badges */}
-              {selectedCompany?.ad && (
-                <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-                  <View style={{ backgroundColor: '#FFE600', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, shadowColor: '#FFE600', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 6, elevation: 4 }}>
-                    <Text style={{ color: '#000000', fontSize: 12, fontWeight: 'bold' }}>Sponsored</Text>
-                  </View>
-                </View>
-              )}
 
               {/* Products/Services */}
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
@@ -444,27 +443,27 @@ const styles = StyleSheet.create({
   historyText: { fontSize: 14, flex: 1 },
 
   mainContent: { flex: 1 },
-  mobileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 15, paddingTop: Platform.OS === 'web' ? 15 : 50, borderBottomWidth: 1 },
-  mobileHeaderTitle: { fontSize: 18, fontWeight: 'bold' },
+  mobileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 12, paddingTop: Platform.OS === 'web' ? 15 : 45, borderBottomWidth: 1 },
+  mobileHeaderTitle: { fontSize: 16, fontWeight: 'bold' },
 
-  chatArea: { padding: 15, paddingBottom: 150 },
-  messageBubble: { padding: 16, borderRadius: 20, maxWidth: '90%' },
-  userMessageRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 25 },
-  aiMessageRow: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 25, gap: 10 },
-  aiAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0', marginTop: 5 },
+  chatArea: { padding: 10, paddingBottom: 150 },
+  messageBubble: { padding: 12, borderRadius: 16, maxWidth: '92%' },
+  userMessageRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 20 },
+  aiMessageRow: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 20, gap: 8 },
+  aiAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0', marginTop: 4 },
   userBubble: { borderBottomRightRadius: 4 },
-  aiBubble: { borderBottomLeftRadius: 4, maxWidth: '85%' },
+  aiBubble: { borderBottomLeftRadius: 4, maxWidth: '88%' },
 
-  companyCard: { marginTop: 15, padding: 16, borderRadius: 16, borderWidth: 1 },
+  companyCard: { marginTop: 12, padding: 12, borderRadius: 12, borderWidth: 1 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardActions: { flexDirection: 'row', gap: 10, marginTop: 15 },
-  actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  cardActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  actionBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
 
-  bottomContainer: { position: 'absolute', bottom: 0, width: '100%', paddingBottom: Platform.OS === 'ios' ? 30 : 20, backgroundColor: 'transparent' },
-  chipsRow: { flexDirection: 'row', marginBottom: 15 },
-  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, marginRight: 10 },
-  inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 15, borderRadius: 25, borderWidth: 1, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  textInput: { flex: 1, minHeight: 40, maxHeight: 120, paddingHorizontal: 15, paddingTop: Platform.OS === 'ios' ? 10 : 8, fontSize: 16, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
+  bottomContainer: { position: 'absolute', bottom: 0, width: '100%', paddingBottom: Platform.OS === 'ios' ? 25 : 15, backgroundColor: 'transparent' },
+  chipsRow: { flexDirection: 'row', marginBottom: 10 },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 20, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 12, paddingTop: Platform.OS === 'ios' ? 8 : 6, fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
   actionIconBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   disclaimer: { textAlign: 'center', fontSize: 11, marginTop: 10 }
 });
