@@ -19,27 +19,27 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'SaaS Slate',
-  bg: '#F1F5F9', // True Cool Gray background (Slate 100)
+  name: 'AI Lavender',
+  bg: '#FAFAFA', // Snow White background
   cardBg: '#FFFFFF', // White bubbles
-  textPrimary: '#1E293B', // Slate 800 text
-  textSecondary: '#64748B', // Slate 500 text
-  accent1: '#64748B', // Real Cool Gray for user bubbles (Slate 500)
-  accent2: '#94A3B8', // Slate 400
-  border: '#E2E8F0', // Slate 200 border
-  sidebarBg: '#F8FAFC'
+  textPrimary: '#4C1D95', // Deep Purple text
+  textSecondary: '#6D28D9', // Royal Purple text
+  accent1: '#6D28D9', // Royal Purple for user bubbles
+  accent2: '#F3E8FF', // Soft Lavender secondary
+  border: '#E9D5FF', // Purple border
+  sidebarBg: '#FAFAFA'
 };
 
 const tDark = {
-  name: 'Midnight Slate',
-  bg: '#0F172A', // Slate 900
-  cardBg: '#1E293B', // Slate 800
-  textPrimary: '#F8FAFC', // Slate 50
-  textSecondary: '#94A3B8', // Slate 400
-  accent1: '#475569', // Slate 600 for user bubbles in dark mode
-  accent2: '#64748B', // Slate 500
-  border: '#334155', // Slate 700
-  sidebarBg: '#0F172A'
+  name: 'Dark Lavender',
+  bg: '#2E1065', // Purple 950
+  cardBg: '#4C1D95', // Purple 900
+  textPrimary: '#F3E8FF', // Purple 100
+  textSecondary: '#C4B5FD', // Purple 300
+  accent1: '#8B5CF6', // Purple 500
+  accent2: '#5B21B6', // Purple 800
+  border: '#6D28D9', // Purple 700
+  sidebarBg: '#2E1065'
 };
 
 const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
