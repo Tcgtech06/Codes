@@ -89,6 +89,59 @@ export default function App() {
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
+  const [hideHeader, setHideHeader] = useState(false);
+  const [hideFooter, setHideFooter] = useState(false);
+  const lastScrollY = useRef(0);
+
+  const handleScroll = (event: any) => {
+    if (isWebOrTablet) return; // Only apply hide logic on mobile
+    const currentY = event.nativeEvent.contentOffset.y;
+    if (currentY <= 0) {
+      setHideHeader(false);
+      setHideFooter(false);
+      lastScrollY.current = currentY;
+      return;
+    }
+    const diff = currentY - lastScrollY.current;
+    if (Math.abs(diff) > 10) {
+      if (diff > 0) {
+        // Swiping up (scrolling down)
+        setHideHeader(true);
+        setHideFooter(false);
+      } else {
+        // Swiping down (scrolling up)
+        setHideHeader(false);
+        setHideFooter(true);
+      }
+      lastScrollY.current = currentY;
+    }
+  };
+
+  const renderCard = (company: any) => (
+    <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
+      {company.ad && (
+        <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
+          <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+        </View>
+      )}
+      <View style={styles.cardHeader}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
+          {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />}
+        </View>
+      </View>
+      <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>{company.address}</Text>
+      <View style={styles.cardActions}>
+        <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+          <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+          <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+
   const handleSend = () => {
     if (!hasText) return;
     Vibration.vibrate(50);
@@ -183,7 +236,8 @@ export default function App() {
         <View style={[styles.mainContent, { backgroundColor: t.bg }]}>
 
           {/* Main Header */}
-          <View style={[styles.mobileHeader, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
+          {(!hideHeader || isWebOrTablet) && (
+            <View style={[styles.mobileHeader, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               {isWebOrTablet ? (
                 <TouchableOpacity onPress={() => setDesktopSidebarOpen(true)} style={{ opacity: desktopSidebarOpen ? 0 : 1 }}>
@@ -216,17 +270,22 @@ export default function App() {
               </TouchableOpacity>
             </View>
           </View>
+          )}
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
-            <ScrollView contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }]}>
+            <ScrollView 
+              contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }]}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+            >
 
               {/* User Message */}
               <View style={styles.userMessageRow}>
-                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }]}>
-                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
+                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
@@ -238,33 +297,23 @@ export default function App() {
                 <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
                   <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la {SEARCH_RESULTS.length} nalla Dyeing Units iruku:</Text>
 
-                  <View style={isWebOrTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: 16 } : {}}>
-                    {SEARCH_RESULTS.slice(0, 4).map(company => (
-                      <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12, overflow: 'hidden' }, isWebOrTablet && { width: 300, marginTop: 0 }]}>
-                        {company.ad && (
-                          <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
-                            <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
-                          </View>
-                        )}
-                        <View style={styles.cardHeader}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>{company.name}</Text>
-                          {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />}
+                  {isWebOrTablet ? (
+                    <View style={{ gap: 16 }}>
+                      <View style={{ flexDirection: 'row', gap: 16 }}>
+                        {SEARCH_RESULTS.slice(0, 2).map(renderCard)}
+                      </View>
+                      {SEARCH_RESULTS.length > 2 && (
+                        <View style={{ flexDirection: 'row', gap: 16 }}>
+                          {SEARCH_RESULTS.slice(2, 4).map(renderCard)}
+                          {SEARCH_RESULTS.length === 3 && <View style={{ flex: 1, maxWidth: 400 }} />}
                         </View>
-                      </View>
-                      <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 4 }}>{company.address}</Text>
-
-                      <View style={styles.cardActions}>
-                        <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
-                          <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 13, fontWeight: '600' }}>Call Now</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
-                          <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 13, fontWeight: '600' }}>WhatsApp</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                  </View>
+                      )}
+                    </View>
+                  ) : (
+                    <View>
+                      {SEARCH_RESULTS.slice(0, 4).map(renderCard)}
+                    </View>
+                  )}
 
                   {SEARCH_RESULTS.length > 4 && (
                     <View style={isWebOrTablet ? { width: '100%', alignItems: 'center', marginTop: 10 } : {}}>
@@ -283,9 +332,9 @@ export default function App() {
                       <Ionicons name="sparkles" size={16} color={t.accent1} />
                     </View>
                   )}
-                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
+                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
                     {msg.type === 'text' ? (
-                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20 }}>{msg.text}</Text>
+                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>{msg.text}</Text>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Ionicons name="play-circle" size={32} color={msg.role === 'user' ? '#0F172A' : t.textPrimary} />
@@ -300,6 +349,7 @@ export default function App() {
             </ScrollView>
 
             {/* Bottom Input Area */}
+            {(!hideFooter || isWebOrTablet) && (
             <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: !hasText ? 12 : 8, borderTopWidth: 1, borderTopColor: t.border }]}>
               {!hasText && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
@@ -364,6 +414,7 @@ export default function App() {
               </View>
               <Text style={[styles.disclaimer, { color: t.textSecondary }]}>Tiruppur AI can make mistakes. Verify important information.</Text>
             </View>
+            )}
           </KeyboardAvoidingView>
         </View>
       </View>
