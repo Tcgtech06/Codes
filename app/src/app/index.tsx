@@ -20,12 +20,12 @@ export const SEARCH_RESULTS = [
 
 const tLight = {
   name: 'SaaS Slate',
-  bg: '#F8FAFC', // Cool Gray background
+  bg: '#F1F5F9', // True Cool Gray background (Slate 100)
   cardBg: '#FFFFFF', // White bubbles
-  textPrimary: '#0F172A', // Slate 900 text
-  textSecondary: '#475569', // Slate 600 text
-  accent1: '#3B82F6', // Blue for user bubbles & buttons
-  accent2: '#60A5FA', // Secondary blue
+  textPrimary: '#1E293B', // Slate 800 text
+  textSecondary: '#64748B', // Slate 500 text
+  accent1: '#64748B', // Real Cool Gray for user bubbles (Slate 500)
+  accent2: '#94A3B8', // Slate 400
   border: '#E2E8F0', // Slate 200 border
   sidebarBg: '#F8FAFC'
 };
@@ -36,8 +36,8 @@ const tDark = {
   cardBg: '#1E293B', // Slate 800
   textPrimary: '#F8FAFC', // Slate 50
   textSecondary: '#94A3B8', // Slate 400
-  accent1: '#3B82F6', // Blue for user bubbles & buttons
-  accent2: '#60A5FA', // Secondary blue
+  accent1: '#475569', // Slate 600 for user bubbles in dark mode
+  accent2: '#64748B', // Slate 500
   border: '#334155', // Slate 700
   sidebarBg: '#0F172A'
 };
