@@ -123,22 +123,36 @@ export default function SearchResults() {
                 })}
               </View>
 
-              <View style={{ backgroundColor: t.bg, padding: 16, borderRadius: 12, marginBottom: 20 }}>
-                <Text style={{ fontSize: 14, color: t.textSecondary, marginBottom: 8 }}>Match Score</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <View style={{ flex: 1, height: 8, backgroundColor: '#E2E8F0', borderRadius: 4 }}>
-                    <View style={{ width: selectedCompany?.match || '90%', height: '100%', backgroundColor: '#10B981', borderRadius: 4 }} />
+              {/* Details List */}
+              <View style={{ gap: 15, marginBottom: 24 }}>
+                <TouchableOpacity onPress={() => Linking.openURL(`tel:${selectedCompany?.phone}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(52, 211, 153, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="call" size={20} color={t.accent1} />
                   </View>
-                  <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#10B981' }}>{selectedCompany?.match || '90%'}</Text>
-                </View>
-              </View>
-
-              <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
-                <TouchableOpacity onPress={() => Linking.openURL(`tel:${selectedCompany?.phone}`)} style={{ flex: 1, backgroundColor: t.accent1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Call Now</Text>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Contact Number</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.phone}</Text>
+                  </View>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${selectedCompany?.phone?.replace(/[^0-9]/g, '')}`)} style={{ flex: 1, backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}>
-                  <Text style={{ color: t.accent1, fontSize: 16, fontWeight: 'bold' }}>WhatsApp</Text>
+
+                <TouchableOpacity onPress={() => Linking.openURL(`mailto:${selectedCompany?.email}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="mail" size={20} color="#3B82F6" />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Email Address</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.email}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => Linking.openURL(`https://maps.google.com/?q=${selectedCompany?.address}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(239, 68, 68, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="location" size={20} color="#EF4444" />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Location</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.address}</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </ScrollView>
