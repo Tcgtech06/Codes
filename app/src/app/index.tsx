@@ -19,27 +19,27 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'Pastel Mint',
-  bg: '#F9FAFB', // Off-white/Slate background
+  name: 'Minimalist Black & White',
+  bg: '#FAFAFA', // Pastel White background
   cardBg: '#FFFFFF',
-  textPrimary: '#1F2937',
-  textSecondary: '#6B7280',
-  accent1: '#34D399', // Pastel Mint / Sage Green (Soothing)
-  accent2: '#FBBF24', // Soft Gold
-  border: '#E5E7EB',
+  textPrimary: '#0F172A',
+  textSecondary: '#475569',
+  accent1: '#0F172A', // Pure Black primary accent
+  accent2: '#10B981', // Subtle pastel green for mix
+  border: '#E2E8F0',
   sidebarBg: '#FFFFFF'
 };
 
 const tDark = {
-  name: 'Mint Dark',
-  bg: '#111827',
-  cardBg: '#1F2937',
-  textPrimary: '#F9FAFB',
-  textSecondary: '#9CA3AF',
-  accent1: '#10B981', // Slightly deeper emerald for dark mode contrast
-  accent2: '#FBBF24',
-  border: '#374151',
-  sidebarBg: '#111827'
+  name: 'Minimalist Dark',
+  bg: '#0F172A',
+  cardBg: '#1E293B',
+  textPrimary: '#F8FAFC',
+  textSecondary: '#94A3B8',
+  accent1: '#FFFFFF', // White accent in dark mode
+  accent2: '#10B981',
+  border: '#334155',
+  sidebarBg: '#0F172A'
 };
 
 const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
@@ -89,6 +89,7 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('TA');
+  const [showLangMenu, setShowLangMenu] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number }[]>([]);
   const hasText = inputText.trim().length > 0;
@@ -440,19 +441,35 @@ export default function App() {
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
                   {/* Language Toggle Button */}
-                  <TouchableOpacity
-                    onPress={() => {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      setLanguage(prev => prev === 'EN' ? 'TA' : prev === 'TA' ? 'HI' : 'EN');
-                    }}
-                    style={[
-                      styles.actionIconBtn,
-                      !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
-                      { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, marginRight: 8 }
-                    ]}
-                  >
-                    <Text style={{ color: t.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{language}</Text>
-                  </TouchableOpacity>
+                  <View style={{ position: 'relative', zIndex: 50 }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setShowLangMenu(!showLangMenu);
+                      }}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
+                        { backgroundColor: showLangMenu ? t.accent2 : t.cardBg, borderColor: showLangMenu ? t.accent2 : t.border, borderWidth: 1, marginRight: 8 }
+                      ]}
+                    >
+                      <Text style={{ color: showLangMenu ? '#fff' : t.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{language}</Text>
+                    </TouchableOpacity>
+
+                    {showLangMenu && (
+                      <View style={{ position: 'absolute', bottom: 45, left: -20, backgroundColor: t.cardBg, borderRadius: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 100 }}>
+                        {['EN', 'TA', 'HI'].map(lang => (
+                          <TouchableOpacity 
+                            key={lang} 
+                            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setLanguage(lang as any); setShowLangMenu(false); }}
+                            style={{ paddingHorizontal: 12, paddingVertical: 10, backgroundColor: language === lang ? 'rgba(16, 185, 129, 0.1)' : 'transparent', borderRadius: 8, marginBottom: 2 }}
+                          >
+                            <Text style={{ color: language === lang ? t.accent2 : t.textPrimary, fontWeight: language === lang ? 'bold' : 'normal', fontSize: 14 }}>{lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil' : 'Hindi'}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
 
                   {/* Mic Button (Left of Send Button) */}
                   <TouchableOpacity
