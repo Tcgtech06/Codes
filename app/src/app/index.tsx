@@ -122,8 +122,8 @@ export default function App() {
   const renderCard = (company: any, index: number) => {
     const anim = cardAnims[index] || cardAnims[0];
     return (
-      <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet ? { flex: 1, maxWidth: 400, marginTop: 0 } : { width: '100%', maxWidth: 320, alignSelf: 'flex-start' }]}>
-        <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
+      <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => { Vibration.vibrate(50); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
           {company.ad && (
             <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
               <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
@@ -137,10 +137,10 @@ export default function App() {
           </View>
           <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>{company.address}</Text>
           <View style={styles.cardActions}>
-            <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+            <TouchableOpacity onPress={() => { Vibration.vibrate(50); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
               <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+            <TouchableOpacity onPress={() => { Vibration.vibrate(50); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`); }} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
               <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
             </TouchableOpacity>
           </View>
@@ -324,16 +324,16 @@ export default function App() {
                       )}
                     </View>
                   ) : (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: -12 }} contentContainerStyle={{ gap: 12, paddingRight: 20 }}>
+                    <View>
                       {SEARCH_RESULTS.slice(0, 4).map((c, i) => renderCard(c, i))}
                       {SEARCH_RESULTS.length > 4 && (
-                        <View style={{ justifyContent: 'center' }}>
-                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
-                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All</Text>
+                        <View style={{ marginTop: 10 }}>
+                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
                           </TouchableOpacity>
                         </View>
                       )}
-                    </ScrollView>
+                    </View>
                   )}
                 </View>
               </View>
@@ -394,6 +394,14 @@ export default function App() {
                     multiline
                     value={inputText}
                     onChangeText={setInputText}
+                    onKeyPress={(e: any) => {
+                      if (e.nativeEvent.key === 'Enter' && Platform.OS === 'web') {
+                        if (!e.nativeEvent.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }
+                    }}
                   />
                 )}
 
