@@ -19,9 +19,9 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'Pastel Green & White',
-  bg: '#FEF2F2', // Pastel Red background
-  cardBg: '#FFFFFF', // White bubbles
+  name: 'Pastel Yellow & Yellow',
+  bg: '#FEF9C3', // Pastel Yellow background
+  cardBg: '#FEF9C3', // Pastel Yellow bubbles
   textPrimary: '#064E3B', // Dark green text
   textSecondary: '#047857',
   accent1: '#3B82F6', // Blue for user bubbles & buttons
@@ -173,9 +173,9 @@ export default function App() {
             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
               <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.border, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8, flexDirection: 'row', gap: 6 }]}>
-              <Ionicons name="logo-whatsapp" size={isWebOrTablet ? 18 : 16} color="#25D366" />
-              <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: '#DCFCE7', borderColor: '#86EFAC', borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8, flexDirection: 'row', gap: 6 }]}>
+              <Ionicons name="logo-whatsapp" size={isWebOrTablet ? 18 : 16} color="#16A34A" />
+              <Text style={{ color: '#16A34A', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   chipsRow: { flexDirection: 'row', marginBottom: 10 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
   inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 30, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6, textAlignVertical: 'bottom', fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
+  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 0, textAlignVertical: 'bottom', fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
   actionIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   disclaimer: { textAlign: 'center', fontSize: 11, marginTop: 10 }
 });
