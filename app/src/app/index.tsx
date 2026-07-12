@@ -19,27 +19,27 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'Tiruppur Cotton Green',
-  bg: '#FAFAFA', // Pastel White / Cotton White
-  cardBg: '#FFFFFF', // Pure White
-  textPrimary: '#1F2937', // Dark Gray text
-  textSecondary: '#4B5563', // Medium Gray text
-  accent1: '#14532D', // Deep Forest Green (Text in bubbles & primary buttons)
-  accent2: '#DCFCE7', // Light Pastel Green (User bubbles)
-  border: '#E5E7EB', // Soft border
+  name: 'Pure White Minimalist',
+  bg: '#FAFAFA', // Pastel White / Off-white background
+  cardBg: '#FFFFFF', // Pure White cards
+  textPrimary: '#18181B', // Dark White / Black text
+  textSecondary: '#71717A', // Grey text
+  accent1: '#18181B', // Almost Black for primary buttons
+  accent2: '#F4F4F5', // Light White (Zinc 100) for user bubbles
+  border: '#E4E4E7', // Zinc 200 border
   sidebarBg: '#FAFAFA'
 };
 
 const tDark = {
-  name: 'Eco Dark',
-  bg: '#052E16', // Very Dark Green
-  cardBg: '#14532D', // Forest Green
-  textPrimary: '#F0FDF4', // Mint White
-  textSecondary: '#BBF7D0', // Light Green
-  accent1: '#4ADE80', // Bright Green
-  accent2: '#064E3B', // Deep Green
-  border: '#166534', // Border Green
-  sidebarBg: '#052E16'
+  name: 'Pure Black Minimalist',
+  bg: '#000000', // Pure Black
+  cardBg: '#111111', // Very Dark Grey
+  textPrimary: '#FAFAFA', // Pure White text
+  textSecondary: '#A1A1AA', // Grey text
+  accent1: '#3F3F46', // Dark Grey for primary buttons
+  accent2: '#27272A', // Grey 800 for user bubbles
+  border: '#333333', // Border
+  sidebarBg: '#000000'
 };
 
 const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
@@ -327,7 +327,7 @@ export default function App() {
               {/* User Message */}
               <View style={styles.userMessageRow}>
                 <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
-                  <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
