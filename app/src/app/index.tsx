@@ -298,7 +298,7 @@ export default function App() {
                   <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la {SEARCH_RESULTS.length} nalla Dyeing Units iruku:</Text>
 
                   {isWebOrTablet ? (
-                    <View style={{ gap: 16 }}>
+                    <View style={{ gap: 16, maxWidth: 816 }}>
                       <View style={{ flexDirection: 'row', gap: 16 }}>
                         {SEARCH_RESULTS.slice(0, 2).map(renderCard)}
                       </View>
@@ -308,18 +308,24 @@ export default function App() {
                           {SEARCH_RESULTS.length === 3 && <View style={{ flex: 1, maxWidth: 400 }} />}
                         </View>
                       )}
+                      {SEARCH_RESULTS.length > 4 && (
+                        <View style={{ width: '100%', alignItems: 'center', marginTop: 10 }}>
+                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 40, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
                   ) : (
                     <View>
                       {SEARCH_RESULTS.slice(0, 4).map(renderCard)}
-                    </View>
-                  )}
-
-                  {SEARCH_RESULTS.length > 4 && (
-                    <View style={isWebOrTablet ? { width: '100%', alignItems: 'center', marginTop: 10 } : {}}>
-                      <TouchableOpacity onPress={() => router.push('/search-results')} style={[{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }, !isWebOrTablet ? { marginTop: 10 } : { paddingHorizontal: 40 }]}>
-                        <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
-                      </TouchableOpacity>
+                      {SEARCH_RESULTS.length > 4 && (
+                        <View style={{ marginTop: 10 }}>
+                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
                   )}
                 </View>
