@@ -19,14 +19,14 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'Minimalist Black & White',
-  bg: '#FAFAFA', // Pastel White background
-  cardBg: '#FFFFFF',
-  textPrimary: '#0F172A',
-  textSecondary: '#475569',
-  accent1: '#0F172A', // Pure Black primary accent
-  accent2: '#10B981', // Subtle pastel green for mix
-  border: '#E2E8F0',
+  name: 'Pastel Green & White',
+  bg: '#ECFDF5', // Pastel Green background
+  cardBg: '#FFFFFF', // Pastel White bubbles
+  textPrimary: '#064E3B', // Dark green text
+  textSecondary: '#047857',
+  accent1: '#059669', // Emerald accent
+  accent2: '#10B981',
+  border: '#D1FAE5',
   sidebarBg: '#FFFFFF'
 };
 
@@ -449,11 +449,11 @@ export default function App() {
                       }}
                       style={[
                         styles.actionIconBtn,
-                        !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
-                        { backgroundColor: showLangMenu ? t.accent2 : t.cardBg, borderColor: showLangMenu ? t.accent2 : t.border, borderWidth: 1, marginRight: 8 }
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: showLangMenu ? t.accent2 : t.cardBg, borderColor: showLangMenu ? t.accent2 : t.border, borderWidth: 1, marginRight: 6 }
                       ]}
                     >
-                      <Text style={{ color: showLangMenu ? '#fff' : t.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{language}</Text>
+                      <Ionicons name="language" size={isWebOrTablet ? 18 : 16} color={showLangMenu ? '#fff' : t.textPrimary} />
                     </TouchableOpacity>
 
                     {showLangMenu && (
@@ -476,11 +476,11 @@ export default function App() {
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsRecording(!isRecording); }}
                     style={[
                       styles.actionIconBtn,
-                      !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
-                      { backgroundColor: isRecording ? '#EF4444' : t.accent1, marginRight: 8 }
+                      !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                      { backgroundColor: isRecording ? '#EF4444' : t.accent1, marginRight: 6 }
                     ]}
                   >
-                    <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 20 : 16} color="#fff" />
+                    <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color="#fff" />
                   </TouchableOpacity>
 
                   {/* Send Button */}
@@ -488,12 +488,12 @@ export default function App() {
                     onPress={handleSend}
                     style={[
                       styles.actionIconBtn,
-                      !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
-                      { backgroundColor: hasText ? t.accent1 : '#E2E8F0' }
+                      !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                      { backgroundColor: hasText ? t.accent1 : '#D1FAE5' }
                     ]}
                     disabled={!hasText}
                   >
-                    <Ionicons name="arrow-up" size={isWebOrTablet ? 20 : 16} color={hasText ? "#fff" : "#94A3B8"} />
+                    <Ionicons name="arrow-up" size={isWebOrTablet ? 18 : 16} color={hasText ? "#fff" : "#059669"} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -671,8 +671,8 @@ const styles = StyleSheet.create({
   bottomContainer: { width: '100%', paddingBottom: Platform.OS === 'ios' ? 20 : 10, backgroundColor: 'transparent' },
   chipsRow: { flexDirection: 'row', marginBottom: 10 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
-  inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 20, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 12, paddingTop: Platform.OS === 'ios' ? 8 : 6, fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
-  actionIconBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 30, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 8 : 6, fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
+  actionIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   disclaimer: { textAlign: 'center', fontSize: 11, marginTop: 10 }
 });
