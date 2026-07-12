@@ -64,7 +64,7 @@ const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
 };
 
 const HotDogMenu = ({ isOpen, isMobile }: { isOpen?: boolean, isMobile?: boolean }) => (
-  <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ scale: isMobile ? 0.75 : 1 }] }}>
+  <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ scale: isMobile ? 0.85 : 1 }] }}>
     <View style={[{ width: isOpen ? 28 : 20, height: 5, borderRadius: 3, backgroundColor: '#EF4444', position: 'absolute' }, isOpen ? { top: 11.5, transform: [{ rotate: '45deg' }] } : { top: 4 }]} />
     <View style={[{ width: 28, height: 5, borderRadius: 3, backgroundColor: '#22C55E', position: 'absolute', top: 11.5 }, isOpen ? { opacity: 0 } : {}]} />
     <View style={[{ width: isOpen ? 28 : 20, height: 5, borderRadius: 3, backgroundColor: '#F59E0B', position: 'absolute' }, isOpen ? { top: 11.5, transform: [{ rotate: '-45deg' }] } : { top: 19 }]} />
@@ -136,7 +136,7 @@ export default function App() {
 
         {/* Sidebar */}
         {((isWebOrTablet && desktopSidebarOpen) || (!isWebOrTablet && sidebarOpen)) && (
-          <View style={[styles.sidebar, !isWebOrTablet && { width: 220 }, { backgroundColor: t.sidebarBg, borderRightColor: t.border }, { position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10 }]}>
+          <View style={[styles.sidebar, !isWebOrTablet && { width: 250 }, { backgroundColor: t.sidebarBg, borderRightColor: t.border }, { position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10 }]}>
             <View style={styles.sidebarHeader}>
               <Text style={[styles.sidebarTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
               {isWebOrTablet ? (
@@ -211,7 +211,7 @@ export default function App() {
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
-                <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
+                <Text style={{ fontSize: 16 }}>{isDarkMode ? "☀️" : "🌙"}</Text>
                 <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
               </TouchableOpacity>
             </View>
@@ -225,8 +225,8 @@ export default function App() {
 
               {/* User Message */}
               <View style={styles.userMessageRow}>
-                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
-                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }]}>
+                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
@@ -240,26 +240,26 @@ export default function App() {
 
                   <View style={isWebOrTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: 16 } : {}}>
                     {SEARCH_RESULTS.slice(0, 4).map(company => (
-                      <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 14 : 8, overflow: 'hidden' }, isWebOrTablet && { width: '47%', marginTop: 0 }]}>
+                      <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12, overflow: 'hidden' }, isWebOrTablet && { width: '47%', marginTop: 0 }]}>
                         {company.ad && (
-                          <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 10, paddingVertical: 3, borderBottomLeftRadius: 10, zIndex: 10 }}>
-                            <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+                          <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
+                            <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
                           </View>
                         )}
                         <View style={styles.cardHeader}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>{company.name}</Text>
-                          {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 14 : 12} color="#3B82F6" />}
+                          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 14 }}>{company.name}</Text>
+                          {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 14} color="#3B82F6" />}
                         </View>
                       </View>
-                      <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 12 : 10, marginVertical: 3 }}>{company.address}</Text>
+                      <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 12, marginVertical: 4 }}>{company.address}</Text>
 
                       <View style={styles.cardActions}>
-                        <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 8 : 6 }]}>
-                          <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 11, fontWeight: '600' }}>Call Now</Text>
+                        <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+                          <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 13, fontWeight: '600' }}>Call Now</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 8 : 6 }]}>
-                          <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 11, fontWeight: '600' }}>WhatsApp</Text>
+                        <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+                          <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 13, fontWeight: '600' }}>WhatsApp</Text>
                         </TouchableOpacity>
                       </View>
                     </TouchableOpacity>
@@ -267,8 +267,8 @@ export default function App() {
                   </View>
 
                   {SEARCH_RESULTS.length > 4 && (
-                    <TouchableOpacity onPress={() => router.push('/search-results')} style={{ marginTop: 6, paddingVertical: 8, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 10, alignItems: 'center', ...(isWebOrTablet ? { maxWidth: 350 } : {}) }}>
-                      <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 12 }}>View All {SEARCH_RESULTS.length} Results</Text>
+                    <TouchableOpacity onPress={() => router.push('/search-results')} style={{ marginTop: 10, paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center', ...(isWebOrTablet ? { maxWidth: 350 } : {}) }}>
+                      <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -281,9 +281,9 @@ export default function App() {
                       <Ionicons name="sparkles" size={16} color={t.accent1} />
                     </View>
                   )}
-                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
+                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 12 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
                     {msg.type === 'text' ? (
-                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>{msg.text}</Text>
+                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20 }}>{msg.text}</Text>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <Ionicons name="play-circle" size={32} color={msg.role === 'user' ? '#0F172A' : t.textPrimary} />
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   historyText: { fontSize: 14, flex: 1 },
 
   mainContent: { flex: 1 },
-  mobileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, paddingTop: Platform.OS === 'web' ? 10 : 35, borderBottomWidth: 1 },
+  mobileHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingTop: Platform.OS === 'web' ? 12 : 40, borderBottomWidth: 1 },
   mobileHeaderTitle: { fontSize: 16, fontWeight: 'bold' },
 
   chatArea: { padding: 10, paddingBottom: 150 },
