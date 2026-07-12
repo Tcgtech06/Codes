@@ -1,8 +1,8 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Vibration } from 'react-native';
+import { useEffect, useState, useRef } from 'react';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Vibration, Animated } from 'react-native';
 
 export const SEARCH_RESULTS = [
   { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
@@ -36,6 +36,33 @@ const tDark = {
   sidebarBg: '#111827'
 };
 
+const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 20, gap: 8, alignItems: 'flex-start' }}>
+      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.cardBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: t.border, marginTop: 4 }}>
+        <Ionicons name="sparkles" size={16} color={t.accent1} />
+      </View>
+      <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
+        <Animated.View style={{ width: 200, height: 20, borderRadius: 6, backgroundColor: t.border, opacity, marginBottom: 15 }} />
+        <View style={isWebOrTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: 16 } : { gap: 12 }}>
+          {[1, 2].map(i => (
+            <Animated.View key={i} style={{ width: isWebOrTablet ? '47%' : '100%', height: 140, borderRadius: 12, backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, opacity }} />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const HotDogMenu = ({ isOpen, isMobile }: { isOpen?: boolean, isMobile?: boolean }) => (
   <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ scale: isMobile ? 0.75 : 1 }] }}>
     <View style={[{ width: isOpen ? 28 : 20, height: 5, borderRadius: 3, backgroundColor: '#EF4444', position: 'absolute' }, isOpen ? { top: 11.5, transform: [{ rotate: '45deg' }] } : { top: 4 }]} />
@@ -60,6 +87,20 @@ export default function App() {
   const hasText = inputText.trim().length > 0;
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  const handleSend = () => {
+    if (!hasText) return;
+    Vibration.vibrate(50);
+    const newMsg = { id: Date.now().toString(), role: 'user', type: 'text', text: inputText } as any;
+    setMessages(prev => [...prev, newMsg]);
+    setInputText('');
+    setIsChatLoading(true);
+    setTimeout(() => {
+      setIsChatLoading(false);
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: 'I am still learning! This is a demo UI response for now.' }]);
+    }, 1500);
+  };
 
   useEffect(() => {
     let interval: any;
@@ -197,14 +238,15 @@ export default function App() {
                 <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
                   <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la {SEARCH_RESULTS.length} nalla Dyeing Units iruku:</Text>
 
-                  {SEARCH_RESULTS.slice(0, 4).map(company => (
-                    <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 14 : 8, overflow: 'hidden' }, isWebOrTablet && { maxWidth: 350 }]}>
-                      {company.ad && (
-                        <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 10, paddingVertical: 3, borderBottomLeftRadius: 10, zIndex: 10 }}>
-                          <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
-                        </View>
-                      )}
-                      <View style={styles.cardHeader}>
+                  <View style={isWebOrTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: 16 } : {}}>
+                    {SEARCH_RESULTS.slice(0, 4).map(company => (
+                      <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 14 : 8, overflow: 'hidden' }, isWebOrTablet && { width: '47%', marginTop: 0 }]}>
+                        {company.ad && (
+                          <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 10, paddingVertical: 3, borderBottomLeftRadius: 10, zIndex: 10 }}>
+                            <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+                          </View>
+                        )}
+                        <View style={styles.cardHeader}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 14 : 12 }}>{company.name}</Text>
                           {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 14 : 12} color="#3B82F6" />}
@@ -222,6 +264,7 @@ export default function App() {
                       </View>
                     </TouchableOpacity>
                   ))}
+                  </View>
 
                   {SEARCH_RESULTS.length > 4 && (
                     <TouchableOpacity onPress={() => router.push('/search-results')} style={{ marginTop: 6, paddingVertical: 8, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 10, alignItems: 'center', ...(isWebOrTablet ? { maxWidth: 350 } : {}) }}>
@@ -251,11 +294,12 @@ export default function App() {
                   </View>
                 </View>
               ))}
+              {isChatLoading && <SkeletonLoading t={t} isWebOrTablet={isWebOrTablet} />}
             </ScrollView>
 
             {/* Bottom Input Area */}
-            <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: hasText ? 12 : 8, borderTopWidth: 1, borderTopColor: t.border }]}>
-              {hasText && (
+            <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: !hasText ? 12 : 8, borderTopWidth: 1, borderTopColor: t.border }]}>
+              {!hasText && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
                   <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
                     <Text style={{ color: t.textSecondary, fontSize: 12 }}>Knitting Units</Text>
@@ -304,6 +348,7 @@ export default function App() {
 
                   {/* Send Button */}
                   <TouchableOpacity
+                    onPress={handleSend}
                     style={[
                       styles.actionIconBtn,
                       !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
