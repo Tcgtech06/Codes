@@ -88,6 +88,7 @@ export default function App() {
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('TA');
   const [recordingTime, setRecordingTime] = useState(0);
   const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number }[]>([]);
   const hasText = inputText.trim().length > 0;
@@ -438,6 +439,21 @@ export default function App() {
                 )}
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                  {/* Language Toggle Button */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setLanguage(prev => prev === 'EN' ? 'TA' : prev === 'TA' ? 'HI' : 'EN');
+                    }}
+                    style={[
+                      styles.actionIconBtn,
+                      !isWebOrTablet && { width: 34, height: 34, borderRadius: 17, marginBottom: 0 },
+                      { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, marginRight: 8 }
+                    ]}
+                  >
+                    <Text style={{ color: t.textPrimary, fontSize: 12, fontWeight: 'bold' }}>{language}</Text>
+                  </TouchableOpacity>
+
                   {/* Mic Button (Left of Send Button) */}
                   <TouchableOpacity
                     onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsRecording(!isRecording); }}
