@@ -36,8 +36,8 @@ const tDark = {
   cardBg: '#111111', // Very Dark Grey
   textPrimary: '#FAFAFA', // Pure White text
   textSecondary: '#A1A1AA', // Grey text
-  accent1: '#3F3F46', // Dark Grey for primary buttons
-  accent2: '#27272A', // Grey 800 for user bubbles
+  accent1: '#18181B', // Dark Grey for primary buttons and user bubble text
+  accent2: '#F4F4F5', // Pastel White (Zinc 100) for user bubbles
   border: '#333333', // Border
   sidebarBg: '#000000'
 };
@@ -148,8 +148,8 @@ export default function App() {
       <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
         <TouchableOpacity activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
           {company.ad && (
-            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 2 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
+              <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
             </View>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
@@ -327,7 +327,7 @@ export default function App() {
               {/* User Message */}
               <View style={styles.userMessageRow}>
                 <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
-                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                  <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
