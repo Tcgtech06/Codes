@@ -19,27 +19,27 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'Pure White Minimalist',
-  bg: '#FAFAFA', // Pastel White / Off-white background
+  name: 'Tiruppur Pure Cotton',
+  bg: '#FFFFFF', // Pure White background
   cardBg: '#FFFFFF', // Pure White cards
-  textPrimary: '#18181B', // Dark White / Black text
-  textSecondary: '#71717A', // Grey text
-  accent1: '#18181B', // Almost Black for primary buttons
-  accent2: '#F4F4F5', // Light White (Zinc 100) for user bubbles
-  border: '#E4E4E7', // Zinc 200 border
-  sidebarBg: '#FAFAFA'
+  textPrimary: '#1F2937', // Dark Gray text
+  textSecondary: '#4B5563', // Medium Gray text
+  accent1: '#14532D', // Deep Forest Green (Text in bubbles & primary buttons)
+  accent2: '#F8FAFC', // Pastel White / Light Grey (User bubbles)
+  border: '#F3F4F6', // Very soft border
+  sidebarBg: '#FFFFFF'
 };
 
 const tDark = {
-  name: 'Pure Black Minimalist',
-  bg: '#000000', // Pure Black
-  cardBg: '#111111', // Very Dark Grey
-  textPrimary: '#FAFAFA', // Pure White text
-  textSecondary: '#A1A1AA', // Grey text
-  accent1: '#18181B', // Dark Grey for primary buttons and user bubble text
-  accent2: '#F4F4F5', // Pastel White (Zinc 100) for user bubbles
-  border: '#333333', // Border
-  sidebarBg: '#000000'
+  name: 'Tiruppur Dark Cotton',
+  bg: '#052E16', // Very Dark Green
+  cardBg: '#14532D', // Forest Green
+  textPrimary: '#F0FDF4', // Mint White
+  textSecondary: '#BBF7D0', // Light Green
+  accent1: '#14532D', // Deep Green for text in user bubbles
+  accent2: '#F8FAFC', // Pastel White for user bubbles
+  border: '#166534', // Border Green
+  sidebarBg: '#052E16'
 };
 
 const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
@@ -148,8 +148,8 @@ export default function App() {
       <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
         <TouchableOpacity activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
           {company.ad && (
-            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
-              <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 2 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
             </View>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
