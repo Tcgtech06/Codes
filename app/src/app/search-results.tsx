@@ -1,7 +1,7 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Linking, Modal, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { SEARCH_RESULTS } from './index';
 
@@ -34,6 +34,24 @@ export default function SearchResults() {
   const { width } = useWindowDimensions();
   const isWebOrTablet = width > 768;
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [hideHeader, setHideHeader] = useState(false);
+  const lastScrollY = useRef(0);
+
+  const handleScroll = (event: any) => {
+    if (isWebOrTablet) return;
+    const currentY = event.nativeEvent.contentOffset.y;
+    if (currentY < 0) return;
+
+    const diff = currentY - lastScrollY.current;
+    if (Math.abs(diff) > 10) {
+      if (diff > 0) {
+        setHideHeader(true);
+      } else {
+        setHideHeader(false);
+      }
+      lastScrollY.current = currentY;
+    }
+  };
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: t.bg },
@@ -49,20 +67,26 @@ export default function SearchResults() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
-      <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginLeft: -4 }}>
-            <Ionicons name="arrow-back" size={20} color={t.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>All Results ({SEARCH_RESULTS.length})</Text>
+      {(!hideHeader || isWebOrTablet) && (
+        <View style={styles.header}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginLeft: -4 }}>
+              <Ionicons name="arrow-back" size={20} color={t.textPrimary} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>All Results ({SEARCH_RESULTS.length})</Text>
+          </View>
+          <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.3)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>AD</Text>
+            <Text style={{ color: t.textPrimary, fontSize: 12, fontWeight: '600' }}>TCG Tech Ads</Text>
+          </View>
         </View>
-        <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.3)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>AD</Text>
-          <Text style={{ color: t.textPrimary, fontSize: 12, fontWeight: '600' }}>TCG Tech Ads</Text>
-        </View>
-      </View>
+      )}
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {SEARCH_RESULTS.map(company => (
           <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { alignSelf: 'center', width: '100%', maxWidth: 600 }]}>
             {company.ad && (
