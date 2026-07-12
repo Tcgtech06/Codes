@@ -6,9 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
 export const SEARCH_RESULTS = [
-  { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
+  { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, offer: '10% OFF', match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
   { id: '2', name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] },
-  { id: '3', name: 'Royal Colors', verified: false, ad: false, match: '89%', address: 'Avinashi Road, Tiruppur', phone: '+919876543211', email: 'info@royalcolors.com', products: ['Knitwear Dyeing', 'Woven Dyeing'] },
+  { id: '3', name: 'Royal Colors', verified: false, ad: false, offer: 'Festive Discount', match: '89%', address: 'Avinashi Road, Tiruppur', phone: '+919876543211', email: 'info@royalcolors.com', products: ['Knitwear Dyeing', 'Woven Dyeing'] },
   { id: '4', name: 'Tiruppur Tech Dyes', verified: true, ad: false, match: '85%', address: 'Avinashi Road, Tiruppur', phone: '+919876543212', email: 'hello@techdyes.com', products: ['Eco-friendly Dyeing', 'Bleaching'] },
   { id: '5', name: 'Modern Dyeing Works', verified: false, ad: false, match: '80%', address: 'Avinashi Road, Tiruppur', phone: '+919876543213', email: 'contact@moderndyeing.com', products: ['Cotton Dyeing'] },
   { id: '6', name: 'Evergreen Textiles', verified: true, ad: false, match: '78%', address: 'PN Road, Tiruppur', phone: '+919876543214', email: 'sales@evergreentextiles.com', products: ['Compact Yarn', 'Fabric Printing'] },
@@ -96,6 +96,7 @@ export default function App() {
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const [hideHeader, setHideHeader] = useState(false);
   const lastScrollY = useRef(0);
@@ -167,7 +168,21 @@ export default function App() {
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
               <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
+              
+              {company.offer && company.ad && (
+                <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
+                  <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
+                  <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
+                </View>
+              )}
             </View>
+
+            {company.offer && !company.ad && (
+              <View style={{ backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', justifyContent: 'center', marginLeft: 8 }}>
+                <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginBottom: 2 }} />
+                <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{company.offer}</Text>
+              </View>
+            )}
           </View>
           <View style={styles.cardActions}>
             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
@@ -243,6 +258,27 @@ export default function App() {
                 </TouchableOpacity>
               )}
             </View>
+            
+            {!isWebOrTablet && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: t.border, marginBottom: 20 }}>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.border, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                  <Ionicons name="person" size={20} color={t.textSecondary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>Guest User</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                    <TouchableOpacity onPress={() => router.push('/login')}>
+                      <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Login</Text>
+                    </TouchableOpacity>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>|</Text>
+                    <TouchableOpacity onPress={() => router.push('/signup')}>
+                      <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Sign Up</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+
             <TouchableOpacity onPress={() => setMessages([])} style={[styles.newChatBtn, { backgroundColor: t.accent1 }]}>
               <Ionicons name="add" size={20} color="#0F172A" />
               <Text style={{ color: '#0F172A', fontWeight: 'bold', marginLeft: 8 }}>New Chat</Text>
@@ -299,14 +335,33 @@ export default function App() {
                 </View>
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
+                  {isWebOrTablet && (
+                    <View style={{ position: 'relative', zIndex: 60 }}>
+                      <TouchableOpacity onPress={() => setShowProfileMenu(!showProfileMenu)} style={{ alignItems: 'center' }}>
+                        <Ionicons name="person-outline" size={20} color={t.textPrimary} />
+                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Profile</Text>
+                      </TouchableOpacity>
+                      {showProfileMenu && (
+                        <View style={{ position: 'absolute', top: 40, right: -10, backgroundColor: t.cardBg, borderRadius: 12, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 120 }}>
+                          <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/login'); }} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
+                            <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Login</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/signup'); }} style={{ padding: 10 }}>
+                            <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Sign Up</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  )}
+
                   <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
                     <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
                     <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Upload</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
-                    <Ionicons name="megaphone-outline" size={20} color={t.accent2} />
-                    <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
+                    <Ionicons name="megaphone-outline" size={20} color={t.textPrimary} />
+                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>

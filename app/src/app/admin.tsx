@@ -71,9 +71,38 @@ export default function AdminDashboard() {
     setAds(ads.filter(a => a.id !== id));
   };
 
+  const getTabIcon = (tab: string) => {
+    switch(tab) {
+      case 'overview': return 'pie-chart-outline';
+      case 'pending': return 'time-outline';
+      case 'ads': return 'megaphone-outline';
+      case 'companies': return 'business-outline';
+      case 'sub_admins': return 'people-outline';
+      default: return 'list';
+    }
+  };
+
+  const renderSidebar = () => (
+    <View style={{ width: 260, backgroundColor: t.cardBg, borderRightWidth: 1, borderColor: t.border, paddingVertical: 24, height: '100%' }}>
+      <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.textSecondary, letterSpacing: 1, marginLeft: 24, marginBottom: 16, textTransform: 'uppercase' }}>Admin Menu</Text>
+      {['overview', 'pending', 'ads', 'companies', 'sub_admins'].map((tab) => (
+        <TouchableOpacity
+          key={tab}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
+          style={[{ paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }, activeTab === tab && { backgroundColor: '#ECFDF5', borderRightWidth: 4, borderColor: t.accent1 }]}
+        >
+          <Ionicons name={getTabIcon(tab) as any} size={22} color={activeTab === tab ? t.accent1 : t.textSecondary} />
+          <Text style={[{ fontSize: 15 }, activeTab === tab ? { color: t.accent1, fontWeight: 'bold' } : { color: t.textSecondary }]}>
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+
   const renderTabs = () => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabContainer}>
-      {['overview', 'pending', 'ads', 'companies'].map((tab) => (
+      {['overview', 'pending', 'ads', 'companies', 'sub_admins'].map((tab) => (
         <TouchableOpacity
           key={tab}
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
@@ -153,26 +182,28 @@ export default function AdminDashboard() {
   const renderPending = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Requires Approval ({MOCK_PENDING.length})</Text>
-      {MOCK_PENDING.map(item => (
-        <View key={item.id} style={styles.card}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <View>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              <Text style={styles.cardSub}>{item.address} • {item.type}</Text>
-              <Text style={styles.cardSub}>{item.phone}</Text>
-              <Text style={{ fontSize: 11, color: t.textSecondary, marginTop: 4 }}>Submitted: {item.date}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}>
-                <Ionicons name="close" size={20} color={t.danger} />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#D1FAE5', borderColor: '#6EE7B7' }]}>
-                <Ionicons name="checkmark" size={20} color={t.accent1} />
-              </TouchableOpacity>
+      <View style={{ flexDirection: isWebOrTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
+        {MOCK_PENDING.map(item => (
+          <View key={item.id} style={[styles.card, isWebOrTablet && { flex: 1, minWidth: 300, marginBottom: 0 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                <Text style={styles.cardSub}>{item.address} • {item.type}</Text>
+                <Text style={styles.cardSub}>{item.phone}</Text>
+                <Text style={{ fontSize: 11, color: t.textSecondary, marginTop: 4 }}>Submitted: {item.date}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}>
+                  <Ionicons name="close" size={20} color={t.danger} />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#D1FAE5', borderColor: '#6EE7B7' }]}>
+                  <Ionicons name="checkmark" size={20} color={t.accent1} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 
@@ -214,28 +245,90 @@ export default function AdminDashboard() {
         </View>
       )}
 
-      {ads.map(ad => (
-        <View key={ad.id} style={styles.card}>
-          <Image source={{ uri: ad.image }} style={{ width: '100%', height: 120, borderRadius: 8, marginBottom: 12, backgroundColor: t.border }} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <View style={{ flex: 1, paddingRight: 10 }}>
-              <Text style={styles.cardTitle}>{ad.title}</Text>
-              <TouchableOpacity onPress={() => Linking.openURL(ad.link)}>
-                <Text style={[styles.cardSub, { color: t.accent2, textDecorationLine: 'underline' }]} numberOfLines={1}>{ad.link}</Text>
-              </TouchableOpacity>
-              <Text style={styles.cardSub}>{ad.impressions} Impressions • {ad.status}</Text>
+      <View style={{ flexDirection: isWebOrTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
+        {ads.map(ad => (
+          <View key={ad.id} style={[styles.card, isWebOrTablet && { flex: 1, minWidth: 350, marginBottom: 0 }]}>
+            <Image source={{ uri: ad.image }} style={{ width: '100%', height: 160, borderRadius: 8, marginBottom: 12, backgroundColor: t.border }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1, paddingRight: 10 }}>
+                <Text style={styles.cardTitle}>{ad.title}</Text>
+                <TouchableOpacity onPress={() => Linking.openURL(ad.link)}>
+                  <Text style={[styles.cardSub, { color: t.accent2, textDecorationLine: 'underline' }]} numberOfLines={1}>{ad.link}</Text>
+                </TouchableOpacity>
+                <Text style={styles.cardSub}>{ad.impressions} Impressions • {ad.status}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#F1F5F9', borderColor: '#CBD5E1' }]}>
+                  <Ionicons name="pencil" size={18} color={t.textPrimary} />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => deleteAd(ad.id)} style={[styles.actionBtn, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}>
+                  <Ionicons name="trash" size={18} color={t.danger} />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#F1F5F9', borderColor: '#CBD5E1' }]}>
-                <Ionicons name="pencil" size={18} color={t.textPrimary} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteAd(ad.id)} style={[styles.actionBtn, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}>
-                <Ionicons name="trash" size={18} color={t.danger} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const [subAdmins, setSubAdmins] = useState([
+    { id: '1', name: 'Royal Admin', email: 'admin@royal.com', company: 'Royal Knitwear' }
+  ]);
+  const [showAddSubAdmin, setShowAddSubAdmin] = useState(false);
+  const [newSubAdmin, setNewSubAdmin] = useState({ name: '', email: '', password: '', company: '' });
+
+  const renderSubAdmins = () => (
+    <View style={styles.section}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Text style={styles.sectionTitle}>Company Sub-Admins</Text>
+        <TouchableOpacity onPress={() => setShowAddSubAdmin(!showAddSubAdmin)} style={{ backgroundColor: t.accent1, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Ionicons name={showAddSubAdmin ? "close" : "person-add"} size={16} color="#fff" />
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>{showAddSubAdmin ? "Cancel" : "Create Login"}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {showAddSubAdmin && (
+        <View style={[styles.card, { backgroundColor: '#F8FAFC', borderColor: t.accent1 }]}>
+          <Text style={[styles.cardTitle, { color: t.accent1 }]}>Create Company Access</Text>
+          <Text style={[styles.cardSub, { marginBottom: 16 }]}>This creates a login for a manufacturer to manage their own profile.</Text>
+
+          <TextInput placeholder="Company Name" style={styles.input} value={newSubAdmin.company} onChangeText={(t) => setNewSubAdmin({ ...newSubAdmin, company: t })} />
+          <TextInput placeholder="Admin Name" style={styles.input} value={newSubAdmin.name} onChangeText={(t) => setNewSubAdmin({ ...newSubAdmin, name: t })} />
+          <TextInput placeholder="Email Address" style={styles.input} autoCapitalize="none" keyboardType="email-address" value={newSubAdmin.email} onChangeText={(t) => setNewSubAdmin({ ...newSubAdmin, email: t })} />
+          <TextInput placeholder="Temporary Password" style={styles.input} secureTextEntry value={newSubAdmin.password} onChangeText={(t) => setNewSubAdmin({ ...newSubAdmin, password: t })} />
+          
+          <TouchableOpacity onPress={() => {
+            if(!newSubAdmin.name) return;
+            setSubAdmins([...subAdmins, { id: Date.now().toString(), name: newSubAdmin.name, email: newSubAdmin.email, company: newSubAdmin.company }]);
+            setShowAddSubAdmin(false);
+            setNewSubAdmin({ name: '', email: '', password: '', company: '' });
+          }} style={{ backgroundColor: t.accent1, padding: 12, borderRadius: 8, alignItems: 'center' }}>
+            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Generate Credentials</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={{ flexDirection: isWebOrTablet ? 'row' : 'column', flexWrap: 'wrap', gap: 16 }}>
+        {subAdmins.map(admin => (
+          <View key={admin.id} style={[styles.card, isWebOrTablet && { flex: 1, minWidth: 300, marginBottom: 0 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#E0F2FE', justifyContent: 'center', alignItems: 'center' }}>
+                  <Ionicons name="person" size={20} color={t.accent2} />
+                </View>
+                <View>
+                  <Text style={styles.cardTitle}>{admin.company}</Text>
+                  <Text style={styles.cardSub}>{admin.name} • {admin.email}</Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/company-admin')} style={[styles.actionBtn, { backgroundColor: '#F1F5F9', borderColor: '#CBD5E1', width: 'auto', paddingHorizontal: 12 }]}>
+                <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.textPrimary }}>Login As</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   );
 
@@ -277,26 +370,28 @@ export default function AdminDashboard() {
           </View>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.container, isWebOrTablet && { alignSelf: 'center', width: '100%', maxWidth: 800 }]}>
-          {renderTabs()}
-
-          {activeTab === 'overview' && renderOverview()}
-          {activeTab === 'pending' && renderPending()}
-          {activeTab === 'ads' && renderAds()}
-          {activeTab === 'companies' && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Manage Database</Text>
-              <View style={styles.card}>
-                <Text style={styles.cardTitle}>Full CRUD Access</Text>
-                <Text style={styles.cardSub}>Search and edit all approved company records here.</Text>
-                <View style={{ marginTop: 12, flexDirection: 'row', backgroundColor: t.bg, borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: t.border }}>
-                  <Ionicons name="search" size={20} color={t.textSecondary} style={{ marginHorizontal: 8 }} />
-                  <TextInput placeholder="Search companies..." style={{ flex: 1, outlineStyle: 'none' as any }} />
+        <View style={{ flex: 1, flexDirection: isWebOrTablet ? 'row' : 'column' }}>
+          {isWebOrTablet ? renderSidebar() : renderTabs()}
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.container, isWebOrTablet && { padding: 32, maxWidth: 1400, alignSelf: 'center', width: '100%' }]}>
+            {activeTab === 'overview' && renderOverview()}
+            {activeTab === 'pending' && renderPending()}
+            {activeTab === 'ads' && renderAds()}
+            {activeTab === 'companies' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Manage Database</Text>
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>Full CRUD Access</Text>
+                  <Text style={styles.cardSub}>Search and edit all approved company records here.</Text>
+                  <View style={{ marginTop: 12, flexDirection: 'row', backgroundColor: t.bg, borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: t.border }}>
+                    <Ionicons name="search" size={20} color={t.textSecondary} style={{ marginHorizontal: 8 }} />
+                    <TextInput placeholder="Search companies..." style={{ flex: 1, outlineStyle: 'none' as any }} />
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
-        </ScrollView>
+            )}
+            {activeTab === 'sub_admins' && renderSubAdmins()}
+          </ScrollView>
+        </View>
       )}
     </SafeAreaView>
   );

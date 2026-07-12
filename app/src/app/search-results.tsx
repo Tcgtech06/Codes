@@ -125,7 +125,21 @@ export default function SearchResults() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
                 <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
+                
+                {company.offer && company.ad && (
+                  <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
+                    <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
+                    <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
+                  </View>
+                )}
               </View>
+
+              {company.offer && !company.ad && (
+                <View style={{ backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', justifyContent: 'center', marginLeft: 8 }}>
+                  <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginBottom: 2 }} />
+                  <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{company.offer}</Text>
+                </View>
+              )}
             </View>
 
             <View style={styles.cardActions}>
