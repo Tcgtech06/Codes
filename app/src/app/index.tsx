@@ -24,8 +24,8 @@ const tLight = {
   cardBg: '#FFFFFF', // Pastel White bubbles
   textPrimary: '#064E3B', // Dark green text
   textSecondary: '#047857',
-  accent1: '#059669', // Emerald accent
-  accent2: '#10B981',
+  accent1: '#3B82F6', // Blue for user bubbles & buttons
+  accent2: '#60A5FA', // Secondary blue
   border: '#D1FAE5',
   sidebarBg: '#FFFFFF'
 };
@@ -326,7 +326,7 @@ export default function App() {
               {/* User Message */}
               <View style={styles.userMessageRow}>
                 <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
-                  <Text style={{ color: '#0F172A', fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                  <Text style={{ color: '#FFFFFF', fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   chipsRow: { flexDirection: 'row', marginBottom: 10 },
   chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
   inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 30, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
-  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 8 : 6, fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
+  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 12 : 10, paddingBottom: Platform.OS === 'ios' ? 12 : 10, textAlignVertical: 'center', fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
   actionIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
   disclaimer: { textAlign: 'center', fontSize: 11, marginTop: 10 }
 });
