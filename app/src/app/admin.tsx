@@ -3,7 +3,6 @@ import * as Haptics from 'expo-haptics';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Image, Linking, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-import { BarChart, LineChart, PieChart } from 'react-native-chart-kit';
 
 // Temporary Mock Data
 const MOCK_PENDING = [
@@ -122,10 +121,30 @@ export default function AdminDashboard() {
           </View>
         </View>
 
-        <View style={{ alignItems: 'center', overflow: 'hidden' }}>
-          {chartType === 'bar' && <BarChart data={{ labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], datasets: [{ data: [40, 60, 45, 80, 55, 90, 75] }] }} width={isWebOrTablet ? 700 : width - 64} height={220} yAxisLabel="" yAxisSuffix="" chartConfig={{ backgroundColor: '#fff', backgroundGradientFrom: '#fff', backgroundGradientTo: '#fff', color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`, labelColor: () => t.textSecondary, barPercentage: 0.6 }} style={{ borderRadius: 8, marginVertical: 8 }} />}
-          {chartType === 'line' && <LineChart data={{ labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], datasets: [{ data: [40, 60, 45, 80, 55, 90, 75] }] }} width={isWebOrTablet ? 700 : width - 64} height={220} yAxisLabel="" yAxisSuffix="" chartConfig={{ backgroundColor: '#fff', backgroundGradientFrom: '#fff', backgroundGradientTo: '#fff', color: (opacity = 1) => `rgba(14, 165, 233, ${opacity})`, labelColor: () => t.textSecondary }} bezier style={{ borderRadius: 8, marginVertical: 8 }} />}
-          {chartType === 'pie' && <PieChart data={[ { name: 'Users', population: 12450, color: t.accent1, legendFontColor: t.textSecondary }, { name: 'Clicks', population: 3240, color: t.accent2, legendFontColor: t.textSecondary }, { name: 'Companies', population: 480, color: t.textPrimary, legendFontColor: t.textSecondary } ]} width={isWebOrTablet ? 700 : width - 64} height={220} chartConfig={{ color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})` }} accessor="population" backgroundColor="transparent" paddingLeft="15" absolute />}
+        <View style={{ height: 180, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8, paddingHorizontal: 10, marginTop: 20 }}>
+          {chartType === 'bar' && [40, 60, 45, 80, 55, 90, 75].map((val, idx) => (
+            <View key={idx} style={{ flex: 1, alignItems: 'center' }}>
+              <View style={{ width: '100%', height: `${val}%`, backgroundColor: t.accent1, borderTopLeftRadius: 4, borderTopRightRadius: 4, opacity: idx === 6 ? 1 : 0.6 }} />
+              <Text style={{ fontSize: 10, color: t.textSecondary, marginTop: 8 }}>Day {idx + 1}</Text>
+            </View>
+          ))}
+          {chartType === 'line' && [40, 60, 45, 80, 55, 90, 75].map((val, idx) => (
+            <View key={idx} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.accent2, bottom: `${val}%`, position: 'absolute' }} />
+              <View style={{ width: 1, height: `${val}%`, backgroundColor: t.accent2, opacity: 0.2 }} />
+              <Text style={{ fontSize: 10, color: t.textSecondary, marginTop: 8 }}>Day {idx + 1}</Text>
+            </View>
+          ))}
+          {chartType === 'pie' && (
+             <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 24 }}>
+                <View style={{ width: 120, height: 120, borderRadius: 60, borderWidth: 20, borderColor: t.accent1, borderTopColor: t.accent2, borderRightColor: t.textPrimary, transform: [{rotate: '45deg'}] }} />
+                <View style={{ justifyContent: 'center', gap: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: t.accent1 }} /><Text style={{ fontSize: 12, color: t.textSecondary }}>Users (60%)</Text></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: t.accent2 }} /><Text style={{ fontSize: 12, color: t.textSecondary }}>Clicks (25%)</Text></View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: t.textPrimary }} /><Text style={{ fontSize: 12, color: t.textSecondary }}>Companies (15%)</Text></View>
+                </View>
+             </View>
+          )}
         </View>
       </View>
     </View>

@@ -412,7 +412,7 @@ export default function App() {
                 </ScrollView>
               )}
 
-              <View style={[styles.inputWrapper, { backgroundColor: t.cardBg, borderColor: t.border, alignItems: 'center' }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: t.cardBg, borderColor: t.border, alignItems: 'center', alignSelf: 'center', width: isWebOrTablet ? '100%' : '90%' }]}>
                 {isRecording ? (
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, height: 40 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444', marginRight: 10 }} />
