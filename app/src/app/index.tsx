@@ -211,7 +211,7 @@ export default function App() {
               </TouchableOpacity>
 
               <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 16 }}>{isDarkMode ? "☀️" : "🌙"}</Text>
+                <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
                 <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
               </TouchableOpacity>
             </View>
@@ -240,7 +240,7 @@ export default function App() {
 
                   <View style={isWebOrTablet ? { flexDirection: 'row', flexWrap: 'wrap', gap: 16 } : {}}>
                     {SEARCH_RESULTS.slice(0, 4).map(company => (
-                      <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12, overflow: 'hidden' }, isWebOrTablet && { width: '47%', marginTop: 0 }]}>
+                      <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 12, overflow: 'hidden' }, isWebOrTablet && { width: 300, marginTop: 0 }]}>
                         {company.ad && (
                           <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
                             <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
@@ -267,9 +267,11 @@ export default function App() {
                   </View>
 
                   {SEARCH_RESULTS.length > 4 && (
-                    <TouchableOpacity onPress={() => router.push('/search-results')} style={{ marginTop: 10, paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center', ...(isWebOrTablet ? { maxWidth: 350 } : {}) }}>
-                      <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
-                    </TouchableOpacity>
+                    <View style={isWebOrTablet ? { width: '100%', alignItems: 'center', marginTop: 10 } : {}}>
+                      <TouchableOpacity onPress={() => router.push('/search-results')} style={[{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }, !isWebOrTablet ? { marginTop: 10 } : { paddingHorizontal: 40 }]}>
+                        <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               </View>
