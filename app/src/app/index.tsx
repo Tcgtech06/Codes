@@ -19,27 +19,27 @@ export const SEARCH_RESULTS = [
 ];
 
 const tLight = {
-  name: 'AI Lavender',
-  bg: '#FAFAFA', // Snow White background
-  cardBg: '#FFFFFF', // White bubbles
-  textPrimary: '#4C1D95', // Deep Purple text
-  textSecondary: '#6D28D9', // Royal Purple text
-  accent1: '#6D28D9', // Royal Purple for user bubbles
-  accent2: '#F3E8FF', // Soft Lavender secondary
-  border: '#E9D5FF', // Purple border
+  name: 'Tiruppur Cotton Green',
+  bg: '#FAFAFA', // Pastel White / Cotton White
+  cardBg: '#FFFFFF', // Pure White
+  textPrimary: '#1F2937', // Dark Gray text
+  textSecondary: '#4B5563', // Medium Gray text
+  accent1: '#14532D', // Deep Forest Green (Text in bubbles & primary buttons)
+  accent2: '#DCFCE7', // Light Pastel Green (User bubbles)
+  border: '#E5E7EB', // Soft border
   sidebarBg: '#FAFAFA'
 };
 
 const tDark = {
-  name: 'Dark Lavender',
-  bg: '#2E1065', // Purple 950
-  cardBg: '#4C1D95', // Purple 900
-  textPrimary: '#F3E8FF', // Purple 100
-  textSecondary: '#C4B5FD', // Purple 300
-  accent1: '#8B5CF6', // Purple 500
-  accent2: '#5B21B6', // Purple 800
-  border: '#6D28D9', // Purple 700
-  sidebarBg: '#2E1065'
+  name: 'Eco Dark',
+  bg: '#052E16', // Very Dark Green
+  cardBg: '#14532D', // Forest Green
+  textPrimary: '#F0FDF4', // Mint White
+  textSecondary: '#BBF7D0', // Light Green
+  accent1: '#4ADE80', // Bright Green
+  accent2: '#064E3B', // Deep Green
+  border: '#166534', // Border Green
+  sidebarBg: '#052E16'
 };
 
 const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
