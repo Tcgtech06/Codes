@@ -2,7 +2,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState, useRef } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Vibration, Animated } from 'react-native';
+import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Vibration, Animated, Image } from 'react-native';
 
 export const SEARCH_RESULTS = [
   { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
@@ -126,7 +126,7 @@ export default function App() {
   const renderCard = (company: any, index: number) => {
     const anim = cardAnims[index] || cardAnims[0];
     return (
-    <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
+    <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet ? { flex: 1, maxWidth: 400, marginTop: 0 } : { width: '100%', maxWidth: 320, alignSelf: 'flex-start' }]}>
       <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
         {company.ad && (
           <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
@@ -437,7 +437,8 @@ export default function App() {
       </View>
       {/* Company Details Modal */}
       <Modal visible={!!selectedCompany} transparent animationType="slide">
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <Pressable style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={() => setSelectedCompany(null)} />
           <View style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
             {selectedCompany?.ad && (
               <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
@@ -458,7 +459,12 @@ export default function App() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Stats / Badges */}
+              {/* Facility Images */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <Image key={i} source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}${i}/200` }} style={{ width: '48%', height: 100, borderRadius: 12, backgroundColor: t.border, flexGrow: 1 }} />
+                ))}
+              </View>
 
               {/* Products/Services */}
               <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
