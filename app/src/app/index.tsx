@@ -1,8 +1,8 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useRef } from 'react';
-import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Vibration, Animated, Image } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Image, KeyboardAvoidingView, Linking, Modal, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, Vibration, View } from 'react-native';
 
 export const SEARCH_RESULTS = [
   { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
@@ -122,31 +122,31 @@ export default function App() {
   const renderCard = (company: any, index: number) => {
     const anim = cardAnims[index] || cardAnims[0];
     return (
-    <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet ? { flex: 1, maxWidth: 400, marginTop: 0 } : { width: '100%', maxWidth: 320, alignSelf: 'flex-start' }]}>
-      <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
-        {company.ad && (
-          <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
-            <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+      <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet ? { flex: 1, maxWidth: 400, marginTop: 0 } : { width: '100%', maxWidth: 320, alignSelf: 'flex-start' }]}>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => setSelectedCompany(company)} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 1 }]}>
+          {company.ad && (
+            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 3, elevation: 1 }}>
+              <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+            </View>
+          )}
+          <View style={styles.cardHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
+              {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />}
+            </View>
           </View>
-        )}
-      <View style={styles.cardHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
-          {company.verified && <MaterialIcons name="verified" size={isWebOrTablet ? 16 : 13} color="#3B82F6" />}
-        </View>
-      </View>
-      <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>{company.address}</Text>
-      <View style={styles.cardActions}>
-        <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
-          <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
+          <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginVertical: 4 }}>{company.address}</Text>
+          <View style={styles.cardActions}>
+            <TouchableOpacity onPress={() => Linking.openURL(`tel:${company.phone}`)} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+              <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+              <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}`)} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
-          <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>WhatsApp</Text>
-        </TouchableOpacity>
-      </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
+      </Animated.View>
+    );
   };
 
   const handleSend = () => {
@@ -245,45 +245,45 @@ export default function App() {
           {/* Main Header */}
           {(!hideHeader || isWebOrTablet) && (
             <View style={[styles.mobileHeader, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {isWebOrTablet ? (
-                <TouchableOpacity onPress={() => setDesktopSidebarOpen(true)} style={{ opacity: desktopSidebarOpen ? 0 : 1 }}>
-                  <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary, fontSize: 20 }]}>Tiruppur AI</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {isWebOrTablet ? (
+                  <TouchableOpacity onPress={() => setDesktopSidebarOpen(true)} style={{ opacity: desktopSidebarOpen ? 0 : 1 }}>
+                    <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary, fontSize: 20 }]}>Tiruppur AI</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={() => setSidebarOpen(true)} style={{ opacity: sidebarOpen ? 0 : 1, marginRight: 10 }}>
+                    <HotDogMenu isMobile={true} />
+                  </TouchableOpacity>
+                )}
+                {!isWebOrTablet && (
+                  <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
+                )}
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
+                <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
+                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Upload</Text>
                 </TouchableOpacity>
-              ) : (
-                <TouchableOpacity onPress={() => setSidebarOpen(true)} style={{ opacity: sidebarOpen ? 0 : 1, marginRight: 10 }}>
-                  <HotDogMenu isMobile={true} />
+
+                <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
+                  <Ionicons name="megaphone-outline" size={20} color={t.accent2} />
+                  <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
                 </TouchableOpacity>
-              )}
-              {!isWebOrTablet && (
-                <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
-              )}
+
+                <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
+                  <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
+                  <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
-              <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
-                <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
-                <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Upload</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
-                <Ionicons name="megaphone-outline" size={20} color={t.accent2} />
-                <Text style={{ color: t.accent2, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
-                <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
-                <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
           )}
 
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
-            <ScrollView 
+            <ScrollView
               contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
@@ -324,16 +324,16 @@ export default function App() {
                       )}
                     </View>
                   ) : (
-                    <View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: -16, marginRight: -20 }} contentContainerStyle={{ gap: 12, paddingLeft: 16, paddingRight: 36 }}>
                       {SEARCH_RESULTS.slice(0, 4).map((c, i) => renderCard(c, i))}
                       {SEARCH_RESULTS.length > 4 && (
-                        <View style={{ marginTop: 10 }}>
-                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
-                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
+                        <View style={{ justifyContent: 'center' }}>
+                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 16, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All</Text>
                           </TouchableOpacity>
                         </View>
                       )}
-                    </View>
+                    </ScrollView>
                   )}
                 </View>
               </View>
