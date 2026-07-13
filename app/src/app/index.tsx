@@ -20,25 +20,25 @@ export const SEARCH_RESULTS = [
 
 const tLight = {
   name: 'Tiruppur Pure Cotton',
-  bg: '#FFFFFF', // Pure White background
+  bg: '#F0FDF4', // Pastel Green background
   cardBg: '#FFFFFF', // Pure White cards
-  textPrimary: '#1F2937', // Dark Gray text
+  textPrimary: '#0F172A', // Dark Gray text
   textSecondary: '#4B5563', // Medium Gray text
-  accent1: '#14532D', // Deep Forest Green (Text in bubbles & primary buttons)
-  accent2: '#F8FAFC', // Pastel White / Light Grey (User bubbles)
-  border: '#F3F4F6', // Very soft border
-  sidebarBg: '#FFFFFF'
+  accent1: '#14532D', // Deep Forest Green
+  accent2: '#FAFAFA', // Pastel White / Light Grey (User bubbles)
+  border: '#E5E7EB', // Very soft border
+  sidebarBg: '#F0FDF4'
 };
 
 const tDark = {
   name: 'Tiruppur Dark Cotton',
   bg: '#052E16', // Very Dark Green
-  cardBg: '#14532D', // Forest Green
+  cardBg: '#064E3B', // Darker Forest Green
   textPrimary: '#F0FDF4', // Mint White
-  textSecondary: '#BBF7D0', // Light Green
-  accent1: '#14532D', // Deep Green for text in user bubbles
-  accent2: '#F8FAFC', // Pastel White for user bubbles
-  border: '#166534', // Border Green
+  textSecondary: '#A7F3D0', // Light Green
+  accent1: '#10B981', // Emerald
+  accent2: '#14532D', // Deep Green for bubbles
+  border: '#047857', // Border Green
   sidebarBg: '#052E16'
 };
 
@@ -185,8 +185,8 @@ export default function App() {
             )}
           </View>
           <View style={styles.cardActions}>
-            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
-              <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, paddingVertical: isWebOrTablet ? 10 : 8 }]}>
+              <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 14 : 12, fontWeight: '600' }}>Call Now</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#DCFCE7', borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : '#86EFAC', borderWidth: 1, paddingVertical: isWebOrTablet ? 10 : 8, flexDirection: 'row', gap: 6 }]}>
               <Ionicons name="logo-whatsapp" size={isWebOrTablet ? 18 : 16} color={isDarkMode ? "#4ADE80" : "#16A34A"} />
@@ -279,9 +279,9 @@ export default function App() {
               </View>
             )}
 
-            <TouchableOpacity onPress={() => setMessages([])} style={[styles.newChatBtn, { backgroundColor: t.accent1 }]}>
-              <Ionicons name="add" size={20} color="#0F172A" />
-              <Text style={{ color: '#0F172A', fontWeight: 'bold', marginLeft: 8 }}>New Chat</Text>
+            <TouchableOpacity onPress={() => setMessages([])} style={[styles.newChatBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border }]}>
+              <Ionicons name="add" size={20} color={t.textPrimary} />
+              <Text style={{ color: t.textPrimary, fontWeight: 'bold', marginLeft: 8 }}>New Chat</Text>
             </TouchableOpacity>
 
             <ScrollView style={styles.historyList}>
@@ -381,8 +381,8 @@ export default function App() {
 
               {/* User Message */}
               <View style={styles.userMessageRow}>
-                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
-                  <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
+                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
+                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
                 </View>
               </View>
 
@@ -435,14 +435,14 @@ export default function App() {
                       <Ionicons name="sparkles" size={16} color={t.accent1} />
                     </View>
                   )}
-                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent1, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
+                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
                     {msg.type === 'text' ? (
-                      <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18 }}>{msg.text}</Text>
+                      <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{msg.text}</Text>
                     ) : (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <Ionicons name="play-circle" size={32} color={msg.role === 'user' ? '#0F172A' : t.textPrimary} />
-                        <View style={{ height: 4, width: 100, backgroundColor: msg.role === 'user' ? 'rgba(15,23,42,0.3)' : t.border, borderRadius: 2 }} />
-                        <Text style={{ color: msg.role === 'user' ? '#0F172A' : t.textPrimary, fontSize: 14 }}>{formatTime(msg.duration || 0)}</Text>
+                        <Ionicons name="play-circle" size={32} color={t.textPrimary} />
+                        <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
+                        <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
                       </View>
                     )}
                   </View>
@@ -470,7 +470,7 @@ export default function App() {
                 </ScrollView>
               )}
 
-              <View style={[styles.inputWrapper, { backgroundColor: t.cardBg, borderColor: t.border, alignItems: 'center', alignSelf: 'center', width: isWebOrTablet ? '100%' : '90%' }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: t.accent2, borderColor: t.border, borderWidth: 1, alignItems: 'center', alignSelf: 'center', width: isWebOrTablet ? '100%' : '90%' }]}>
                 {isRecording ? (
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, height: 40 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444', marginRight: 10 }} />
@@ -533,10 +533,10 @@ export default function App() {
                     style={[
                       styles.actionIconBtn,
                       !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
-                      { backgroundColor: isRecording ? '#EF4444' : t.accent1, marginRight: 6 }
+                      { backgroundColor: isRecording ? '#EF4444' : t.accent2, marginRight: 6 }
                     ]}
                   >
-                    <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color="#fff" />
+                    <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color={isRecording ? "#fff" : t.textPrimary} />
                   </TouchableOpacity>
 
                   {/* Send Button */}
@@ -545,11 +545,11 @@ export default function App() {
                     style={[
                       styles.actionIconBtn,
                       !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
-                      { backgroundColor: hasText ? t.accent1 : '#D1FAE5' }
+                      { backgroundColor: hasText ? t.accent2 : (isDarkMode ? t.cardBg : '#F1F5F9') }
                     ]}
                     disabled={!hasText}
                   >
-                    <Ionicons name="arrow-up" size={isWebOrTablet ? 18 : 16} color={hasText ? "#fff" : "#059669"} />
+                    <Ionicons name="arrow-up" size={isWebOrTablet ? 18 : 16} color={hasText ? t.textPrimary : (isDarkMode ? t.border : "#94A3B8")} />
                   </TouchableOpacity>
                 </View>
               </View>

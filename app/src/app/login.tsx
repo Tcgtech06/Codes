@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 const t = {
-  bg: '#F8FAFC',
+  bg: '#F0FDF4',
   cardBg: '#FFFFFF',
   border: '#E2E8F0',
   textPrimary: '#0F172A',
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 15,
     color: t.textPrimary,
-    ...(Platform.OS === 'web' && { outlineStyle: 'none' }),
+    ...(Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)),
   },
   loginButton: {
     backgroundColor: t.accent1,

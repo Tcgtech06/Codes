@@ -28,7 +28,7 @@ export default function CompanyAdmin() {
   const [gallery, setGallery] = useState(MOCK_GALLERY);
 
   const t = {
-    bg: '#F8FAFC',
+    bg: '#F0FDF4', // Pastel Green
     cardBg: '#FFFFFF',
     border: '#E2E8F0',
     textPrimary: '#0F172A',
@@ -108,8 +108,8 @@ export default function CompanyAdmin() {
             {isEditingProfile ? (
               <TextInput 
                 style={styles.input} 
-                value={value} 
-                onChangeText={(text) => setProfile({...profile, [key]: text})} 
+                value={value as string} 
+                onChangeText={(text) => setProfile({...profile, [key as keyof typeof profile]: text})} 
               />
             ) : (
               <Text style={{ fontSize: 16, color: t.textPrimary, fontWeight: '500' }}>{value}</Text>
@@ -252,6 +252,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0F172A',
     backgroundColor: '#FFFFFF',
-    ...(Platform.OS === 'web' && { outlineStyle: 'none' }),
+    ...(Platform.OS === 'web' && { outlineStyle: 'none' } as any),
   }
 });

@@ -8,7 +8,7 @@ import { SEARCH_RESULTS } from './index';
 
 const tLight = {
   name: 'Pastel Mint',
-  bg: '#F9FAFB',
+  bg: '#F0FDF4',
   cardBg: '#FFFFFF',
   textPrimary: '#1F2937',
   textSecondary: '#6B7280',

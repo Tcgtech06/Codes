@@ -31,7 +31,7 @@ export default function AdminDashboard() {
   const [newAd, setNewAd] = useState({ title: '', link: '', image: '' });
 
   const t = {
-    bg: '#F8FAFC',
+    bg: '#F0FDF4',
     cardBg: '#FFFFFF',
     border: '#E2E8F0',
     textPrimary: '#0F172A',
