@@ -21,14 +21,14 @@ export default function CompanyAdmin() {
 
   const [activeTab, setActiveTab] = useState('profile'); // profile, gallery, data
   
-  const [profile, setProfile] = useState({ name: 'Royal Knitwear', address: 'PN Road, Tiruppur', phone: '+919876543212', type: 'Dyeing', gst: '33AABCU9603R1ZN' });
+  const [profile, setProfile] = useState({ name: 'Royal Knitwear', address: 'PN Road, Tiruppur', phone: '+919876543212', type: 'Dyeing', gst: '33AABCU9603R1ZN', offerText: 'FLAT 50% OFF' });
   const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   const [products, setProducts] = useState(MOCK_PRODUCTS);
   const [gallery, setGallery] = useState(MOCK_GALLERY);
 
   const t = {
-    bg: '#F0FDF4', // Pastel Green
+    bg: '#F0F9FF', // Pastel Blue
     cardBg: '#FFFFFF',
     border: '#E2E8F0',
     textPrimary: '#0F172A',
@@ -104,15 +104,20 @@ export default function CompanyAdmin() {
 
         {Object.entries(profile).map(([key, value]) => (
           <View key={key} style={{ marginBottom: 12 }}>
-            <Text style={{ fontSize: 12, color: t.textSecondary, textTransform: 'uppercase', marginBottom: 4 }}>{key}</Text>
+            <Text style={{ fontSize: 12, color: t.textSecondary, textTransform: 'uppercase', marginBottom: 4 }}>{key === 'offerText' ? 'Offer Badge Text' : key}</Text>
             {isEditingProfile ? (
               <TextInput 
                 style={styles.input} 
                 value={value as string} 
                 onChangeText={(text) => setProfile({...profile, [key as keyof typeof profile]: text})} 
+                maxLength={key === 'offerText' ? 15 : undefined}
+                placeholder={key === 'offerText' ? "e.g. 20% OFF (Max 15 chars)" : ""}
               />
             ) : (
-              <Text style={{ fontSize: 16, color: t.textPrimary, fontWeight: '500' }}>{value}</Text>
+              <Text style={{ fontSize: 16, color: t.textPrimary, fontWeight: '500' }}>{value || (key === 'offerText' ? 'No active offer' : '')}</Text>
+            )}
+            {key === 'offerText' && isEditingProfile && (
+              <Text style={{ fontSize: 10, color: t.textSecondary, marginTop: 4 }}>Max 15 characters. This will be displayed on your search result card.</Text>
             )}
           </View>
         ))}

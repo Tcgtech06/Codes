@@ -7,7 +7,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 const t = {
-  bg: '#F0FDF4',
+  bg: '#F0F9FF',
   cardBg: '#FFFFFF',
   border: '#E2E8F0',
   textPrimary: '#0F172A',

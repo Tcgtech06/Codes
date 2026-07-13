@@ -51,7 +51,7 @@ export default function AdvertiseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0FDF4' },
+  container: { flex: 1, backgroundColor: '#F0F9FF' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, paddingTop: Platform.OS === 'web' ? 20 : 50, borderBottomWidth: 1, borderBottomColor: '#BBF7D0', backgroundColor: '#fff' },
   backBtn: { padding: 5 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#14532D' },

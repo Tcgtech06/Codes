@@ -8,13 +8,13 @@ import { SEARCH_RESULTS } from './index';
 
 const tLight = {
   name: 'Pastel Mint',
-  bg: '#F0FDF4',
+  bg: '#F0F9FF',
   cardBg: '#FFFFFF',
   textPrimary: '#1F2937',
   textSecondary: '#6B7280',
   accent1: '#34D399',
   accent2: '#FBBF24',
-  border: '#E5E7EB',
+  border: '#86EFAC',
 };
 
 const tDark = {
@@ -74,7 +74,7 @@ export default function SearchResults() {
     header: { position: 'absolute', top: 0, width: '100%', zIndex: 50, paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 50 : (Platform.OS === 'web' ? 20 : 40), paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: t.cardBg, borderBottomWidth: 1, borderBottomColor: t.border },
     headerTitle: { fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginLeft: 12 },
     content: { padding: 20, paddingTop: Platform.OS === 'ios' ? 110 : 90 },
-    companyCard: { marginBottom: 15, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
+    companyCard: { marginBottom: 15, borderRadius: 12, borderWidth: 3, overflow: 'hidden' },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     cardActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
     actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
@@ -110,6 +110,12 @@ export default function SearchResults() {
                 <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
               </View>
             )}
+            {!company.ad && company.offer && (
+              <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, zIndex: 10, borderWidth: 1, borderColor: '#FDA4AF', flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="pricetag" size={10} color="#E11D48" style={{ marginRight: 4 }} />
+                <Text style={{ color: '#BE123C', fontSize: 9, fontWeight: '900' }}>{company.offer.toUpperCase()}</Text>
+              </View>
+            )}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
               <View style={{ position: 'relative', marginRight: 12 }}>
                 <Image 
@@ -125,29 +131,21 @@ export default function SearchResults() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
                 <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
-                
-                {company.offer && company.ad && (
+                {company.ad && company.offer && (
                   <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
                     <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
                     <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
                   </View>
                 )}
               </View>
-
-              {company.offer && !company.ad && (
-                <View style={{ backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', justifyContent: 'center', marginLeft: 8 }}>
-                  <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginBottom: 2 }} />
-                  <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900', textAlign: 'center' }}>{company.offer}</Text>
-                </View>
-              )}
             </View>
 
-            <View style={styles.cardActions}>
-              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1 }]}>
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>Call Now</Text>
+            <View style={[styles.cardActions, { marginTop: 4 }]}>
+              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent1, paddingVertical: isWebOrTablet ? 6 : 4, minHeight: 28 }]}>
+                <Text style={{ color: '#fff', fontSize: isWebOrTablet ? 12 : 10, fontWeight: '600' }}>Call Now</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1 }]}>
-                <Text style={{ color: t.accent1, fontSize: 14, fontWeight: '600' }}>WhatsApp</Text>
+              <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: 'transparent', borderColor: t.accent1, borderWidth: 1, paddingVertical: isWebOrTablet ? 6 : 4, minHeight: 28 }]}>
+                <Text style={{ color: t.accent1, fontSize: isWebOrTablet ? 12 : 10, fontWeight: '600' }}>WhatsApp</Text>
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -186,11 +184,25 @@ export default function SearchResults() {
                       <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
+                    {!isWebOrTablet && selectedCompany?.offer && (
+                      <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 10 }}>
+                        <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
+                        <Text style={{ color: '#BE123C', fontSize: 11, fontWeight: '900' }}>{selectedCompany.offer}</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
-                <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20, marginTop: selectedCompany?.ad ? 28 : 0 }}>
-                  <Ionicons name="close" size={24} color={t.textPrimary} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: selectedCompany?.ad ? 28 : 0 }}>
+                  {isWebOrTablet && selectedCompany?.offer && (
+                    <View style={{ flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginRight: 12 }}>
+                      <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '900' }}>{selectedCompany.offer}</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20 }}>
+                    <Ionicons name="close" size={24} color={t.textPrimary} />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
