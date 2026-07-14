@@ -3,8 +3,10 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, Plat
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { signInWithEmailAndPassword, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { auth, app } from '../config/firebase';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { useRef } from 'react';
 
 const t = {
   bg: '#F0F9FF',
@@ -23,6 +25,14 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // Phone Auth States
+  const [authMode, setAuthMode] = useState<'email' | 'phone'>('email');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otp, setOtp] = useState('');
+  const [confirmResult, setConfirmResult] = useState<ConfirmationResult | null>(null);
+  
+  const recaptchaVerifier = useRef(null);
 
   const handleLogin = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -45,9 +55,51 @@ export default function LoginScreen() {
     }
   };
 
+  const handleSendOTP = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!phoneNumber) return setError('Please enter your phone number');
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : '+91' + phoneNumber;
+      const result = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier.current as any);
+      setConfirmResult(result);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (!otp || !confirmResult) return setError('Please enter OTP');
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      await confirmResult.confirm(otp);
+      router.replace('/');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={app.options}
+        attemptInvisibleVerification={true}
+      />
       <View style={styles.container}>
         <View style={styles.card}>
           <View style={styles.iconContainer}>
@@ -63,48 +115,129 @@ export default function LoginScreen() {
             </View>
           ) : null}
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="mail-outline" size={20} color={t.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={t.textSecondary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+          {authMode === 'email' ? (
+            <>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="mail-outline" size={20} color={t.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor={t.textSecondary}
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="lock-closed-outline" size={20} color={t.textSecondary} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your password"
+                    placeholderTextColor={t.textSecondary}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.loginButton} 
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Login</Text>}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {!confirmResult ? (
+                <>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Phone Number</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="call-outline" size={20} color={t.textSecondary} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="+91 98765 43210"
+                        placeholderTextColor={t.textSecondary}
+                        value={phoneNumber}
+                        onChangeText={setPhoneNumber}
+                        keyboardType="phone-pad"
+                      />
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.loginButton} 
+                    onPress={handleSendOTP}
+                    disabled={loading}
+                  >
+                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Send OTP</Text>}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Enter OTP</Text>
+                    <View style={styles.inputWrapper}>
+                      <Ionicons name="keypad-outline" size={20} color={t.textSecondary} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="123456"
+                        placeholderTextColor={t.textSecondary}
+                        value={otp}
+                        onChangeText={setOtp}
+                        keyboardType="number-pad"
+                      />
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.loginButton} 
+                    onPress={handleVerifyOTP}
+                    disabled={loading}
+                  >
+                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginButtonText}>Verify & Login</Text>}
+                  </TouchableOpacity>
+                </>
+              )}
+            </>
+          )}
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', marginVertical: 24 }}>
+            <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+            <Text style={{ marginHorizontal: 16, color: t.textSecondary, fontSize: 14 }}>Or continue with</Text>
+            <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={20} color={t.textSecondary} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor={t.textSecondary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
-          </View>
+          <View style={{ flexDirection: 'row', gap: 16, width: '100%' }}>
+            <TouchableOpacity 
+              style={[styles.socialButton, { flex: 1 }]}
+              onPress={() => alert('Thala, Google Sign-In requires Client ID setup in Firebase Console. We will add the logic once keys are ready!')}
+            >
+              <Ionicons name="logo-google" size={20} color="#DB4437" />
+              <Text style={styles.socialButtonText}>Google</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.loginButton} 
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.loginButtonText}>Login</Text>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.socialButton, { flex: 1, backgroundColor: authMode === 'phone' ? '#ECFDF5' : t.bg, borderColor: authMode === 'phone' ? t.accent1 : t.border }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setAuthMode(authMode === 'phone' ? 'email' : 'phone');
+                setError('');
+                setConfirmResult(null);
+              }}
+            >
+              <Ionicons name={authMode === 'phone' ? "mail" : "call"} size={20} color={t.accent1} />
+              <Text style={styles.socialButtonText}>{authMode === 'phone' ? 'Email' : 'Phone'}</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
@@ -234,5 +367,21 @@ const styles = StyleSheet.create({
     color: t.accent1,
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: t.border,
+    backgroundColor: t.bg,
+    gap: 8,
+  },
+  socialButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: t.textPrimary,
   }
 });

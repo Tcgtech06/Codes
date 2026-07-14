@@ -2,7 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, Linking, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Image, Linking, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, ActivityIndicator } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as XLSX from 'xlsx';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 // Temporary Mock Data
 const MOCK_PENDING = [
@@ -32,6 +36,8 @@ export default function AdminDashboard() {
 
   const [availableColumns, setAvailableColumns] = useState(['Company Name', 'Category', 'Address', 'Phone', 'Email', 'GSTIN', 'Website', 'Turnover']);
   const [selectedColumns, setSelectedColumns] = useState(['Company Name', 'Category', 'Address', 'Phone']);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const t = {
     bg: '#F0F9FF',
@@ -336,6 +342,98 @@ export default function AdminDashboard() {
     </View>
   );
 
+  const handleFileUpload = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel', 'text/csv'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+      setIsUploading(true);
+      const fileUri = result.assets[0].uri;
+      const response = await fetch(fileUri);
+      const blob = await response.blob();
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = e.target?.result;
+          const workbook = XLSX.read(data, { type: 'binary' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
+          
+          if (!json || json.length === 0) {
+            alert('File is empty or invalid!');
+            return setIsUploading(false);
+          }
+          
+          let successCount = 0;
+          for (let item of json) {
+            await addDoc(collection(db, 'companies'), item as any);
+            successCount++;
+          }
+          alert(`Success thala! ${successCount} records uploaded to Firebase.`);
+        } catch (err) {
+          alert('Failed to parse and upload data!');
+          console.error(err);
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      reader.readAsBinaryString(blob);
+    } catch (error) {
+      console.error(error);
+      alert('Error selecting file.');
+      setIsUploading(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (selectedColumns.length === 0) return alert('Please select at least one column!');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsExporting(true);
+    
+    try {
+      const querySnapshot = await getDocs(collection(db, 'companies'));
+      const records: any[] = [];
+      const uniqueCheck = new Set();
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const uniqueKey = data['Phone'] || data['Company Name'] || doc.id;
+        if (!uniqueCheck.has(uniqueKey)) {
+          uniqueCheck.add(uniqueKey);
+          
+          const filteredData: any = {};
+          selectedColumns.forEach(col => {
+            filteredData[col] = data[col] || '';
+          });
+          records.push(filteredData);
+        }
+      });
+      
+      if (records.length === 0) {
+         alert('No data found in Firebase to export!');
+         setIsExporting(false);
+         return;
+      }
+      
+      const worksheet = XLSX.utils.json_to_sheet(records);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Companies");
+      
+      XLSX.writeFile(workbook, "TiruppurAI_Export.xlsx");
+      alert(`Exported ${records.length} unique records successfully!`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to export data!');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const renderBulkUpload = () => (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Bulk Data Upload (Excel / CSV)</Text>
@@ -349,9 +447,9 @@ export default function AdminDashboard() {
           {'\n\n'}Only .xlsx, .xls, and .csv formats are allowed. Other documents like PDFs will be rejected.
         </Text>
         
-        <TouchableOpacity onPress={() => alert('Thala, Excel file a parse panni Firebase la store panra logic inga varum!')} style={{ backgroundColor: t.accent1, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Ionicons name="document-text" size={20} color="#fff" />
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Select File (.xlsx, .csv)</Text>
+        <TouchableOpacity onPress={handleFileUpload} disabled={isUploading} style={{ backgroundColor: t.accent1, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isUploading ? 0.7 : 1 }}>
+          {isUploading ? <ActivityIndicator color="#fff" /> : <Ionicons name="document-text" size={20} color="#fff" />}
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{isUploading ? 'Uploading...' : 'Select File (.xlsx, .csv)'}</Text>
         </TouchableOpacity>
         
         <View style={{ height: 1, backgroundColor: t.border, width: '100%', marginVertical: 32 }} />
@@ -418,13 +516,9 @@ export default function AdminDashboard() {
           })}
         </View>
         
-        <TouchableOpacity onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            if (selectedColumns.length === 0) return alert('Please select at least one column!');
-            alert(`Thala, Exporting Excel with columns: ${selectedColumns.join(', ')}.\n\nDuplicates will be omitted automatically!`);
-        }} style={{ backgroundColor: '#D97706', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Ionicons name="download-outline" size={20} color="#fff" />
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Download Unique Records (.xlsx)</Text>
+        <TouchableOpacity onPress={handleExportExcel} disabled={isExporting} style={{ backgroundColor: '#D97706', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 8, opacity: isExporting ? 0.7 : 1 }}>
+          {isExporting ? <ActivityIndicator color="#fff" /> : <Ionicons name="download-outline" size={20} color="#fff" />}
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>{isExporting ? 'Exporting...' : 'Download Unique Records (.xlsx)'}</Text>
         </TouchableOpacity>
 
       </View>
