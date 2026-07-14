@@ -24,11 +24,14 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState('');
   const [chartType, setChartType] = useState('bar');
 
-  const [activeTab, setActiveTab] = useState('overview'); // overview, pending, ads, companies
+  const [activeTab, setActiveTab] = useState('overview'); // overview, pending, ads, companies, sub_admins, bulk_upload
 
   const [ads, setAds] = useState(MOCK_ADS_INITIAL);
   const [showAddAd, setShowAddAd] = useState(false);
   const [newAd, setNewAd] = useState({ title: '', link: '', image: '' });
+
+  const [availableColumns, setAvailableColumns] = useState(['Company Name', 'Category', 'Address', 'Phone', 'Email', 'GSTIN', 'Website', 'Turnover']);
+  const [selectedColumns, setSelectedColumns] = useState(['Company Name', 'Category', 'Address', 'Phone']);
 
   const t = {
     bg: '#F0F9FF',
@@ -78,6 +81,7 @@ export default function AdminDashboard() {
       case 'ads': return 'megaphone-outline';
       case 'companies': return 'business-outline';
       case 'sub_admins': return 'people-outline';
+      case 'bulk_upload': return 'cloud-upload-outline';
       default: return 'list';
     }
   };
@@ -85,7 +89,7 @@ export default function AdminDashboard() {
   const renderSidebar = () => (
     <View style={{ width: 260, backgroundColor: t.cardBg, borderRightWidth: 1, borderColor: t.border, paddingVertical: 24, height: '100%' }}>
       <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.textSecondary, letterSpacing: 1, marginLeft: 24, marginBottom: 16, textTransform: 'uppercase' }}>Admin Menu</Text>
-      {['overview', 'pending', 'ads', 'companies', 'sub_admins'].map((tab) => (
+      {['overview', 'pending', 'ads', 'companies', 'sub_admins', 'bulk_upload'].map((tab) => (
         <TouchableOpacity
           key={tab}
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
@@ -102,7 +106,7 @@ export default function AdminDashboard() {
 
   const renderTabs = () => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabContainer}>
-      {['overview', 'pending', 'ads', 'companies', 'sub_admins'].map((tab) => (
+      {['overview', 'pending', 'ads', 'companies', 'sub_admins', 'bulk_upload'].map((tab) => (
         <TouchableOpacity
           key={tab}
           onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setActiveTab(tab); }}
@@ -332,6 +336,101 @@ export default function AdminDashboard() {
     </View>
   );
 
+  const renderBulkUpload = () => (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Bulk Data Upload (Excel / CSV)</Text>
+      <View style={[styles.card, { alignItems: 'center', paddingVertical: 40 }]}>
+        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#ECFDF5', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+          <Ionicons name="cloud-upload" size={40} color={t.accent1} />
+        </View>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 8 }}>Upload Excel or CSV File</Text>
+        <Text style={{ fontSize: 14, color: t.textSecondary, textAlign: 'center', maxWidth: 400, marginBottom: 24 }}>
+          Upload your company databases here. We support dynamic columns, so any headers in your file will be automatically parsed and stored without omitting data. 
+          {'\n\n'}Only .xlsx, .xls, and .csv formats are allowed. Other documents like PDFs will be rejected.
+        </Text>
+        
+        <TouchableOpacity onPress={() => alert('Thala, Excel file a parse panni Firebase la store panra logic inga varum!')} style={{ backgroundColor: t.accent1, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Ionicons name="document-text" size={20} color="#fff" />
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Select File (.xlsx, .csv)</Text>
+        </TouchableOpacity>
+        
+        <View style={{ height: 1, backgroundColor: t.border, width: '100%', marginVertical: 32 }} />
+
+        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#E0F2FE', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+          <Ionicons name="link" size={40} color={t.accent2} />
+        </View>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 8 }}>Import from Google Sheets Link</Text>
+        <Text style={{ fontSize: 14, color: t.textSecondary, textAlign: 'center', maxWidth: 400, marginBottom: 24 }}>
+          Paste a public Google Sheets link. We will extract the data automatically without any paid API keys!
+        </Text>
+        
+        <View style={{ flexDirection: 'row', width: '100%', maxWidth: 500, gap: 12 }}>
+          <TextInput 
+            placeholder="Paste Google Sheets link here..." 
+            style={[styles.input, { flex: 1, marginBottom: 0 }]} 
+            placeholderTextColor={t.textSecondary}
+          />
+          <TouchableOpacity onPress={() => alert('Thala, Public Google Sheets link a vachi CSV ah extract panni Firebase la poduvom!')} style={{ backgroundColor: t.accent2, paddingHorizontal: 20, borderRadius: 8, justifyContent: 'center' }}>
+            <Text style={{ color: '#fff', fontWeight: 'bold' }}>Import</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 1, backgroundColor: t.border, width: '100%', marginVertical: 32 }} />
+
+        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: '#FEF3C7', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+          <Ionicons name="download" size={40} color="#D97706" />
+        </View>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 8 }}>Export Database</Text>
+        <Text style={{ fontSize: 14, color: t.textSecondary, textAlign: 'center', maxWidth: 450, marginBottom: 24 }}>
+          Select the specific column headings you want to include in the exported Excel. When downloading, new scraped data will be compared against existing data, and duplicates will be automatically omitted. Only unique records with your selected columns will be exported.
+        </Text>
+        
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center', maxWidth: 600, marginBottom: 24 }}>
+          {availableColumns.map(col => {
+            const isSelected = selectedColumns.includes(col);
+            return (
+              <TouchableOpacity
+                key={col}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  if (isSelected) {
+                    setSelectedColumns(selectedColumns.filter(c => c !== col));
+                  } else {
+                    setSelectedColumns([...selectedColumns, col]);
+                  }
+                }}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: isSelected ? '#D97706' : t.border,
+                  backgroundColor: isSelected ? '#FEF3C7' : '#fff',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                <Ionicons name={isSelected ? "checkmark-circle" : "ellipse-outline"} size={16} color={isSelected ? "#D97706" : t.textSecondary} />
+                <Text style={{ color: isSelected ? '#B45309' : t.textSecondary, fontWeight: isSelected ? 'bold' : 'normal', fontSize: 13 }}>{col}</Text>
+              </TouchableOpacity>
+            )
+          })}
+        </View>
+        
+        <TouchableOpacity onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            if (selectedColumns.length === 0) return alert('Please select at least one column!');
+            alert(`Thala, Exporting Excel with columns: ${selectedColumns.join(', ')}.\n\nDuplicates will be omitted automatically!`);
+        }} style={{ backgroundColor: '#D97706', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Ionicons name="download-outline" size={20} color="#fff" />
+          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Download Unique Records (.xlsx)</Text>
+        </TouchableOpacity>
+
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
       <Stack.Screen options={{
@@ -390,6 +489,7 @@ export default function AdminDashboard() {
               </View>
             )}
             {activeTab === 'sub_admins' && renderSubAdmins()}
+            {activeTab === 'bulk_upload' && renderBulkUpload()}
           </ScrollView>
         </View>
       )}
