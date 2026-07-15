@@ -2,7 +2,9 @@ import { initializeApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
 import { Platform } from "react-native";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,8 +17,14 @@ const firebaseConfig = {
   measurementId: "G-T45M2QY90K"
 };
 
-// Initialize Firebase
+// Initialize Firebase (Modular)
 const app = initializeApp(firebaseConfig);
+
+// Initialize Firebase (Compat) for expo-firebase-recaptcha
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 let analytics: any = null;
 
 // Initialize Analytics only if supported (usually only web in Expo without native modules)
@@ -31,7 +39,9 @@ if (Platform.OS === 'web') {
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+});
 export const functions = getFunctions(app, 'us-central1');
 
 // Connect to Local Emulator for Functions (Bypassing Blaze plan requirement)

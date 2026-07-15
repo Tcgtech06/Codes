@@ -5,7 +5,9 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { httpsCallable } from 'firebase/functions';
-import { app, functions } from '../config/firebase';
+import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore';
+import { app, functions, db } from '../config/firebase';
+import { useAuth } from '../context/AuthContext';
 import { Audio } from 'expo-av';
 
 export let SEARCH_RESULTS: any[] = [];
@@ -72,7 +74,7 @@ export default function App() {
   const { width } = useWindowDimensions();
   const isWebOrTablet = width > 768;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingInstance, setRecordingInstance] = useState<Audio.Recording | null>(null);
@@ -85,6 +87,77 @@ export default function App() {
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user, logout } = useAuth();
+  const userId = user?.uid || 'guest';
+  const [chatId, setChatId] = useState(() => Date.now().toString());
+  const [history, setHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (userId === 'guest') {
+        setHistory([]);
+        return;
+      }
+      try {
+        const q = query(collection(db, 'chats'), where('userId', '==', userId));
+        const snapshot = await getDocs(q);
+        const chats = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+        chats.sort((a, b) => b.updatedAt - a.updatedAt);
+        setHistory(chats);
+      } catch (err) {
+        console.error("Failed to fetch history:", err);
+      }
+    };
+    fetchHistory();
+  }, [userId]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      const saveChat = async () => {
+        // If guest, do not save to DB (saves cost, clears when app closes)
+        if (userId === 'guest') return;
+
+        try {
+          let title = 'New Chat';
+          const firstMsg = messages.find(m => m.role === 'user');
+          if (firstMsg) {
+             title = firstMsg.type === 'text' ? firstMsg.text.substring(0, 30) + '...' : 'Voice Search';
+          }
+          await setDoc(doc(db, 'chats', chatId), {
+            userId,
+            title,
+            messages,
+            updatedAt: Date.now()
+          }, { merge: true });
+          
+          setHistory(prev => {
+            const exists = prev.find(c => c.id === chatId);
+            if (exists) {
+               return prev.map(c => c.id === chatId ? { ...c, title, updatedAt: Date.now() } : c).sort((a, b) => b.updatedAt - a.updatedAt);
+            } else {
+               return [{ id: chatId, title, messages, updatedAt: Date.now() }, ...prev];
+            }
+          });
+        } catch (err) {
+          console.error("Failed to save chat:", err);
+        }
+      };
+      saveChat();
+    }
+  }, [messages]);
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setChatId(Date.now().toString());
+    if (!isWebOrTablet) setSidebarOpen(false);
+  };
+
+  const loadChat = (chat: any) => {
+    setMessages(chat.messages || []);
+    setChatId(chat.id);
+    if (!isWebOrTablet) setSidebarOpen(false);
+  };
+
   const currentSearchId = useRef(0);
 
   const hideHeaderState = useState(false);
@@ -389,35 +462,44 @@ export default function App() {
                   <Ionicons name="person" size={20} color={t.textSecondary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>Guest User</Text>
+                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? (user.displayName || user.phoneNumber || 'User') : 'Guest User'}</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                    <TouchableOpacity onPress={() => router.push('/login')}>
-                      <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Login</Text>
-                    </TouchableOpacity>
-                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>|</Text>
-                    <TouchableOpacity onPress={() => router.push('/signup')}>
-                      <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Sign Up</Text>
-                    </TouchableOpacity>
+                    {user ? (
+                      <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
+                        <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>Logout</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <>
+                        <TouchableOpacity onPress={() => router.push('/login')}>
+                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Login</Text>
+                        </TouchableOpacity>
+                        <Text style={{ color: t.textSecondary, fontSize: 12 }}>|</Text>
+                        <TouchableOpacity onPress={() => router.push('/signup')}>
+                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Sign Up</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
                 </View>
               </View>
             )}
 
-            <TouchableOpacity onPress={() => setMessages([])} style={[styles.newChatBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border }]}>
+            <TouchableOpacity onPress={handleNewChat} style={[styles.newChatBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border }]}>
               <Ionicons name="add" size={20} color={t.textPrimary} />
               <Text style={{ color: t.textPrimary, fontWeight: 'bold', marginLeft: 8 }}>New Chat</Text>
             </TouchableOpacity>
 
             <ScrollView style={styles.historyList}>
               <Text style={[styles.historySection, { color: t.textSecondary }]}>Recent</Text>
-              <TouchableOpacity style={styles.historyItem}>
-                <Ionicons name="chatbubble-outline" size={18} color={t.textPrimary} />
-                <Text style={[styles.historyText, { color: t.textPrimary }]} numberOfLines={1}>1000 Cotton Shirts Dyeing...</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.historyItem}>
-                <Ionicons name="chatbubble-outline" size={18} color={t.textPrimary} />
-                <Text style={[styles.historyText, { color: t.textPrimary }]} numberOfLines={1}>Best Knitting Units Tiruppur</Text>
-              </TouchableOpacity>
+              {history.map(chat => (
+                <TouchableOpacity key={chat.id} onPress={() => loadChat(chat)} style={[styles.historyItem, chatId === chat.id && { backgroundColor: t.accent2, borderRadius: 8, paddingHorizontal: 4 }]}>
+                  <Ionicons name="chatbubble-outline" size={18} color={t.textPrimary} />
+                  <Text style={[styles.historyText, { color: t.textPrimary, fontWeight: chatId === chat.id ? 'bold' : 'normal' }]} numberOfLines={1}>{chat.title}</Text>
+                </TouchableOpacity>
+              ))}
+              {history.length === 0 && (
+                <Text style={{ color: t.textSecondary, fontSize: 12, paddingHorizontal: 12, marginTop: 10 }}>No history found.</Text>
+              )}
             </ScrollView>
 
             {/* Branding */}
@@ -467,12 +549,25 @@ export default function App() {
                       </TouchableOpacity>
                       {showProfileMenu && (
                         <View style={{ position: 'absolute', top: 40, right: -10, backgroundColor: t.cardBg, borderRadius: 12, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 120 }}>
-                          <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/login'); }} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
-                            <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Login</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/signup'); }} style={{ padding: 10 }}>
-                            <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Sign Up</Text>
-                          </TouchableOpacity>
+                          {user ? (
+                            <>
+                              <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{user.displayName || user.phoneNumber || 'User'}</Text>
+                              </View>
+                              <TouchableOpacity onPress={async () => { setShowProfileMenu(false); await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }} style={{ padding: 10 }}>
+                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>Logout</Text>
+                              </TouchableOpacity>
+                            </>
+                          ) : (
+                            <>
+                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/login'); }} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Login</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/signup'); }} style={{ padding: 10 }}>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Sign Up</Text>
+                              </TouchableOpacity>
+                            </>
+                          )}
                         </View>
                       )}
                     </View>
