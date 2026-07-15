@@ -4,19 +4,10 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { httpsCallable } from 'firebase/functions';
+import { app, functions } from '../config/firebase';
 
-export const SEARCH_RESULTS = [
-  { id: '1', name: 'Sri Balaji Dyeing', verified: true, ad: true, offer: '10% OFF', match: '98%', address: 'Avinashi Road, Tiruppur', phone: '+919876543210', email: 'contact@sribalajidyeing.com', products: ['Cotton Shirts Dyeing', 'Polyester Dyeing', 'Garment Dyeing'] },
-  { id: '2', name: 'KGM Dyeing Mill', verified: true, ad: false, match: '92%', address: 'Avinashi Road, Tiruppur', phone: '+919123456789', email: 'info@kgmdyeing.com', products: ['Yarn Dyeing', 'Fabric Dyeing'] },
-  { id: '3', name: 'Royal Colors', verified: false, ad: false, offer: 'Festive Discount', match: '89%', address: 'Avinashi Road, Tiruppur', phone: '+919876543211', email: 'info@royalcolors.com', products: ['Knitwear Dyeing', 'Woven Dyeing'] },
-  { id: '4', name: 'Tiruppur Tech Dyes', verified: true, ad: false, match: '85%', address: 'Avinashi Road, Tiruppur', phone: '+919876543212', email: 'hello@techdyes.com', products: ['Eco-friendly Dyeing', 'Bleaching'] },
-  { id: '5', name: 'Modern Dyeing Works', verified: false, ad: false, match: '80%', address: 'Avinashi Road, Tiruppur', phone: '+919876543213', email: 'contact@moderndyeing.com', products: ['Cotton Dyeing'] },
-  { id: '6', name: 'Evergreen Textiles', verified: true, ad: false, match: '78%', address: 'PN Road, Tiruppur', phone: '+919876543214', email: 'sales@evergreentextiles.com', products: ['Compact Yarn', 'Fabric Printing'] },
-  { id: '7', name: 'Classic Knits', verified: true, ad: true, match: '75%', address: 'Mangalam Road, Tiruppur', phone: '+919876543215', email: 'contact@classicknits.com', products: ['Knitting', 'Compacting'] },
-  { id: '8', name: 'Pioneer Dyeing', verified: false, ad: false, match: '70%', address: 'Kangayam Road, Tiruppur', phone: '+919876543216', email: 'info@pioneerdyeing.com', products: ['Yarn Dyeing'] },
-  { id: '9', name: 'Vibrant Colors', verified: true, ad: false, match: '68%', address: 'Dharapuram Road, Tiruppur', phone: '+919876543217', email: 'hello@vibrantcolors.com', products: ['Woven Dyeing', 'Garment Dyeing'] },
-  { id: '10', name: 'Sunrise Garments', verified: false, ad: false, match: '65%', address: 'Palladam Road, Tiruppur', phone: '+919876543218', email: 'contact@sunrisegarments.com', products: ['Cotton Dyeing', 'Washing'] }
-];
+export let SEARCH_RESULTS: any[] = [];
 
 const tLight = {
   name: 'Tiruppur Pure Cotton',
@@ -53,17 +44,12 @@ const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
     ).start();
   }, []);
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 20, gap: 8, alignItems: 'flex-start' }}>
-      <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: t.cardBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: t.border, marginTop: 4 }}>
-        <Ionicons name="sparkles" size={16} color={t.accent1} />
-      </View>
-      <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-        <Animated.View style={{ width: 200, height: 20, borderRadius: 6, backgroundColor: t.border, opacity, marginBottom: 15 }} />
-        <View style={isWebOrTablet ? { flexDirection: 'row', gap: 16, maxWidth: 816 } : { gap: 12 }}>
-          {[1, 2].map(i => (
-            <Animated.View key={i} style={[{ height: 140, borderRadius: 12, backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, opacity }, isWebOrTablet ? { flex: 1, maxWidth: 400 } : { width: '100%' }]} />
-          ))}
-        </View>
+    <View style={{ flexDirection: 'column', justifyContent: 'flex-start', marginBottom: 20, width: '100%' }}>
+      <Animated.View style={{ width: 200, height: 20, borderRadius: 6, backgroundColor: t.border, opacity, marginBottom: 15 }} />
+      <View style={isWebOrTablet ? { flexDirection: 'row', gap: 16, maxWidth: 816 } : { gap: 12 }}>
+        {[1, 2].map(i => (
+          <Animated.View key={i} style={[{ height: 140, borderRadius: 12, backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, opacity }, isWebOrTablet ? { flex: 1, maxWidth: 400 } : { width: '100%' }]} />
+        ))}
       </View>
     </View>
   );
@@ -97,9 +83,13 @@ export default function App() {
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const currentSearchId = useRef(0);
 
-  const [hideHeader, setHideHeader] = useState(false);
+  const hideHeaderState = useState(false);
+  const hideHeader = hideHeaderState[0];
+  const setHideHeader = hideHeaderState[1];
   const lastScrollY = useRef(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const modalScrollY = useRef(0);
   const cardAnims = useRef([...Array(10)].map(() => new Animated.Value(0))).current;
@@ -153,27 +143,31 @@ export default function App() {
               <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
             </View>
           )}
-          {!company.ad && company.offer && (
+          {!company.ad && company.offer && company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
             <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, borderWidth: 1, borderColor: '#FDA4AF', borderTopWidth: 0, borderRightWidth: 0 }}>
               <Text style={{ color: '#BE123C', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{company.offer.toUpperCase()}</Text>
             </View>
           )}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <View style={{ position: 'relative', marginRight: 12 }}>
-              <Image
-                source={{ uri: `https://picsum.photos/seed/${company.id}logo/100` }}
-                style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }}
-              />
-              {company.verified && (
-                <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
-                  <MaterialIcons name="verified" size={16} color="#3B82F6" />
-                </View>
-              )}
-            </View>
+            {(company.logo || company.verified) && (
+              <View style={{ position: 'relative', marginRight: 12 }}>
+                {company.logo && (
+                  <Image
+                    source={{ uri: company.logo }}
+                    style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }}
+                  />
+                )}
+                {company.verified && (
+                  <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
+                    <MaterialIcons name="verified" size={16} color="#3B82F6" />
+                  </View>
+                )}
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
               <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
-              {company.ad && company.offer && (
+              {company.ad && company.offer && company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
                 <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
                   <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
                   <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
@@ -195,17 +189,56 @@ export default function App() {
     );
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!hasText) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newMsg = { id: Date.now().toString(), role: 'user', type: 'text', text: inputText } as any;
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
     setIsChatLoading(true);
-    setTimeout(() => {
-      setIsChatLoading(false);
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: 'I am still learning! This is a demo UI response for now.' }]);
-    }, 1500);
+
+    const searchId = Date.now();
+    currentSearchId.current = searchId;
+
+    try {
+      const searchCompanyAI = httpsCallable(functions, 'searchCompanyAI');
+      const response = await searchCompanyAI({ query: inputText });
+      
+      if (currentSearchId.current !== searchId) return; // Discard if stopped
+      
+      const data = response.data as any;
+
+      if (data.error) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: data.error }]);
+      } else {
+        if (data.results && Array.isArray(data.results)) {
+          SEARCH_RESULTS.length = 0; // Clear existing array
+          SEARCH_RESULTS.push(...data.results); // Update with new AI RAG results
+        }
+        setMessages(prev => [...prev, { 
+          id: Date.now().toString(), 
+          role: 'ai', 
+          type: 'text', 
+          text: data.text,
+          results: Array.isArray(data.results) ? data.results : []
+        }]);
+      }
+    } catch (e: any) {
+      console.error(e);
+      if (currentSearchId.current === searchId) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: 'Oops! AI Network error: ' + e.message }]);
+      }
+    } finally {
+      if (currentSearchId.current === searchId) {
+        setIsChatLoading(false);
+      }
+    }
+  };
+
+  const handleStop = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    currentSearchId.current = 0;
+    setIsChatLoading(false);
   };
 
   useEffect(() => {
@@ -370,82 +403,88 @@ export default function App() {
             )}
 
             <ScrollView
+              ref={scrollViewRef}
               style={{ flex: 1 }}
               contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }, { paddingTop: isWebOrTablet ? 60 : 90 }]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
 
-              {/* User Message */}
-              <View style={styles.userMessageRow}>
-                <View style={[styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }]}>
-                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: '500' }}>Enaku 1000 cotton shirts dyeing panna oru nalla company venum Avinashi road la.</Text>
-                </View>
-              </View>
-
-              {/* AI Response */}
-              <View style={[styles.aiMessageRow, { alignItems: 'flex-start' }]}>
-                <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1 }]}>
-                  <Ionicons name="sparkles" size={16} color={t.accent1} />
-                </View>
-                <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                  <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 26 : 18, marginBottom: 15 }}>Avinashi Road-la {SEARCH_RESULTS.length} nalla Dyeing Units iruku:</Text>
-
-                  {isWebOrTablet ? (
-                    <View style={{ gap: 16, maxWidth: 816 }}>
-                      <View style={{ flexDirection: 'row', gap: 16 }}>
-                        {SEARCH_RESULTS.slice(0, 2).map((c, i) => renderCard(c, i))}
-                      </View>
-                      {SEARCH_RESULTS.length > 2 && (
-                        <View style={{ flexDirection: 'row', gap: 16 }}>
-                          {SEARCH_RESULTS.slice(2, 4).map((c, i) => renderCard(c, i + 2))}
-                          {SEARCH_RESULTS.length === 3 && <View style={{ flex: 1, maxWidth: 400 }} />}
-                        </View>
-                      )}
-                      {SEARCH_RESULTS.length > 4 && (
-                        <View style={{ width: '100%', alignItems: 'center', marginTop: 10 }}>
-                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 40, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
-                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  ) : (
-                    <View>
-                      {SEARCH_RESULTS.slice(0, 4).map((c, i) => renderCard(c, i))}
-                      {SEARCH_RESULTS.length > 4 && (
-                        <View style={{ marginTop: 10 }}>
-                          <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
-                            <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {SEARCH_RESULTS.length} Results</Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-              </View>
               {/* Dynamic Messages */}
               {messages.map(msg => (
-                <View key={msg.id} style={[msg.role === 'user' ? styles.userMessageRow : styles.aiMessageRow, msg.role === 'ai' && { alignItems: 'flex-start' }]}>
-                  {msg.role === 'ai' && (
-                    <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1 }]}>
-                      <Ionicons name="sparkles" size={16} color={t.accent1} />
-                    </View>
-                  )}
-                  <View style={msg.role === 'user' ? [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, borderBottomRightRadius: 4, padding: isWebOrTablet ? 16 : 10 }] : { flex: 1, paddingLeft: isWebOrTablet ? 12 : 8, paddingTop: 4 }}>
-                    {msg.type === 'text' ? (
-                      <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{msg.text}</Text>
-                    ) : (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                        <Ionicons name="play-circle" size={32} color={t.textPrimary} />
-                        <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
-                        <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
+                <View key={msg.id} style={[msg.role === 'user' ? styles.userMessageRow : styles.aiMessageRow, msg.role === 'ai' && { alignItems: 'flex-start', flexDirection: 'column', width: '100%' }]}>
+                  
+                  <View style={msg.role === 'user' ? 
+                    [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, padding: isWebOrTablet ? 16 : 10 }] : 
+                    { flexDirection: 'row', width: '100%', alignItems: 'flex-start' }
+                  }>
+                    {msg.role === 'ai' && (
+                      <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, marginRight: 12 }]}>
+                        <Ionicons name="sparkles" size={16} color={t.accent1} />
                       </View>
                     )}
+                    
+                    <View style={msg.role === 'ai' ? { flex: 1, paddingTop: 4 } : {}}>
+                      {msg.type === 'text' ? (
+                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: msg.role === 'user' ? '500' : 'normal', marginBottom: msg.results && msg.results.length > 0 ? 15 : 0 }}>{msg.text}</Text>
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Ionicons name="play-circle" size={32} color={t.textPrimary} />
+                          <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
+                          <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
+                        </View>
+                      )}
+
+                      {/* Render results under the AI message if available */}
+                      {msg.role === 'ai' && msg.results && msg.results.length > 0 && (
+                        isWebOrTablet ? (
+                          <View style={{ gap: 16, maxWidth: 816 }}>
+                            <View style={{ flexDirection: 'row', gap: 16 }}>
+                              {msg.results.slice(0, 2).map((c: any, i: number) => renderCard(c, i))}
+                            </View>
+                            {msg.results.length > 2 && (
+                              <View style={{ flexDirection: 'row', gap: 16 }}>
+                                {msg.results.slice(2, 4).map((c: any, i: number) => renderCard(c, i + 2))}
+                                {msg.results.length === 3 && <View style={{ flex: 1, maxWidth: 400 }} />}
+                              </View>
+                            )}
+                            {msg.results.length > 4 && (
+                              <View style={{ width: '100%', alignItems: 'center', marginTop: 10 }}>
+                                <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 40, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {msg.results.length} Results</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </View>
+                        ) : (
+                          <View style={{ width: '100%' }}>
+                            {msg.results.slice(0, 4).map((c: any, i: number) => renderCard(c, i))}
+                            {msg.results.length > 4 && (
+                              <View style={{ marginTop: 10 }}>
+                                <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {msg.results.length} Results</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </View>
+                        )
+                      )}
+                    </View>
                   </View>
                 </View>
               ))}
-              {isChatLoading && <SkeletonLoading t={t} isWebOrTablet={isWebOrTablet} />}
+              {isChatLoading && (
+                <View style={[styles.aiMessageRow, { alignItems: 'flex-start' }]}>
+                  <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1 }]}>
+                    <Ionicons name="sparkles" size={16} color={t.accent1} />
+                  </View>
+                  <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
+                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 15 : 13, fontStyle: 'italic', marginBottom: 10 }}>Thinking...</Text>
+                    <SkeletonLoading t={t} isWebOrTablet={isWebOrTablet} />
+                  </View>
+                </View>
+              )}
             </ScrollView>
 
             {/* Bottom Input Area */}
@@ -536,18 +575,31 @@ export default function App() {
                     <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color={isRecording ? "#fff" : t.textPrimary} />
                   </TouchableOpacity>
 
-                  {/* Send Button */}
-                  <TouchableOpacity
-                    onPress={handleSend}
-                    style={[
-                      styles.actionIconBtn,
-                      !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
-                      { backgroundColor: hasText ? t.accent2 : (isDarkMode ? t.cardBg : '#F1F5F9') }
-                    ]}
-                    disabled={!hasText}
-                  >
-                    <Ionicons name="arrow-up" size={isWebOrTablet ? 18 : 16} color={hasText ? t.textPrimary : (isDarkMode ? t.border : "#94A3B8")} />
-                  </TouchableOpacity>
+                  {/* Send or Stop Button */}
+                  {isChatLoading ? (
+                    <TouchableOpacity
+                      onPress={handleStop}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: '#EF4444' }
+                      ]}
+                    >
+                      <Ionicons name="stop" size={isWebOrTablet ? 18 : 16} color="#fff" />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={handleSend}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: hasText ? t.accent2 : (isDarkMode ? t.cardBg : '#F1F5F9') }
+                      ]}
+                      disabled={!hasText}
+                    >
+                      <Ionicons name="arrow-up" size={isWebOrTablet ? 18 : 16} color={hasText ? t.textPrimary : (isDarkMode ? t.border : "#94A3B8")} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
               <Text style={[styles.disclaimer, { color: t.textSecondary }]}>Tiruppur AI can make mistakes. Verify important information.</Text>
@@ -574,23 +626,27 @@ export default function App() {
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
-                  <View style={{ position: 'relative', marginRight: 15 }}>
-                    <Image
-                      source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }}
-                      style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }}
-                    />
-                    {selectedCompany?.verified && (
-                      <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
-                        <MaterialIcons name="verified" size={20} color="#3B82F6" />
-                      </View>
-                    )}
-                  </View>
+                  {(selectedCompany?.logo || selectedCompany?.verified) && (
+                    <View style={{ position: 'relative', marginRight: 15 }}>
+                      {selectedCompany?.logo && (
+                        <Image
+                          source={{ uri: selectedCompany.logo }}
+                          style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }}
+                        />
+                      )}
+                      {selectedCompany?.verified && (
+                        <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
+                          <MaterialIcons name="verified" size={20} color="#3B82F6" />
+                        </View>
+                      )}
+                    </View>
+                  )}
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
-                    {!isWebOrTablet && selectedCompany?.offer && (
+                    {!isWebOrTablet && selectedCompany?.offer && selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
                       <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 10 }}>
                         <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
                         <Text style={{ color: '#BE123C', fontSize: 11, fontWeight: '900' }}>{selectedCompany.offer}</Text>
@@ -599,7 +655,7 @@ export default function App() {
                   </View>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: selectedCompany?.ad ? 28 : 0 }}>
-                  {isWebOrTablet && selectedCompany?.offer && (
+                  {isWebOrTablet && selectedCompany?.offer && selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
                     <View style={{ flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginRight: 12 }}>
                       <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
                       <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '900' }}>{selectedCompany.offer}</Text>

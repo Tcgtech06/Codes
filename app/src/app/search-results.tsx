@@ -99,39 +99,46 @@ export default function SearchResults() {
       )}
 
       <ScrollView 
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          isWebOrTablet && { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'flex-start' }
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         {SEARCH_RESULTS.map(company => (
-          <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { alignSelf: 'center', width: '100%', maxWidth: 600 }]}>
+          <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { width: '48%', maxWidth: 400, flexGrow: 1 }]}>
             {company.ad && (
               <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
                 <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
               </View>
             )}
-            {!company.ad && company.offer && (
+            {!company.ad && company.offer && company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
               <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, zIndex: 10, borderWidth: 1, borderColor: '#FDA4AF', flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="pricetag" size={10} color="#E11D48" style={{ marginRight: 4 }} />
                 <Text style={{ color: '#BE123C', fontSize: 9, fontWeight: '900' }}>{company.offer.toUpperCase()}</Text>
               </View>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <View style={{ position: 'relative', marginRight: 12 }}>
-                <Image 
-                  source={{ uri: `https://picsum.photos/seed/${company.id}logo/100` }} 
-                  style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }} 
-                />
-                {company.verified && (
-                  <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
-                    <MaterialIcons name="verified" size={16} color="#3B82F6" />
-                  </View>
-                )}
-              </View>
+              {(company.logo || company.verified) && (
+                <View style={{ position: 'relative', marginRight: 12 }}>
+                  {company.logo && (
+                    <Image 
+                      source={{ uri: company.logo }} 
+                      style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }} 
+                    />
+                  )}
+                  {company.verified && (
+                    <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
+                      <MaterialIcons name="verified" size={16} color="#3B82F6" />
+                    </View>
+                  )}
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
                 <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
-                {company.ad && company.offer && (
+                {company.ad && company.offer && company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
                   <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
                     <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
                     <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
@@ -168,23 +175,27 @@ export default function SearchResults() {
               )}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
-                  <View style={{ position: 'relative', marginRight: 15 }}>
-                    <Image 
-                      source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}logo/100` }} 
-                      style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }} 
-                    />
-                    {selectedCompany?.verified && (
-                      <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
-                        <MaterialIcons name="verified" size={20} color="#3B82F6" />
-                      </View>
-                    )}
-                  </View>
+                  {(selectedCompany?.logo || selectedCompany?.verified) && (
+                    <View style={{ position: 'relative', marginRight: 15 }}>
+                      {selectedCompany?.logo && (
+                        <Image 
+                          source={{ uri: selectedCompany.logo }} 
+                          style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }} 
+                        />
+                      )}
+                      {selectedCompany?.verified && (
+                        <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
+                          <MaterialIcons name="verified" size={20} color="#3B82F6" />
+                        </View>
+                      )}
+                    </View>
+                  )}
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                       <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
-                    {!isWebOrTablet && selectedCompany?.offer && (
+                    {!isWebOrTablet && selectedCompany?.offer && selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
                       <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 10 }}>
                         <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
                         <Text style={{ color: '#BE123C', fontSize: 11, fontWeight: '900' }}>{selectedCompany.offer}</Text>
@@ -193,7 +204,7 @@ export default function SearchResults() {
                   </View>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: selectedCompany?.ad ? 28 : 0 }}>
-                  {isWebOrTablet && selectedCompany?.offer && (
+                  {isWebOrTablet && selectedCompany?.offer && selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
                     <View style={{ flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginRight: 12 }}>
                       <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
                       <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '900' }}>{selectedCompany.offer}</Text>

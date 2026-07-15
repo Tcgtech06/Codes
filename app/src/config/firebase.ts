@@ -28,7 +28,13 @@ if (Platform.OS === 'web') {
     });
 }
 
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const functions = getFunctions(app, 'us-central1');
+
+// Connect to Local Emulator for Functions (Bypassing Blaze plan requirement)
+connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
 export { app, analytics };
