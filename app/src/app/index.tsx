@@ -79,7 +79,7 @@ export default function App() {
   const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('TA');
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number }[]>([]);
+  const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number, results?: any[] }[]>([]);
   const hasText = inputText.trim().length > 0;
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
@@ -520,20 +520,10 @@ export default function App() {
                     )}
                     
                     <View style={msg.role === 'ai' ? { flex: 1, paddingTop: 4 } : {}}>
-                      {msg.type === 'text' ? (
-                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 13, lineHeight: isWebOrTablet ? 24 : 18, fontWeight: msg.role === 'user' ? '500' : 'normal', marginBottom: msg.results && msg.results.length > 0 ? 15 : 0 }}>{msg.text}</Text>
-                      ) : (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                          <Ionicons name="play-circle" size={32} color={t.textPrimary} />
-                          <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
-                          <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
-                        </View>
-                      )}
-
-                      {/* Render results under the AI message if available */}
+                      {/* Render results BEFORE the AI message if available */}
                       {msg.role === 'ai' && msg.results && msg.results.length > 0 && (
                         isWebOrTablet ? (
-                          <View style={{ gap: 16, maxWidth: 816 }}>
+                          <View style={{ gap: 16, maxWidth: 816, marginBottom: 15 }}>
                             <View style={{ flexDirection: 'row', gap: 16 }}>
                               {msg.results.slice(0, 2).map((c: any, i: number) => renderCard(c, i))}
                             </View>
@@ -552,7 +542,7 @@ export default function App() {
                             )}
                           </View>
                         ) : (
-                          <View style={{ width: '100%' }}>
+                          <View style={{ width: '100%', marginBottom: 15 }}>
                             {msg.results.slice(0, 4).map((c: any, i: number) => renderCard(c, i))}
                             {msg.results.length > 4 && (
                               <View style={{ marginTop: 10 }}>
@@ -563,6 +553,17 @@ export default function App() {
                             )}
                           </View>
                         )
+                      )}
+
+                      {/* Render Text AT THE BOTTOM */}
+                      {msg.type === 'text' ? (
+                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20, fontWeight: msg.role === 'user' ? '500' : 'normal', marginTop: msg.results && msg.results.length > 0 ? 5 : 0 }}>{msg.text}</Text>
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Ionicons name="play-circle" size={32} color={t.textPrimary} />
+                          <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
+                          <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
+                        </View>
                       )}
                     </View>
                   </View>

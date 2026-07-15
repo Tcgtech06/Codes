@@ -20,18 +20,21 @@ const FALLBACK_MODELS = [
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
-const CompanySchema = z.array(z.object({
-  id: z.string(),
-  name: z.string(),
-  verified: z.boolean(),
-  ad: z.boolean(),
-  offer: z.string().optional(),
-  match: z.string(),
-  address: z.string(),
-  phone: z.string(),
-  email: z.string(),
-  products: z.array(z.string())
-}));
+const CompanySchema = z.object({
+  text: z.string().describe("A SHORT, conversational Tanglish response. Give a 1-sentence summary, then a short, highly contextual follow-up question based on their search (e.g., 'Neenga keta knitted garments ivanga thaan. Ungaluku Dyeing or manufacturer list venuma?'). Do NOT greet repeatedly."),
+  results: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    verified: z.boolean(),
+    ad: z.boolean(),
+    offer: z.string().optional(),
+    match: z.string(),
+    address: z.string(),
+    phone: z.string(),
+    email: z.string(),
+    products: z.array(z.string())
+  }))
+});
 
 // Helper function to search companies using AI
 async function getCompaniesFromQuery(query: string) {
@@ -46,18 +49,19 @@ async function getCompaniesFromQuery(query: string) {
         try {
             const response = await ai.generate({
                 model: model,
-                prompt: `You are the AI assistant for 'Tiruppur AI'. 
+                prompt: `You are the AI assistant for 'Tiruppur AI', a platform connecting people with companies in Tiruppur. 
                 The user is asking: "${query}".
                 
-                Here is the raw database of companies from our Excel upload:
+                Here is the raw database of companies:
                 ${contextData}
                 
-                Find the most relevant companies from the database that match the user's request. 
-                Format the output strictly as a JSON array matching the provided schema. 
-                - If fields are missing in the DB, set reasonable defaults.
-                - For 'products', extract the category or products from the raw data.
-                - For 'match', provide a percentage string like '95%'.
-                - If you cannot find any data, return an empty array.`,
+                Guidelines:
+                1. If the user says a casual greeting (like "hi ena panra"), reply casually in Tanglish. DO NOT say "Vanakam" or "Hello" repeatedly in every message. Only greet if the user explicitly greets you first.
+                2. If they search for something, find the matching companies and return them in the 'results' array.
+                3. In the 'text' field, keep the response SHORT and SWEET. (e.g., "Neenga ketta knitting companies ivanga thaan.").
+                4. VERY IMPORTANT: ALWAYS end your 'text' response with a highly contextual, short follow-up question. Think of the natural next step in the Tiruppur textile supply chain! (e.g., If they search 'Garments', ask "Ungaluku Dyeing or manufacturer list venuma?").
+                
+                Format the output strictly matching the provided JSON schema.`,
                 output: { schema: CompanySchema }
             });
 
@@ -77,7 +81,7 @@ async function getCompaniesFromQuery(query: string) {
 }
 
 // Genkit Flow exposed as a Firebase Callable Function
-export const searchCompanyAI = onCall(async (request) => {
+export const searchCompanyAI = onCall({ cors: true }, async (request) => {
     const query = request.data?.query;
     
     if (!query) {
@@ -85,10 +89,10 @@ export const searchCompanyAI = onCall(async (request) => {
     }
 
     try {
-        const resultData = await getCompaniesFromQuery(query);
+        const responseData = await getCompaniesFromQuery(query) as any;
         return { 
-            text: `I found ${resultData?.length || 0} matching companies for your request.`,
-            results: resultData 
+            text: responseData?.text || `I found ${responseData?.results?.length || 0} matching companies for your request.`,
+            results: responseData?.results || [] 
         };
     } catch (e: any) {
         console.error("Function error:", e);
@@ -97,7 +101,7 @@ export const searchCompanyAI = onCall(async (request) => {
 });
 
 // Sarvam AI Voice Search Endpoint
-export const processVoiceSearch = onCall(async (request) => {
+export const processVoiceSearch = onCall({ cors: true }, async (request) => {
     const audioBase64 = request.data?.audioBase64;
     
     if (!audioBase64) {
@@ -106,25 +110,27 @@ export const processVoiceSearch = onCall(async (request) => {
 
     try {
         // 1. Send Audio to Sarvam STT
-        const boundary = '----WebKitFormBoundary7MA4YWxkTrZu0gW';
-        const payload = Buffer.concat([
-            Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="audio.m4a"\r\nContent-Type: audio/m4a\r\n\r\n`),
-            Buffer.from(audioBase64, 'base64'),
-            Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nsaaras:v1\r\n--${boundary}--`)
-        ]);
+        const audioBuffer = Buffer.from(audioBase64, 'base64');
+        const blob = new Blob([audioBuffer], { type: 'audio/wav' });
+        
+        const formData = new FormData();
+        formData.append("file", blob, "audio.wav");
+        formData.append("model", "saaras:v3");
+        // Sarvam STT needs language_code. ta-IN is Tamil
+        formData.append("language_code", "ta-IN"); 
 
-        // Using native fetch in Node 18+
         const sarvamResponse = await fetch("https://api.sarvam.ai/speech-to-text", {
             method: "POST",
             headers: {
-                "api-subscription-key": "sk_e0ozdx05_mfJwd1qPfeCcjOsqNY61esRV",
-                "Content-Type": `multipart/form-data; boundary=${boundary}`,
+                "api-subscription-key": "sk_e0ozdx05_mfJwd1qPfeCcjOsqNY61esRV"
+                // Do NOT set Content-Type manually when using FormData in fetch, it will auto-set the boundary
             },
-            body: payload
+            body: formData as any
         });
 
         if (!sarvamResponse.ok) {
-            throw new Error(`Sarvam STT failed: ${sarvamResponse.statusText}`);
+            const errText = await sarvamResponse.text();
+            throw new Error(`Sarvam STT failed: ${sarvamResponse.statusText} - ${errText}`);
         }
 
         const sttData = await sarvamResponse.json();
@@ -137,11 +143,11 @@ export const processVoiceSearch = onCall(async (request) => {
         console.log("Sarvam Extracted Text:", textQuery);
 
         // 2. Search database using the extracted text (via our shared helper)
-        const resultData = await getCompaniesFromQuery(textQuery);
+        const responseData = await getCompaniesFromQuery(textQuery) as any;
         
         return { 
-            text: `(Heard: "${textQuery}") - I found ${resultData?.length || 0} matching companies.`,
-            results: resultData 
+            text: responseData?.text || `(Heard: "${textQuery}") - I found ${responseData?.results?.length || 0} matching companies.`,
+            results: responseData?.results || [] 
         };
 
     } catch (e: any) {
