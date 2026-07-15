@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { httpsCallable } from 'firebase/functions';
-import { collection, doc, setDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import { app, functions, db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Audio } from 'expo-av';
@@ -156,6 +156,20 @@ export default function App() {
     setMessages(chat.messages || []);
     setChatId(chat.id);
     if (!isWebOrTablet) setSidebarOpen(false);
+  };
+
+  const handleDeleteChat = async (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await deleteDoc(doc(db, 'chats', id));
+      setHistory(prev => prev.filter(c => c.id !== id));
+      if (chatId === id) {
+        setMessages([]);
+        setChatId(Date.now().toString());
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+    }
   };
 
   const currentSearchId = useRef(0);
@@ -462,7 +476,7 @@ export default function App() {
                   <Ionicons name="person" size={20} color={t.textSecondary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? (user.displayName || user.phoneNumber || 'User') : 'Guest User'}</Text>
+                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? `Welcome, ${user.displayName || user.phoneNumber || 'User'}` : 'Guest User'}</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
                     {user ? (
                       <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
@@ -492,10 +506,15 @@ export default function App() {
             <ScrollView style={styles.historyList}>
               <Text style={[styles.historySection, { color: t.textSecondary }]}>Recent</Text>
               {history.map(chat => (
-                <TouchableOpacity key={chat.id} onPress={() => loadChat(chat)} style={[styles.historyItem, chatId === chat.id && { backgroundColor: t.accent2, borderRadius: 8, paddingHorizontal: 4 }]}>
-                  <Ionicons name="chatbubble-outline" size={18} color={t.textPrimary} />
-                  <Text style={[styles.historyText, { color: t.textPrimary, fontWeight: chatId === chat.id ? 'bold' : 'normal' }]} numberOfLines={1}>{chat.title}</Text>
-                </TouchableOpacity>
+                <View key={chat.id} style={[styles.historyItem, chatId === chat.id && { backgroundColor: t.accent2, borderRadius: 8, paddingHorizontal: 4 }, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 4 }]}>
+                  <TouchableOpacity onPress={() => loadChat(chat)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingVertical: 4 }}>
+                    <Ionicons name="chatbubble-outline" size={18} color={t.textPrimary} />
+                    <Text style={[styles.historyText, { color: t.textPrimary, fontWeight: chatId === chat.id ? 'bold' : 'normal', flex: 1, marginRight: 8 }]} numberOfLines={1}>{chat.title}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteChat(chat.id)} style={{ padding: 6 }}>
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
               ))}
               {history.length === 0 && (
                 <Text style={{ color: t.textSecondary, fontSize: 12, paddingHorizontal: 12, marginTop: 10 }}>No history found.</Text>
@@ -552,7 +571,7 @@ export default function App() {
                           {user ? (
                             <>
                               <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{user.displayName || user.phoneNumber || 'User'}</Text>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Welcome, {user.displayName || user.phoneNumber || 'User'}</Text>
                               </View>
                               <TouchableOpacity onPress={async () => { setShowProfileMenu(false); await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }} style={{ padding: 10 }}>
                                 <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>Logout</Text>
