@@ -21,7 +21,7 @@ const FALLBACK_MODELS = [
 
 // Define the exact schema the Frontend expects for the Result Container
 const CompanySchema = z.object({
-  text: z.string().describe("A SHORT, conversational Tanglish response. Give a 1-sentence summary, then a short, highly contextual follow-up question based on their search (e.g., 'Neenga keta knitted garments ivanga thaan. Ungaluku Dyeing or manufacturer list venuma?'). Do NOT greet repeatedly."),
+  text: z.string().describe("A SHORT conversational response WITH EMOJIS, matching the user's exact language (English, Tanglish, or Tamil). Give a 1-sentence summary, then a highly contextual follow-up question based on their search."),
   results: z.array(z.object({
     id: z.string(),
     name: z.string(),
@@ -56,10 +56,14 @@ async function getCompaniesFromQuery(query: string) {
                 ${contextData}
                 
                 Guidelines:
-                1. If the user says a casual greeting (like "hi ena panra"), reply casually in Tanglish. DO NOT say "Vanakam" or "Hello" repeatedly in every message. Only greet if the user explicitly greets you first.
-                2. If they search for something, find the matching companies and return them in the 'results' array.
-                3. In the 'text' field, keep the response SHORT and SWEET. (e.g., "Neenga ketta knitting companies ivanga thaan.").
-                4. VERY IMPORTANT: ALWAYS end your 'text' response with a highly contextual, short follow-up question. Think of the natural next step in the Tiruppur textile supply chain! (e.g., If they search 'Garments', ask "Ungaluku Dyeing or manufacturer list venuma?").
+                1. LANGUAGE MATCHING (CRITICAL): Strictly mirror the user's language.
+                   - If user speaks full English -> Reply in full English.
+                   - If user speaks Tanglish -> Reply in Tanglish.
+                   - If user speaks Pure Tamil -> Reply in Pure Tamil.
+                2. If the user says a casual greeting (like "hi ena panra"), reply casually. DO NOT say "Vanakam" or "Hello" repeatedly in every message.
+                3. Keep the 'text' response EXTREMELY SHORT (max 1 or 2 small sentences). Use relevant emojis!
+                4. If they search for something, find the matching companies and return them in the 'results' array.
+                5. VERY IMPORTANT: ALWAYS end your 'text' response with a highly contextual, short follow-up question. Think of the natural next step in the Tiruppur textile supply chain! (e.g., If they search 'Garments', ask "Ungaluku Dyeing or manufacturer list venuma?").
                 
                 Format the output strictly matching the provided JSON schema.`,
                 output: { schema: CompanySchema }

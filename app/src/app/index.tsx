@@ -12,14 +12,14 @@ export let SEARCH_RESULTS: any[] = [];
 
 const tLight = {
   name: 'Tiruppur Pure Cotton',
-  bg: '#F0F9FF', // Pastel Blue background
+  bg: '#F8FAFC', // Pastel White background
   cardBg: '#FFFFFF', // Pure White cards
   textPrimary: '#0F172A', // Dark Gray text
   textSecondary: '#4B5563', // Medium Gray text
   accent1: '#14532D', // Deep Forest Green
   accent2: '#FAFAFA', // Pastel White / Light Grey (User bubbles)
   border: '#86EFAC', // Pastel Green border
-  sidebarBg: '#F0F9FF'
+  sidebarBg: '#F8FAFC'
 };
 
 const tDark = {
