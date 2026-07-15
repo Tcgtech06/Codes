@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { httpsCallable } from 'firebase/functions';
 import { app, functions } from '../config/firebase';
+import { Audio } from 'expo-av';
 
 export let SEARCH_RESULTS: any[] = [];
 
@@ -74,6 +75,7 @@ export default function App() {
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingInstance, setRecordingInstance] = useState<Audio.Recording | null>(null);
   const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('TA');
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -241,18 +243,110 @@ export default function App() {
     setIsChatLoading(false);
   };
 
+  const handleSarvamVoiceSearch = async (uri: string | null) => {
+    if (!uri) return;
+    setIsChatLoading(true);
+    const searchId = Date.now();
+    currentSearchId.current = searchId;
+    try {
+      // 1. Read Audio URI as Blob
+      const fileResponse = await fetch(uri);
+      const blob = await fileResponse.blob();
+
+      // 2. Convert Blob to Base64 string
+      const base64Audio = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+          const resultStr = reader.result as string;
+          resolve(resultStr.includes(',') ? resultStr.split(',')[1] : resultStr);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      // 3. Send to Firebase Cloud Function (Sarvam AI integration)
+      const processVoiceSearch = httpsCallable(functions, 'processVoiceSearch');
+      const response = await processVoiceSearch({ audioBase64: base64Audio });
+      
+      if (currentSearchId.current !== searchId) return; // Discard if stopped
+      
+      const data = response.data as any;
+
+      if (data.error) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: data.error }]);
+      } else {
+        if (data.results && Array.isArray(data.results)) {
+          SEARCH_RESULTS.length = 0; // Clear existing array
+          SEARCH_RESULTS.push(...data.results); // Update with new AI RAG results
+        }
+        setMessages(prev => [...prev, { 
+          id: Date.now().toString(), 
+          role: 'ai', 
+          type: 'text', 
+          text: data.text,
+          results: Array.isArray(data.results) ? data.results : []
+        }]);
+      }
+    } catch (e: any) {
+      console.error(e);
+      if (currentSearchId.current === searchId) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: 'Oops! Sarvam AI Voice Network error: ' + e.message }]);
+      }
+    } finally {
+      if (currentSearchId.current === searchId) setIsChatLoading(false);
+    }
+  };
+
+  const handleMicPress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isRecording && recordingInstance) {
+      // Stop recording
+      setIsRecording(false);
+      try {
+        await recordingInstance.stopAndUnloadAsync();
+        const uri = recordingInstance.getURI();
+        console.log('Recording stopped and stored at', uri);
+        
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', type: 'voice', text: '', duration: recordingTime }]);
+        
+        handleSarvamVoiceSearch(uri);
+        
+        setRecordingTime(0);
+        setRecordingInstance(null);
+      } catch (err) {
+        console.error('Failed to stop recording', err);
+      }
+    } else {
+      // Start recording
+      try {
+        const permission = await Audio.requestPermissionsAsync();
+        if (permission.status === 'granted') {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: true,
+            playsInSilentModeIOS: true,
+          });
+          const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+          setRecordingInstance(recording);
+          setIsRecording(true);
+          setRecordingTime(0);
+        } else {
+          console.error('Microphone permission not granted');
+        }
+      } catch (err) {
+        console.error('Failed to start recording', err);
+      }
+    }
+  };
+
   useEffect(() => {
     let interval: any;
     if (isRecording) {
       interval = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
-    } else if (!isRecording && recordingTime > 0) {
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', type: 'voice', text: '', duration: recordingTime }]);
-      setRecordingTime(0);
     }
     return () => clearInterval(interval);
-  }, [isRecording, recordingTime]);
+  }, [isRecording]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -565,7 +659,7 @@ export default function App() {
 
                   {/* Mic Button (Left of Send Button) */}
                   <TouchableOpacity
-                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setIsRecording(!isRecording); }}
+                    onPress={handleMicPress}
                     style={[
                       styles.actionIconBtn,
                       !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
