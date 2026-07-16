@@ -20,12 +20,11 @@ const ai = genkit({
 });
 
 const FALLBACK_MODELS = [
-    // TEMPORARY BLOCK FOR TESTING
-    // "googleai/gemini-flash-latest",
-    // "googleai/gemini-flash-lite-latest",
-    // "googleai/gemini-pro-latest",
     "groq/llama-3.3-70b-versatile",
-    "groq/openai/gpt-oss-120b"
+    "groq/openai/gpt-oss-120b",
+    "googleai/gemini-flash-latest",
+    "googleai/gemini-flash-lite-latest",
+    "googleai/gemini-pro-latest"
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
@@ -152,23 +151,41 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
     }
 
     try {
-        // 1. Send Audio to Sarvam STT
         const audioBuffer = Buffer.from(audioBase64, 'base64');
         const blob = new Blob([audioBuffer], { type: 'audio/wav' });
         
-        const formData = new FormData();
-        formData.append("file", blob, "audio.wav");
-        formData.append("model", "saaras:v3");
-        // Sarvam STT needs language_code. ta-IN is Tamil
-        formData.append("language_code", "ta-IN"); 
-
         let textQuery = "";
 
         try {
-            // TEMPORARY BLOCK: Forcing Sarvam to fail to test Groq Whisper
-            throw new Error("Temporary block for testing Sarvam fallback");
+            // 1. Try Groq Whisper FIRST
+            const groqFormData = new FormData();
+            groqFormData.append("file", blob, "audio.wav");
+            groqFormData.append("model", "whisper-large-v3");
+            groqFormData.append("prompt", "This audio contains Tanglish and Tamil speech.");
             
-            /*
+            const groqResponse = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.GROQ_API_KEY || groqKey.value()}`
+                },
+                body: groqFormData as any
+            });
+
+            if (!groqResponse.ok) {
+                const errText = await groqResponse.text();
+                throw new Error(`Groq Whisper failed: ${errText}`);
+            }
+            const groqData = await groqResponse.json();
+            textQuery = groqData.text || "";
+        } catch (groqError: any) {
+            console.warn("Groq Whisper failed, falling back to Sarvam STT...", groqError.message);
+            
+            // 2. Fallback to Sarvam STT
+            const formData = new FormData();
+            formData.append("file", blob, "audio.wav");
+            formData.append("model", "saaras:v3");
+            formData.append("language_code", "ta-IN"); 
+
             const sarvamResponse = await fetch("https://api.sarvam.ai/speech-to-text", {
                 method: "POST",
                 headers: {
@@ -182,29 +199,6 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
             }
             const sttData = await sarvamResponse.json();
             textQuery = sttData.transcript || "";
-            */
-        } catch (sarvamError: any) {
-            console.warn("Sarvam STT failed, falling back to Groq Whisper...", sarvamError.message);
-            
-            const groqFormData = new FormData();
-            groqFormData.append("file", blob, "audio.wav");
-            groqFormData.append("model", "whisper-large-v3");
-            groqFormData.append("prompt", "This audio contains Tanglish and Tamil speech.");
-            
-            const groqResponse = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${groqKey.value()}`
-                },
-                body: groqFormData as any
-            });
-
-            if (!groqResponse.ok) {
-                const errText = await groqResponse.text();
-                throw new Error(`Groq Whisper fallback failed: ${errText}`);
-            }
-            const groqData = await groqResponse.json();
-            textQuery = groqData.text || "";
         }
 
         if (!textQuery) {
