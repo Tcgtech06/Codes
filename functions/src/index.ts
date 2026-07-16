@@ -3,6 +3,12 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import { onCall } from "firebase-functions/v2/https";
 import { genkit, z } from "genkit";
 import { googleAI } from "@genkit-ai/google-genai";
+import groq from "genkitx-groq";
+import { defineSecret } from "firebase-functions/params";
+import { FieldValue } from "firebase-admin/firestore";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
+
+const groqKey = defineSecret("GROQ_API_KEY");
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -10,13 +16,14 @@ setGlobalOptions({ maxInstances: 10, region: "us-central1" });
 
 // Initialize Genkit
 const ai = genkit({
-  plugins: [googleAI()],
+  plugins: [googleAI(), groq()],
 });
 
 const FALLBACK_MODELS = [
     "googleai/gemini-flash-latest",
     "googleai/gemini-flash-lite-latest",
-    "googleai/gemini-pro-latest"
+    "googleai/gemini-pro-latest",
+    "groq/llama-3.3-70b-versatile"
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
@@ -38,9 +45,36 @@ const CompanySchema = z.object({
 
 // Helper function to search companies using AI
 async function getCompaniesFromQuery(query: string) {
-    const snapshot = await db.collection("companies").limit(100).get();
-    const dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const contextData = JSON.stringify(dbRecords);
+    let contextData = "";
+
+    try {
+        // 1. Generate Embedding for the user query
+        const queryEmbeddingRes = await ai.embed({
+            model: "googleai/text-embedding-004",
+            content: query
+        });
+
+        // 2. Search Firestore using Vector Search
+        const vectorQuery = db.collection("companies").findNearest("embedding", FieldValue.vector(queryEmbeddingRes as number[]), {
+            limit: 15,
+            distanceMeasure: "COSINE"
+        });
+        
+        const snapshot = await vectorQuery.get();
+        const dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        if (dbRecords.length > 0) {
+            contextData = JSON.stringify(dbRecords);
+        } else {
+            throw new Error("No vector results (maybe embeddings not generated yet)");
+        }
+    } catch (error: any) {
+        console.warn("Vector search failed, falling back to basic fetch:", error.message);
+        // Basic fallback if vector search is not ready or fails
+        const snapshot = await db.collection("companies").limit(50).get();
+        const dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        contextData = JSON.stringify(dbRecords);
+    }
 
     let resultData = null;
     let success = false;
@@ -157,5 +191,47 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
     } catch (e: any) {
         console.error("processVoiceSearch error:", e);
         return { error: "Voice search failed: " + e.message };
+    }
+});
+
+// Trigger to auto-generate embeddings when a company is added or updated
+export const autoGenerateCompanyEmbedding = onDocumentWritten("companies/{companyId}", async (event) => {
+    if (!event.data?.after.exists) {
+        return; // Document deleted
+    }
+
+    const data = event.data.after.data();
+    const beforeData = event.data.before?.data();
+
+    // Prevent infinite loop by checking if ONLY the embedding field changed
+    if (beforeData) {
+        const { embedding: _bEmb, ...bRest } = beforeData;
+        const { embedding: _aEmb, ...aRest } = data;
+        if (JSON.stringify(bRest) === JSON.stringify(aRest)) {
+            return; // No real data changed
+        }
+    }
+
+    // Combine relevant fields for embedding
+    const textToEmbed = [
+        data.name,
+        data.address,
+        data.match,
+        data.offer,
+        ...(data.products || [])
+    ].filter(Boolean).join(" ");
+
+    try {
+        const embeddingRes = await ai.embed({
+            model: "googleai/text-embedding-004",
+            content: textToEmbed
+        });
+
+        await event.data.after.ref.update({
+            embedding: FieldValue.vector(embeddingRes as number[])
+        });
+        console.log(`Successfully generated embedding for company: ${data.name}`);
+    } catch (e: any) {
+        console.error("Failed to generate embedding:", e.message);
     }
 });
