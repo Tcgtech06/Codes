@@ -16,13 +16,14 @@ setGlobalOptions({ maxInstances: 10, region: "us-central1" });
 
 // Initialize Genkit
 const ai = genkit({
-  plugins: [googleAI(), groq()],
+  plugins: [googleAI(), groq({ apiKey: process.env.GROQ_API_KEY })],
 });
 
 const FALLBACK_MODELS = [
-    "googleai/gemini-flash-latest",
-    "googleai/gemini-flash-lite-latest",
-    "googleai/gemini-pro-latest",
+    // TEMPORARY BLOCK FOR TESTING
+    // "googleai/gemini-flash-latest",
+    // "googleai/gemini-flash-lite-latest",
+    // "googleai/gemini-pro-latest",
     "groq/llama-3.3-70b-versatile",
     "groq/openai/gpt-oss-120b"
 ];
@@ -31,17 +32,17 @@ const FALLBACK_MODELS = [
 const CompanySchema = z.object({
   text: z.string().describe("A SHORT conversational response WITH EMOJIS, matching the user's exact language (English, Tanglish, or Tamil). Give a 1-sentence summary, then a highly contextual follow-up question based on their search."),
   results: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    verified: z.boolean(),
-    ad: z.boolean(),
-    offer: z.string().optional(),
-    match: z.string(),
-    address: z.string(),
-    phone: z.string(),
-    email: z.string(),
-    products: z.array(z.string())
-  }))
+    id: z.string().optional().catch(""),
+    name: z.string().optional().catch(""),
+    verified: z.boolean().optional().catch(false),
+    ad: z.boolean().optional().catch(false),
+    offer: z.string().optional().catch(""),
+    match: z.string().optional().catch(""),
+    address: z.string().optional().catch(""),
+    phone: z.string().optional().catch(""),
+    email: z.string().optional().catch(""),
+    products: z.array(z.string()).optional().catch([])
+  })).optional().catch([])
 });
 
 // Helper function to search companies using AI
@@ -51,12 +52,15 @@ async function getCompaniesFromQuery(query: string) {
     try {
         // 1. Generate Embedding for the user query
         const queryEmbeddingRes = await ai.embed({
-            model: "googleai/text-embedding-004",
+            embedder: "googleai/text-embedding-004",
             content: query
         });
 
         // 2. Search Firestore using Vector Search
-        const vectorQuery = db.collection("companies").findNearest("embedding", FieldValue.vector(queryEmbeddingRes as number[]), {
+        // Genkit returns an array of embedding objects when calling embed
+        const embeddingVector = (queryEmbeddingRes as any)[0]?.embedding || queryEmbeddingRes;
+        
+        const vectorQuery = db.collection("companies").findNearest("embedding", FieldValue.vector(embeddingVector as number[]), {
             limit: 15,
             distanceMeasure: "COSINE"
         });
@@ -161,6 +165,10 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
         let textQuery = "";
 
         try {
+            // TEMPORARY BLOCK: Forcing Sarvam to fail to test Groq Whisper
+            throw new Error("Temporary block for testing Sarvam fallback");
+            
+            /*
             const sarvamResponse = await fetch("https://api.sarvam.ai/speech-to-text", {
                 method: "POST",
                 headers: {
@@ -174,6 +182,7 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
             }
             const sttData = await sarvamResponse.json();
             textQuery = sttData.transcript || "";
+            */
         } catch (sarvamError: any) {
             console.warn("Sarvam STT failed, falling back to Groq Whisper...", sarvamError.message);
             
@@ -224,8 +233,10 @@ export const autoGenerateCompanyEmbedding = onDocumentWritten("companies/{compan
         return; // Document deleted
     }
 
-    const data = event.data.after.data();
-    const beforeData = event.data.before?.data();
+    const data = event.data.after.data() as any;
+    const beforeData = event.data.before?.data() as any;
+    
+    if (!data) return;
 
     // Prevent infinite loop by checking if ONLY the embedding field changed
     if (beforeData) {
@@ -247,12 +258,14 @@ export const autoGenerateCompanyEmbedding = onDocumentWritten("companies/{compan
 
     try {
         const embeddingRes = await ai.embed({
-            model: "googleai/text-embedding-004",
+            embedder: "googleai/text-embedding-004",
             content: textToEmbed
         });
+        
+        const embeddingVector = (embeddingRes as any)[0]?.embedding || embeddingRes;
 
         await event.data.after.ref.update({
-            embedding: FieldValue.vector(embeddingRes as number[])
+            embedding: FieldValue.vector(embeddingVector as number[])
         });
         console.log(`Successfully generated embedding for company: ${data.name}`);
     } catch (e: any) {
