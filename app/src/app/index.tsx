@@ -454,6 +454,17 @@ export default function App() {
           />
         )}
 
+        {/* Overlay to close popups (Profile & Lang menu) when tapping outside */}
+        {(showProfileMenu || showLangMenu) && (
+          <Pressable
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
+            onPress={() => {
+              setShowProfileMenu(false);
+              setShowLangMenu(false);
+            }}
+          />
+        )}
+
         {/* Sidebar */}
         {((isWebOrTablet && desktopSidebarOpen) || (!isWebOrTablet && sidebarOpen)) && (
           <View style={[styles.sidebar, !isWebOrTablet && { width: 250 }, { backgroundColor: t.sidebarBg, borderRightColor: t.border }, { position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10 }]}>
