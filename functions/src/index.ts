@@ -23,6 +23,7 @@ const FALLBACK_MODELS = [
     "googleai/gemini-flash-latest",
     "googleai/gemini-flash-lite-latest",
     "googleai/gemini-pro-latest",
+    "groq/openai/gpt-oss-120b",
     "groq/llama-3.3-70b-versatile"
 ];
 
