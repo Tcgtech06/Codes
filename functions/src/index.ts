@@ -23,8 +23,8 @@ const FALLBACK_MODELS = [
     "googleai/gemini-flash-latest",
     "googleai/gemini-flash-lite-latest",
     "googleai/gemini-pro-latest",
-    "groq/openai/gpt-oss-120b",
-    "groq/llama-3.3-70b-versatile"
+    "groq/llama-3.3-70b-versatile",
+    "groq/openai/gpt-oss-120b"
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
@@ -158,28 +158,51 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
         // Sarvam STT needs language_code. ta-IN is Tamil
         formData.append("language_code", "ta-IN"); 
 
-        const sarvamResponse = await fetch("https://api.sarvam.ai/speech-to-text", {
-            method: "POST",
-            headers: {
-                "api-subscription-key": "sk_e0ozdx05_mfJwd1qPfeCcjOsqNY61esRV"
-                // Do NOT set Content-Type manually when using FormData in fetch, it will auto-set the boundary
-            },
-            body: formData as any
-        });
+        let textQuery = "";
 
-        if (!sarvamResponse.ok) {
-            const errText = await sarvamResponse.text();
-            throw new Error(`Sarvam STT failed: ${sarvamResponse.statusText} - ${errText}`);
+        try {
+            const sarvamResponse = await fetch("https://api.sarvam.ai/speech-to-text", {
+                method: "POST",
+                headers: {
+                    "api-subscription-key": "sk_e0ozdx05_mfJwd1qPfeCcjOsqNY61esRV"
+                },
+                body: formData as any
+            });
+
+            if (!sarvamResponse.ok) {
+                throw new Error("Sarvam STT failed");
+            }
+            const sttData = await sarvamResponse.json();
+            textQuery = sttData.transcript || "";
+        } catch (sarvamError: any) {
+            console.warn("Sarvam STT failed, falling back to Groq Whisper...", sarvamError.message);
+            
+            const groqFormData = new FormData();
+            groqFormData.append("file", blob, "audio.wav");
+            groqFormData.append("model", "whisper-large-v3");
+            groqFormData.append("prompt", "This audio contains Tanglish and Tamil speech.");
+            
+            const groqResponse = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${groqKey.value()}`
+                },
+                body: groqFormData as any
+            });
+
+            if (!groqResponse.ok) {
+                const errText = await groqResponse.text();
+                throw new Error(`Groq Whisper fallback failed: ${errText}`);
+            }
+            const groqData = await groqResponse.json();
+            textQuery = groqData.text || "";
         }
 
-        const sttData = await sarvamResponse.json();
-        const textQuery = sttData.transcript || "";
-        
         if (!textQuery) {
             return { error: "Could not understand the audio. Please try again." };
         }
 
-        console.log("Sarvam Extracted Text:", textQuery);
+        console.log("Extracted Text:", textQuery);
 
         // 2. Search database using the extracted text (via our shared helper)
         const responseData = await getCompaniesFromQuery(textQuery) as any;
