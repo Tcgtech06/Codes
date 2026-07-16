@@ -51,7 +51,7 @@ async function getCompaniesFromQuery(query: string) {
     try {
         // 1. Generate Embedding for the user query
         const queryEmbeddingRes = await ai.embed({
-            embedder: "googleai/text-embedding-004",
+            embedder: "googleai/embedding-001",
             content: query
         });
 
@@ -256,7 +256,7 @@ export const autoGenerateCompanyEmbedding = onDocumentWritten("companies/{compan
 
     try {
         const embeddingRes = await ai.embed({
-            embedder: "googleai/text-embedding-004",
+            embedder: "googleai/embedding-001",
             content: textToEmbed
         });
         
