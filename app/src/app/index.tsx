@@ -680,9 +680,24 @@ export default function App() {
                         )
                       )}
 
-                      {/* Render Text AT THE BOTTOM */}
+                      {/* Render Text AT THE BOTTOM with clickable links */}
                       {msg.type === 'text' ? (
-                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20, fontWeight: msg.role === 'user' ? '500' : 'normal', marginTop: msg.results && msg.results.length > 0 ? 5 : 0 }}>{msg.text}</Text>
+                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20, fontWeight: msg.role === 'user' ? '500' : 'normal', marginTop: msg.results && msg.results.length > 0 ? 5 : 0 }}>
+                          {msg.text.split(/(https?:\/\/[^\s]+)/g).map((part: string, index: number) => {
+                            if (part.match(/https?:\/\/[^\s]+/)) {
+                              return (
+                                <Text
+                                  key={index}
+                                  style={{ color: '#3B82F6', textDecorationLine: 'underline' }}
+                                  onPress={() => Linking.openURL(part)}
+                                >
+                                  {part}
+                                </Text>
+                              );
+                            }
+                            return part;
+                          })}
+                        </Text>
                       ) : (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                           <Ionicons name="play-circle" size={32} color={t.textPrimary} />
