@@ -45,35 +45,35 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
     Animated.loop(
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(scanX, { toValue: 150, duration: 600, useNativeDriver: true }),
-          Animated.timing(scanY, { toValue: 30, duration: 600, useNativeDriver: true })
+          Animated.timing(scanX, { toValue: 120, duration: 300, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 30, duration: 300, useNativeDriver: true })
         ]),
         Animated.parallel([
-          Animated.timing(scanX, { toValue: 20, duration: 600, useNativeDriver: true }),
-          Animated.timing(scanY, { toValue: 70, duration: 600, useNativeDriver: true })
+          Animated.timing(scanX, { toValue: 10, duration: 300, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 60, duration: 300, useNativeDriver: true })
         ]),
         Animated.parallel([
-          Animated.timing(scanX, { toValue: 180, duration: 600, useNativeDriver: true }),
-          Animated.timing(scanY, { toValue: 110, duration: 600, useNativeDriver: true })
+          Animated.timing(scanX, { toValue: 140, duration: 300, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 90, duration: 300, useNativeDriver: true })
         ]),
         Animated.parallel([
-          Animated.timing(scanX, { toValue: 0, duration: 600, useNativeDriver: true }),
-          Animated.timing(scanY, { toValue: 0, duration: 600, useNativeDriver: true })
+          Animated.timing(scanX, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 0, duration: 300, useNativeDriver: true })
         ])
       ])
     ).start();
     
     const interval = setInterval(() => {
       setStep(s => (s + 1) % 4);
-    }, 800);
+    }, 600);
     return () => clearInterval(interval);
   }, []);
 
   const steps = [
-    "🔍 Scanning Tiruppur Database...",
-    "🗂️ Filtering matching companies...",
-    "🧠 AI is analyzing the best suppliers...",
-    "✅ Extracting top results!"
+    "🔍 Scanning Tiruppur DB...",
+    "🗂️ Filtering matching rows...",
+    "🧠 AI is parsing JSON...",
+    "✅ Extracting objects!"
   ];
 
   const displayData = data && data.length > 0 ? data.slice(0, 3) : [
@@ -83,37 +83,46 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
   ];
 
   return (
-    <View style={{ width: '100%', marginBottom: 15, padding: 12, backgroundColor: t.cardBg, borderRadius: 12, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }}>
-      <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 13, marginBottom: 12, fontStyle: 'italic' }}>
+    <View style={{ width: '85%', maxWidth: 300, marginBottom: 15, padding: 8, backgroundColor: '#1E293B', borderRadius: 8, borderWidth: 1, borderColor: '#334155', overflow: 'hidden' }}>
+      <Text style={{ color: '#10B981', fontWeight: 'bold', fontSize: 11, marginBottom: 8, fontStyle: 'italic', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>
         {steps[step]}
       </Text>
       
       <View style={{ position: 'relative' }}>
         {/* Magnifying Glass */}
         <Animated.View style={{ 
-          position: 'absolute', top: -10, left: 10,
+          position: 'absolute', top: -5, left: 10,
           zIndex: 20,
           transform: [
             { translateX: scanX },
             { translateY: scanY }
           ]
         }}>
-          <View style={{ backgroundColor: '#fff', padding: 8, borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, borderWidth: 1, borderColor: t.border }}>
-            <Ionicons name="search" size={24} color={t.accent1} />
+          <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', padding: 4, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 5 }}>
+            <Ionicons name="search" size={16} color="#10B981" />
           </View>
         </Animated.View>
 
+        <Text style={{ color: '#94A3B8', fontSize: 10, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[</Text>
         {displayData.map((c: any, i: number) => (
-          <View key={i} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: t.border, paddingVertical: 8, opacity: 0.8 }}>
-            <Ionicons name="document-text-outline" size={16} color={t.textSecondary} style={{ marginRight: 8, marginTop: 2 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: t.textPrimary, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{c.name}</Text>
-              <Text style={{ color: t.textSecondary, fontSize: 11 }} numberOfLines={1}>
-                {c.products?.length > 0 ? c.products.join(', ') : c.address}
+          <View key={i} style={{ paddingLeft: 12, marginBottom: 2, opacity: 0.85 }}>
+            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 10, color: '#94A3B8' }}>{`{`}</Text>
+            <View style={{ paddingLeft: 12 }}>
+              <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 10 }} numberOfLines={1}>
+                <Text style={{ color: '#38BDF8' }}>"name"</Text>
+                <Text style={{ color: '#94A3B8' }}>: </Text>
+                <Text style={{ color: '#A7F3D0' }}>"{c.name}"</Text><Text style={{ color: '#94A3B8' }}>,</Text>
+              </Text>
+              <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 10 }} numberOfLines={1}>
+                <Text style={{ color: '#38BDF8' }}>"data"</Text>
+                <Text style={{ color: '#94A3B8' }}>: </Text>
+                <Text style={{ color: '#A7F3D0' }}>"{c.products?.length > 0 ? c.products.join(', ') : c.address}"</Text>
               </Text>
             </View>
+            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 10, color: '#94A3B8' }}>{`}`}{i < displayData.length - 1 ? ',' : ''}</Text>
           </View>
         ))}
+        <Text style={{ color: '#94A3B8', fontSize: 10, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>]</Text>
       </View>
     </View>
   );
