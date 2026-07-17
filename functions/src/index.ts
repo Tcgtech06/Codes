@@ -40,6 +40,7 @@ const CompanySchema = z.object({
     address: z.string().optional().catch(""),
     phone: z.string().optional().catch(""),
     email: z.string().optional().catch(""),
+    website: z.string().optional().catch(""),
     products: z.array(z.string()).optional().catch([])
   })).optional().catch([])
 });
@@ -47,6 +48,7 @@ const CompanySchema = z.object({
 // Helper function to search companies using AI
 async function getCompaniesFromQuery(query: string, language: string = 'EN') {
     let contextData = "";
+    let dbRecords: any[] = [];
 
     try {
         // 1. Generate Embedding for the user query
@@ -65,7 +67,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN') {
         });
         
         const snapshot = await vectorQuery.get();
-        const dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         
         if (dbRecords.length > 0) {
             contextData = JSON.stringify(dbRecords);
@@ -76,7 +78,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN') {
         console.warn("Vector search failed, falling back to basic fetch:", error.message);
         // Basic fallback if vector search is not ready or fails
         const snapshot = await db.collection("companies").limit(50).get();
-        const dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         contextData = JSON.stringify(dbRecords);
     }
 
@@ -130,6 +132,21 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN') {
         throw new Error("AI servers are currently very busy. Please try again in a few seconds.");
     }
     
+    // Enrich AI results with full database fields and sort by admin rank
+    if (resultData && Array.isArray(resultData.results)) {
+        resultData.results = resultData.results.map((aiCompany: any) => {
+            const originalCompany = dbRecords.find(c => c.id === aiCompany.id);
+            return originalCompany ? { ...originalCompany, ...aiCompany } : aiCompany;
+        });
+
+        // Sort by rank: companies with rank 1,2,3 come first. If no rank, they go to the bottom.
+        resultData.results.sort((a: any, b: any) => {
+            const rankA = typeof a.rank === 'number' ? a.rank : 999;
+            const rankB = typeof b.rank === 'number' ? b.rank : 999;
+            return rankA - rankB;
+        });
+    }
+
     return resultData;
 }
 

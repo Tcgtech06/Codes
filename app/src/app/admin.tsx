@@ -5,8 +5,9 @@ import { useState } from 'react';
 import { Image, Linking, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, ActivityIndicator } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as XLSX from 'xlsx';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { useEffect } from 'react';
 
 // Temporary Mock Data
 const MOCK_PENDING = [
@@ -38,6 +39,36 @@ export default function AdminDashboard() {
   const [selectedColumns, setSelectedColumns] = useState(['Company Name', 'Category', 'Address', 'Phone']);
   const [isUploading, setIsUploading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [companySearch, setCompanySearch] = useState('');
+
+  useEffect(() => {
+    if (activeTab === 'companies') {
+      fetchCompanies();
+    }
+  }, [activeTab]);
+
+  const fetchCompanies = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'companies'));
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setCompanies(list);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateCompanyRank = async (id: string, newRank: number | null) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await updateDoc(doc(db, 'companies', id), { rank: newRank });
+      setCompanies(prev => prev.map(c => c.id === id ? { ...c, rank: newRank } : c));
+    } catch (e) {
+      alert("Failed to update rank");
+      console.error(e);
+    }
+  };
 
   const t = {
     bg: '#F0F9FF',
@@ -573,13 +604,43 @@ export default function AdminDashboard() {
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Manage Database</Text>
                 <View style={styles.card}>
-                  <Text style={styles.cardTitle}>Full CRUD Access</Text>
-                  <Text style={styles.cardSub}>Search and edit all approved company records here.</Text>
+                  <Text style={styles.cardTitle}>Full CRUD Access & Ranking</Text>
+                  <Text style={styles.cardSub}>Search and rank top companies to appear first in AI results.</Text>
                   <View style={{ marginTop: 12, flexDirection: 'row', backgroundColor: t.bg, borderRadius: 8, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: t.border }}>
                     <Ionicons name="search" size={20} color={t.textSecondary} style={{ marginHorizontal: 8 }} />
-                    <TextInput placeholder="Search companies..." style={{ flex: 1, outlineStyle: 'none' as any }} />
+                    <TextInput placeholder="Search companies..." value={companySearch} onChangeText={setCompanySearch} style={{ flex: 1, outlineStyle: 'none' as any }} />
                   </View>
                 </View>
+
+                {companies.filter(c => 
+                  c['Company Name']?.toLowerCase().includes(companySearch.toLowerCase()) || 
+                  c.name?.toLowerCase().includes(companySearch.toLowerCase())
+                ).map(company => (
+                  <View key={company.id} style={[styles.card, { flexDirection: isWebOrTablet ? 'row' : 'column', justifyContent: 'space-between', alignItems: isWebOrTablet ? 'center' : 'flex-start' }]}>
+                    <View style={{ flex: 1, paddingRight: 15 }}>
+                      <Text style={styles.cardTitle}>{company['Company Name'] || company.name}</Text>
+                      <Text style={styles.cardSub}>{company['Category'] || company.type} • {company.phone}</Text>
+                      <Text style={{ fontSize: 12, color: t.textSecondary }}>{company['Address'] || company.address}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: isWebOrTablet ? 0 : 15, gap: 10 }}>
+                      <Text style={{ fontSize: 12, fontWeight: 'bold', color: t.textSecondary }}>AI Search Rank:</Text>
+                      {[1, 2, 3].map(rank => (
+                        <TouchableOpacity 
+                          key={rank}
+                          onPress={() => updateCompanyRank(company.id, company.rank === rank ? null : rank)}
+                          style={{
+                            width: 32, height: 32, borderRadius: 16,
+                            justifyContent: 'center', alignItems: 'center',
+                            backgroundColor: company.rank === rank ? t.accent1 : t.bg,
+                            borderWidth: 1, borderColor: company.rank === rank ? t.accent1 : t.border
+                          }}
+                        >
+                          <Text style={{ color: company.rank === rank ? '#fff' : t.textSecondary, fontWeight: 'bold' }}>{rank}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                ))}
               </View>
             )}
             {activeTab === 'sub_admins' && renderSubAdmins()}

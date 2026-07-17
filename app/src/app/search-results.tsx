@@ -261,6 +261,18 @@ export default function SearchResults() {
                   </View>
                 </TouchableOpacity>
 
+                {selectedCompany?.website && (
+                  <TouchableOpacity onPress={() => Linking.openURL(selectedCompany.website.startsWith('http') ? selectedCompany.website : `https://${selectedCompany.website}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(139, 92, 246, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="globe-outline" size={20} color="#8B5CF6" />
+                    </View>
+                    <View>
+                      <Text style={{ color: t.textSecondary, fontSize: 12 }}>Website</Text>
+                      <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{selectedCompany.website}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity onPress={() => Linking.openURL(`https://maps.google.com/?q=${selectedCompany?.address}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
                   <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(239, 68, 68, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="location" size={20} color="#EF4444" />
