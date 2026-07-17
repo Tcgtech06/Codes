@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { httpsCallable } from 'firebase/functions';
-import { collection, doc, setDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
 import { app, functions, db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Audio } from 'expo-av';
@@ -177,6 +177,43 @@ const translations = {
     dashEg1: "सर्वश्रेष्ठ कॉम्पैक्ट यार्न आपूर्तिकर्ताओं की आवश्यकता है",
     dashEg2: "पीएन रोड में रंगाई इकाइयां",
     dashEg3: "निर्यात गारमेंट निर्माताओं का पता लगाएं"
+  },
+  TG: {
+    welcome: "Tiruppur AI ku Welcome",
+    askPlaceholder: "Tiruppur AI ta kelunga...",
+    thinking: "Yosikuthu...",
+    upload: "Upload",
+    ads: "Ads",
+    theme: "Theme",
+    login: "Login",
+    signup: "Sign up",
+    logout: "Logout",
+    sponsored: "SPONSORED",
+    recording: "Kekuthu...",
+    viewAll: "Ellam Paaru",
+    results: "Results",
+    welcomeUser: "Welcome",
+    history: "History",
+    newChat: "Pudhu Thedal",
+    noHistory: "History illa.",
+    profile: "Profile",
+    guestUser: "Guest",
+    aProductOf: "Product of",
+    quickSearches: {
+      knitting: "Knitting Units",
+      tcg: "TCG Tech Services",
+      compact: "Compact Yarn"
+    },
+    dashTitle: "Unga Textile Search Assistant",
+    dashP1: "Tiruppur ah Search pannunga",
+    dashP1Sub: "Garments, Dyeing, Printing - edhuvenalum search pannunga.",
+    dashP2: "Pesanum nu kooda illa",
+    dashP2Sub: "Mic ah press panni Tamil la pesunga!",
+    dashP3: "Business ah valarkka",
+    dashP3Sub: "Direct contacts eduthu business valarkavum.",
+    dashEg1: "Best compact yarn suppliers venum",
+    dashEg2: "PN Road la irukka dyeing units",
+    dashEg3: "Export garments manufacturers"
   }
 };
 
@@ -192,7 +229,7 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingInstance, setRecordingInstance] = useState<Audio.Recording | null>(null);
-  const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('EN');
+  const [language, setLanguage] = useState<'EN' | 'TA' | 'HI' | 'TG'>('EN');
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [hasUsedMic, setHasUsedMic] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -226,6 +263,26 @@ export default function App() {
       }
     };
     fetchHistory();
+  }, [userId]);
+
+  // Fetch Preferred Language
+  useEffect(() => {
+    const fetchUserLanguage = async () => {
+      if (userId === 'guest') return;
+      try {
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.preferredLanguage) {
+            setLanguage(data.preferredLanguage);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user language:", err);
+      }
+    };
+    fetchUserLanguage();
   }, [userId]);
 
   useEffect(() => {
@@ -952,7 +1009,7 @@ export default function App() {
                     {messages.length === 0 && !showLangMenu && (
                       <View pointerEvents="none" style={{ position: 'absolute', top: -35, left: -40, backgroundColor: t.textPrimary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 120, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
                         <Text style={{ color: t.bg, fontSize: 11, fontWeight: 'bold' }}>
-                          {language === 'TA' ? 'மொழியை மாற்றுக' : language === 'HI' ? 'भाषा बदलें' : 'Change Language'}
+                          {language === 'TA' ? 'மொழியை மாற்றுக' : language === 'HI' ? 'भाषा बदलें' : language === 'TG' ? 'Language Maathu' : 'Change Language'}
                         </Text>
                         <View style={{ position: 'absolute', bottom: -4, left: 50, width: 10, height: 10, backgroundColor: t.textPrimary, transform: [{ rotate: '45deg' }] }} />
                       </View>
@@ -978,7 +1035,7 @@ export default function App() {
                     {messages.length > 0 && !hasUsedMic && !isRecording && (
                       <View pointerEvents="none" style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 90, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
                         <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
-                          {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : 'Tap to Speak'}
+                          {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : language === 'TG' ? 'Inga Pesunga' : 'Tap to Speak'}
                         </Text>
                         <View style={{ position: 'absolute', bottom: -4, right: 20, width: 10, height: 10, backgroundColor: t.accent1, transform: [{ rotate: '45deg' }] }} />
                       </View>
@@ -1171,12 +1228,12 @@ export default function App() {
 
       <Modal visible={!!showLangMenu} transparent animationType="fade">
         <Pressable onPress={() => setShowLangMenu(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
-          <View style={{ backgroundColor: t.cardBg, padding: 24, borderRadius: 20, width: '80%', maxWidth: 320 }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 20, textAlign: 'center' }}>
-              {language === 'TA' ? 'மொழியைத் தேர்ந்தெடுக்கவும்' : language === 'HI' ? 'भाषा चुनें' : 'Select Language'}
+          <View style={{ backgroundColor: t.cardBg, padding: 16, borderRadius: 16, width: '70%', maxWidth: 260 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 16, textAlign: 'center' }}>
+              {language === 'TA' ? 'மொழியைத் தேர்ந்தெடுக்கவும்' : language === 'HI' ? 'भाषा चुनें' : language === 'TG' ? 'Language Select Pannunga' : 'Select Language'}
             </Text>
 
-            {['EN', 'TA', 'HI'].map(lang => (
+            {['EN', 'TA', 'TG', 'HI'].map(lang => (
               <TouchableOpacity
                 key={lang}
                 onPress={() => { 
@@ -1184,10 +1241,10 @@ export default function App() {
                   setLanguage(lang as any); 
                   setShowLangMenu(false); 
                 }}
-                style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: language === lang ? t.accent1 : t.bg, borderRadius: 12, marginBottom: 15, justifyContent: 'center' }}
+                style={{ flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: language === lang ? t.accent1 : t.bg, borderRadius: 10, marginBottom: 8, justifyContent: 'center' }}
               >
-                <Text style={{ color: language === lang ? '#fff' : t.textPrimary, fontSize: 16, fontWeight: language === lang ? 'bold' : '600' }}>
-                  {lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil (தமிழ்)' : 'Hindi (हिंदी)'}
+                <Text style={{ color: language === lang ? '#fff' : t.textPrimary, fontSize: 14, fontWeight: language === lang ? 'bold' : '600' }}>
+                  {lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil (தமிழ்)' : lang === 'TG' ? 'Tanglish' : 'Hindi (हिंदी)'}
                 </Text>
               </TouchableOpacity>
             ))}

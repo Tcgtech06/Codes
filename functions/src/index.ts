@@ -89,6 +89,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN') {
         const langMap: Record<string, string> = {
             'EN': 'English',
             'TA': 'Tamil (தமிழ்) - Use Tamil script',
+            'TG': 'Tanglish (Tamil words written in English alphabet)',
             'HI': 'Hindi (हिंदी) - Use Hindi script'
         };
         const targetLang = langMap[language] || 'English';

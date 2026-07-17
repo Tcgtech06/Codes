@@ -4,7 +4,8 @@ import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { createUserWithEmailAndPassword, updateProfile, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { auth, app } from '../config/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, app, db } from '../config/firebase';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { useRef } from 'react';
 
@@ -24,6 +25,7 @@ export default function SignupScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState<'EN' | 'TA' | 'TG' | 'HI'>('EN');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -48,6 +50,15 @@ export default function SignupScreen() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
+      
+      // Save preferred language to Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        name,
+        email,
+        preferredLanguage,
+        createdAt: new Date().toISOString()
+      });
+
       router.replace('/'); // Go to home on success
     } catch (err: any) {
       console.error(err);
@@ -84,7 +95,15 @@ export default function SignupScreen() {
     setError('');
     
     try {
-      await confirmResult.confirm(otp);
+      const userCredential = await confirmResult.confirm(otp);
+      
+      // Save preferred language to Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        phone: phoneNumber,
+        preferredLanguage,
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+
       router.replace('/');
     } catch (err: any) {
       console.error(err);
@@ -164,6 +183,26 @@ export default function SignupScreen() {
                 </View>
               </View>
 
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Preferred Language</Text>
+                <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                  {['EN', 'TA', 'TG', 'HI'].map((lang) => (
+                    <TouchableOpacity
+                      key={lang}
+                      onPress={() => setPreferredLanguage(lang as any)}
+                      style={[
+                        styles.langPill,
+                        preferredLanguage === lang && { backgroundColor: t.accent1, borderColor: t.accent1 }
+                      ]}
+                    >
+                      <Text style={[styles.langPillText, preferredLanguage === lang && { color: '#fff' }]}>
+                        {lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil' : lang === 'TG' ? 'Tanglish' : 'Hindi'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
               <TouchableOpacity 
                 style={styles.signupButton} 
                 onPress={handleSignup}
@@ -188,6 +227,24 @@ export default function SignupScreen() {
                         onChangeText={setPhoneNumber}
                         keyboardType="phone-pad"
                       />
+                    </View>
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Preferred Language</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                      {['EN', 'TA', 'TG', 'HI'].map((lang) => (
+                        <TouchableOpacity
+                          key={lang}
+                          onPress={() => setPreferredLanguage(lang as any)}
+                          style={[
+                            styles.langPill,
+                            preferredLanguage === lang && { backgroundColor: t.accent1, borderColor: t.accent1 }
+                          ]}
+                        >
+                          <Text style={[styles.langPillText, preferredLanguage === lang && { color: '#fff' }]}>
+                            {lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil' : lang === 'TG' ? 'Tanglish' : 'Hindi'}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
                   </View>
                   <TouchableOpacity 
@@ -399,5 +456,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: t.textPrimary,
+  },
+  langPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: t.border,
+    backgroundColor: t.bg,
+  },
+  langPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: t.textSecondary,
   }
 });
