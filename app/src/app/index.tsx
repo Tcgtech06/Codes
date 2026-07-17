@@ -37,14 +37,29 @@ const tDark = {
 };
 
 const DatabaseScanner = ({ t, data, tr }: any) => {
-  const scanAnim = useRef(new Animated.Value(0)).current;
+  const scanX = useRef(new Animated.Value(0)).current;
+  const scanY = useRef(new Animated.Value(0)).current;
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scanAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-        Animated.timing(scanAnim, { toValue: 0, duration: 1200, useNativeDriver: true })
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 150, duration: 600, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 30, duration: 600, useNativeDriver: true })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 20, duration: 600, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 70, duration: 600, useNativeDriver: true })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 180, duration: 600, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 110, duration: 600, useNativeDriver: true })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 0, duration: 600, useNativeDriver: true }),
+          Animated.timing(scanY, { toValue: 0, duration: 600, useNativeDriver: true })
+        ])
       ])
     ).start();
     
@@ -74,13 +89,19 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
       </Text>
       
       <View style={{ position: 'relative' }}>
+        {/* Magnifying Glass */}
         <Animated.View style={{ 
-          position: 'absolute', top: 0, left: 0, right: 0, height: 40, 
-          backgroundColor: 'rgba(16, 185, 129, 0.15)', 
-          borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(16, 185, 129, 0.5)',
-          zIndex: 10,
-          transform: [{ translateY: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 100] }) }]
-        }} />
+          position: 'absolute', top: -10, left: 10,
+          zIndex: 20,
+          transform: [
+            { translateX: scanX },
+            { translateY: scanY }
+          ]
+        }}>
+          <View style={{ backgroundColor: '#fff', padding: 8, borderRadius: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 5, elevation: 5, borderWidth: 1, borderColor: t.border }}>
+            <Ionicons name="search" size={24} color={t.accent1} />
+          </View>
+        </Animated.View>
 
         {displayData.map((c: any, i: number) => (
           <View key={i} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: t.border, paddingVertical: 8, opacity: 0.8 }}>
