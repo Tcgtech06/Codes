@@ -192,8 +192,9 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingInstance, setRecordingInstance] = useState<Audio.Recording | null>(null);
-  const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('TA');
+  const [language, setLanguage] = useState<'EN' | 'TA' | 'HI'>('EN');
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [hasUsedMic, setHasUsedMic] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number, results?: any[] }[]>([]);
   const hasText = inputText.trim().length > 0;
@@ -533,6 +534,7 @@ export default function App() {
           const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
           setRecordingInstance(recording);
           setIsRecording(true);
+          setHasUsedMic(true);
           setRecordingTime(0);
         } else {
           console.error('Microphone permission not granted');
@@ -950,6 +952,12 @@ export default function App() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
                   {/* Language Toggle Button */}
                   <View style={{ position: 'relative', zIndex: 50 }}>
+                    {messages.length === 0 && (
+                      <View style={{ position: 'absolute', top: -35, left: -40, backgroundColor: t.textPrimary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 120, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
+                        <Text style={{ color: t.bg, fontSize: 11, fontWeight: 'bold' }}>Change Language</Text>
+                        <View style={{ position: 'absolute', bottom: -4, left: 50, width: 10, height: 10, backgroundColor: t.textPrimary, transform: [{ rotate: '45deg' }] }} />
+                      </View>
+                    )}
                     <TouchableOpacity
                       onPress={() => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -970,9 +978,9 @@ export default function App() {
                           <TouchableOpacity
                             key={lang}
                             onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setLanguage(lang as any); setShowLangMenu(false); }}
-                            style={{ paddingHorizontal: 12, paddingVertical: 10, backgroundColor: language === lang ? 'rgba(16, 185, 129, 0.1)' : 'transparent', borderRadius: 8, marginBottom: 2 }}
+                            style={{ paddingHorizontal: 12, paddingVertical: 10, backgroundColor: language === lang ? t.accent1 : 'transparent', borderRadius: 8, marginBottom: 2 }}
                           >
-                            <Text style={{ color: language === lang ? t.accent2 : t.textPrimary, fontWeight: language === lang ? 'bold' : 'normal', fontSize: 14 }}>{lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil' : 'Hindi'}</Text>
+                            <Text style={{ color: language === lang ? '#fff' : t.textPrimary, fontWeight: language === lang ? 'bold' : 'normal', fontSize: 14 }}>{lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil' : 'Hindi'}</Text>
                           </TouchableOpacity>
                         ))}
                       </View>
@@ -981,12 +989,12 @@ export default function App() {
 
                   {/* Mic Button (Left of Send Button) */}
                   <View style={{ position: 'relative' }}>
-                    {messages.length === 0 && !isRecording && (
-                      <View style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, minWidth: 80, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 }}>
+                    {messages.length > 0 && !hasUsedMic && !isRecording && (
+                      <View style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 90, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
                         <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
                           {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : 'Tap to Speak'}
                         </Text>
-                        <View style={{ position: 'absolute', bottom: -4, right: 20, width: 8, height: 8, backgroundColor: t.accent1, transform: [{ rotate: '45deg' }] }} />
+                        <View style={{ position: 'absolute', bottom: -4, right: 20, width: 10, height: 10, backgroundColor: t.accent1, transform: [{ rotate: '45deg' }] }} />
                       </View>
                     )}
                     <TouchableOpacity
