@@ -50,11 +50,11 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
         ]),
         Animated.parallel([
           Animated.timing(scanX, { toValue: 10, duration: 1500, useNativeDriver: false }),
-          Animated.timing(scanY, { toValue: 50, duration: 1500, useNativeDriver: false })
+          Animated.timing(scanY, { toValue: 40, duration: 1500, useNativeDriver: false })
         ]),
         Animated.parallel([
           Animated.timing(scanX, { toValue: 140, duration: 1500, useNativeDriver: false }),
-          Animated.timing(scanY, { toValue: 85, duration: 1500, useNativeDriver: false })
+          Animated.timing(scanY, { toValue: 55, duration: 1500, useNativeDriver: false })
         ]),
         Animated.parallel([
           Animated.timing(scanX, { toValue: 0, duration: 1500, useNativeDriver: false }),
@@ -76,14 +76,13 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
     { text: tr.scan4 || "Extracting objects!", icon: "checkmark-circle-outline" }
   ];
 
-  const displayData = data && data.length > 0 ? data.slice(0, 3) : [
-    { "Company Name": "S.K. Garments", "Products": "Cotton, Yarn" },
-    { "Company Name": "Tiruppur Exports", "Products": "Dyeing, Printing" },
-    { "Company Name": "Royal Tex", "Products": "Compact Yarn" }
+  const displayData = data && data.length > 0 ? data.slice(0, 2) : [
+    { name: "S.K. Garments", products: "Cotton, Yarn", location: "PN Road" },
+    { name: "Tiruppur Exports", products: "Dyeing, Printing", type: "Manufacturer" }
   ];
 
   const getRowOpacity = (index: number) => {
-    const center = index === 0 ? 15 : index === 1 ? 50 : 85;
+    const center = index === 0 ? 15 : 55;
     return scanY.interpolate({
       inputRange: [center - 40, center, center + 40],
       outputRange: [0.2, 1, 0.2],
@@ -117,22 +116,19 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
 
         <Text style={{ color: t.textSecondary, fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[</Text>
         {displayData.map((c: any, i: number) => {
-          const cName = c['Company Name'] || c.name || "Unknown";
-          const cData = c['Products'] || c.products?.join(', ') || c.address || "...";
+          const entries = Object.entries(c).filter(([k, v]) => k !== 'id' && k !== 'offer' && typeof v === 'string' && v.trim() !== '').slice(0, 2);
           return (
           <Animated.View key={i} style={{ paddingLeft: 12, marginBottom: 4, opacity: getRowOpacity(i) }}>
             <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`{`}</Text>
             <View style={{ paddingLeft: 12 }}>
-              <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 }} numberOfLines={1}>
-                <Text style={{ color: t.accent1 }}>"name"</Text>
-                <Text style={{ color: t.textSecondary }}>: </Text>
-                <Text style={{ color: t.textPrimary, fontWeight: '600' }}>"{cName}"</Text><Text style={{ color: t.textSecondary }}>,</Text>
-              </Text>
-              <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 }} numberOfLines={1}>
-                <Text style={{ color: t.accent1 }}>"data"</Text>
-                <Text style={{ color: t.textSecondary }}>: </Text>
-                <Text style={{ color: t.textPrimary }}>"{cData}"</Text>
-              </Text>
+              {entries.map(([key, val], eIndex) => (
+                <Text key={key} style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 }} numberOfLines={1}>
+                  <Text style={{ color: t.accent1 }}>"{key}"</Text>
+                  <Text style={{ color: t.textSecondary }}>: </Text>
+                  <Text style={{ color: t.textPrimary, fontWeight: eIndex === 0 ? '600' : 'normal' }}>"{String(val)}"</Text>
+                  {eIndex < entries.length - 1 && <Text style={{ color: t.textSecondary }}>,</Text>}
+                </Text>
+              ))}
             </View>
             <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`}`}{i < displayData.length - 1 ? ',' : ''}</Text>
           </Animated.View>
