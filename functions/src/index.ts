@@ -21,10 +21,9 @@ const ai = genkit({
 
 const FALLBACK_MODELS = [
     "groq/llama-3.3-70b-versatile",
-    "groq/openai/gpt-oss-120b",
-    "googleai/gemini-flash-latest",
-    "googleai/gemini-flash-lite-latest",
-    "googleai/gemini-pro-latest"
+    "groq/llama-3.1-8b-instant",
+    "googleai/gemini-1.5-flash",
+    "googleai/gemini-1.5-pro"
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
