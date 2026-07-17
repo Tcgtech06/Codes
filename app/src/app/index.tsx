@@ -92,7 +92,17 @@ const translations = {
       knitting: "Knitting Units",
       tcg: "TCG Tech Services",
       compact: "Compact Yarn"
-    }
+    },
+    dashTitle: "Your Textile Search Assistant",
+    dashP1: "Search Tiruppur",
+    dashP1Sub: "Garments, Dyeing, Printing - find anything.",
+    dashP2: "Just Speak",
+    dashP2Sub: "Tap the mic and speak in Tamil or English!",
+    dashP3: "Grow Business",
+    dashP3Sub: "Get direct contacts and build your network.",
+    dashEg1: "Need best Compact Yarn suppliers",
+    dashEg2: "Dyeing units in PN Road",
+    dashEg3: "Find export garments manufacturers"
   },
   TA: {
     welcome: "திருப்பூர் AI-க்கு வரவேற்கிறோம்",
@@ -119,7 +129,17 @@ const translations = {
       knitting: "நிட்டிங் யூனிட்கள்",
       tcg: "TCG டெக் சேவைகள்",
       compact: "கம்பாக்ட் நூல்"
-    }
+    },
+    dashTitle: "உங்கள் டெக்ஸ்டைல் தேடல் உதவியாளர்",
+    dashP1: "திருப்பூரை தேடுங்கள்",
+    dashP1Sub: "கார்மெண்ட்ஸ், டையிங், பிரிண்டிங் - எதையும் தேடுங்கள்.",
+    dashP2: "பேசுங்கள் போதும்",
+    dashP2Sub: "மைக்கை அழுத்தி தமிழில் பேசுங்கள்!",
+    dashP3: "தொழிலை வளர்க்க",
+    dashP3Sub: "நேரடி தொடர்புகளைப் பெற்று தொழிலை வளர்க்கவும்.",
+    dashEg1: "சிறந்த கம்பாக்ட் நூல் சப்ளையர்கள் வேண்டும்",
+    dashEg2: "PN ரோடில் உள்ள டையிங் யூனிட்கள்",
+    dashEg3: "ஏற்றுமதி கார்மெண்ட்ஸ் உற்பத்தியாளர்கள்"
   },
   HI: {
     welcome: "तिरुपुर AI में आपका स्वागत है",
@@ -146,7 +166,17 @@ const translations = {
       knitting: "बुनाई इकाइयाँ",
       tcg: "TCG टेक सेवाएँ",
       compact: "कॉम्पैक्ट यार्न"
-    }
+    },
+    dashTitle: "आपका कपड़ा खोज सहायक",
+    dashP1: "तिरुपुर खोजें",
+    dashP1Sub: "गारमेंट्स, रंगाई, छपाई - कुछ भी खोजें।",
+    dashP2: "बस बोलें",
+    dashP2Sub: "माइक दबाएं और तमिल में बोलें!",
+    dashP3: "व्यापार बढ़ाएं",
+    dashP3Sub: "सीधे संपर्क प्राप्त करें और अपना नेटवर्क बनाएं।",
+    dashEg1: "सर्वश्रेष्ठ कॉम्पैक्ट यार्न आपूर्तिकर्ताओं की आवश्यकता है",
+    dashEg2: "पीएन रोड में रंगाई इकाइयां",
+    dashEg3: "निर्यात गारमेंट निर्माताओं का पता लगाएं"
   }
 };
 
@@ -364,10 +394,12 @@ export default function App() {
     );
   };
 
-  const handleSend = async () => {
-    if (!hasText) return;
+  const handleSend = async (textOverride?: string) => {
+    const textToSend = textOverride || inputText;
+    if (!textToSend.trim()) return;
+    
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newMsg = { id: Date.now().toString(), role: 'user', type: 'text', text: inputText } as any;
+    const newMsg = { id: Date.now().toString(), role: 'user', type: 'text', text: textToSend } as any;
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
     setIsChatLoading(true);
@@ -377,7 +409,7 @@ export default function App() {
 
     try {
       const searchCompanyAI = httpsCallable(functions, 'searchCompanyAI');
-      const response = await searchCompanyAI({ query: inputText, language: language });
+      const response = await searchCompanyAI({ query: textToSend, language: language });
       
       if (currentSearchId.current !== searchId) return; // Discard if stopped
       
@@ -716,6 +748,69 @@ export default function App() {
               onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
 
+              {/* Empty State Welcome Dashboard */}
+              {messages.length === 0 && !isChatLoading && (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: isWebOrTablet ? 40 : 20, paddingHorizontal: 20 }}>
+                  <View style={{ backgroundColor: t.cardBg, borderRadius: 24, padding: 24, width: '100%', maxWidth: 600, borderWidth: 1, borderColor: t.border, shadowColor: t.textPrimary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
+                    
+                    <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                      <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(139, 92, 246, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                        <Ionicons name="sparkles" size={32} color="#8B5CF6" />
+                      </View>
+                      <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary, textAlign: 'center' }}>{tr.welcome}</Text>
+                      <Text style={{ fontSize: 16, color: t.textSecondary, textAlign: 'center', marginTop: 4 }}>{tr.dashTitle}</Text>
+                    </View>
+
+                    <View style={{ gap: 20, marginBottom: 30 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="search" size={20} color="#3B82F6" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP1}</Text>
+                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP1Sub}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="mic" size={20} color="#10B981" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP2}</Text>
+                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP2Sub}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(245, 158, 11, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="trending-up" size={20} color="#F59E0B" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP3}</Text>
+                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP3Sub}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={{ gap: 10 }}>
+                      <TouchableOpacity onPress={() => handleSend(tr.dashEg1)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg1}"</Text>
+                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleSend(tr.dashEg2)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg2}"</Text>
+                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleSend(tr.dashEg3)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg3}"</Text>
+                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              )}
+
               {/* Dynamic Messages */}
               {messages.map(msg => (
                 <View key={msg.id} style={[msg.role === 'user' ? styles.userMessageRow : styles.aiMessageRow, msg.role === 'ai' && { alignItems: 'flex-start', flexDirection: 'column', width: '100%' }]}>
@@ -885,16 +980,26 @@ export default function App() {
                   </View>
 
                   {/* Mic Button (Left of Send Button) */}
-                  <TouchableOpacity
-                    onPress={handleMicPress}
-                    style={[
-                      styles.actionIconBtn,
-                      !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
-                      { backgroundColor: isRecording ? '#EF4444' : t.accent2, marginRight: 6 }
-                    ]}
-                  >
-                    <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color={isRecording ? "#fff" : t.textPrimary} />
-                  </TouchableOpacity>
+                  <View style={{ position: 'relative' }}>
+                    {messages.length === 0 && !isRecording && (
+                      <View style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, minWidth: 80, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 }}>
+                        <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
+                          {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : 'Tap to Speak'}
+                        </Text>
+                        <View style={{ position: 'absolute', bottom: -4, right: 20, width: 8, height: 8, backgroundColor: t.accent1, transform: [{ rotate: '45deg' }] }} />
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={handleMicPress}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: isRecording ? '#EF4444' : t.accent2, marginRight: 6 }
+                      ]}
+                    >
+                      <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color={isRecording ? "#fff" : t.textPrimary} />
+                    </TouchableOpacity>
+                  </View>
 
                   {/* Send or Stop Button */}
                   {isChatLoading ? (
@@ -910,7 +1015,7 @@ export default function App() {
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
-                      onPress={handleSend}
+                      onPress={() => handleSend()}
                       style={[
                         styles.actionIconBtn,
                         !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
