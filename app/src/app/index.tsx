@@ -66,6 +66,90 @@ const HotDogMenu = ({ isOpen, isMobile }: { isOpen?: boolean, isMobile?: boolean
   </View>
 );
 
+const translations = {
+  EN: {
+    welcome: "Welcome to Tiruppur AI",
+    askPlaceholder: "Ask Tiruppur AI...",
+    thinking: "Thinking...",
+    upload: "Upload",
+    ads: "Ads",
+    theme: "Theme",
+    login: "Login",
+    signup: "Sign Up",
+    logout: "Logout",
+    sponsored: "SPONSORED",
+    recording: "Recording...",
+    viewAll: "View All",
+    results: "Results",
+    welcomeUser: "Welcome",
+    history: "History",
+    newChat: "New Chat",
+    noHistory: "No history found.",
+    profile: "Profile",
+    guestUser: "Guest User",
+    aProductOf: "A product of",
+    quickSearches: {
+      knitting: "Knitting Units",
+      tcg: "TCG Tech Services",
+      compact: "Compact Yarn"
+    }
+  },
+  TA: {
+    welcome: "திருப்பூர் AI-க்கு வரவேற்கிறோம்",
+    askPlaceholder: "திருப்பூர் AI-யிடம் கேளுங்கள்...",
+    thinking: "யோசிக்கிறது...",
+    upload: "பதிவேற்று",
+    ads: "விளம்பரங்கள்",
+    theme: "தீம்",
+    login: "உள்நுழை",
+    signup: "பதிவு செய்",
+    logout: "வெளியேறு",
+    sponsored: "விளம்பரம்",
+    recording: "பதிவாகிறது...",
+    viewAll: "அனைத்தையும் காண்",
+    results: "முடிவுகள்",
+    welcomeUser: "வரவேற்கிறோம்",
+    history: "வரலாறு",
+    newChat: "புதிய தேடல்",
+    noHistory: "வரலாறு இல்லை.",
+    profile: "சுயவிவரம்",
+    guestUser: "விருந்தினர்",
+    aProductOf: "தயாரிப்பு",
+    quickSearches: {
+      knitting: "நிட்டிங் யூனிட்கள்",
+      tcg: "TCG டெக் சேவைகள்",
+      compact: "கம்பாக்ட் நூல்"
+    }
+  },
+  HI: {
+    welcome: "तिरुपुर AI में आपका स्वागत है",
+    askPlaceholder: "तिरुपुर AI से पूछें...",
+    thinking: "सोच रहा है...",
+    upload: "अपलोड",
+    ads: "विज्ञापन",
+    theme: "थीम",
+    login: "लॉग इन",
+    signup: "साइन अप",
+    logout: "लॉग आउट",
+    sponsored: "प्रायोजित",
+    recording: "रिकॉर्डिंग...",
+    viewAll: "सभी देखें",
+    results: "परिणाम",
+    welcomeUser: "स्वागत है",
+    history: "इतिहास",
+    newChat: "नई खोज",
+    noHistory: "कोई इतिहास नहीं मिला।",
+    profile: "प्रोफ़ाइल",
+    guestUser: "अतिथि",
+    aProductOf: "का उत्पाद",
+    quickSearches: {
+      knitting: "बुनाई इकाइयाँ",
+      tcg: "TCG टेक सेवाएँ",
+      compact: "कॉम्पैक्ट यार्न"
+    }
+  }
+};
+
 export default function App() {
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -91,6 +175,8 @@ export default function App() {
   const userId = user?.uid || 'guest';
   const [chatId, setChatId] = useState(() => Date.now().toString());
   const [history, setHistory] = useState<any[]>([]);
+
+  const tr = translations[language] || translations['EN'];
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -291,7 +377,7 @@ export default function App() {
 
     try {
       const searchCompanyAI = httpsCallable(functions, 'searchCompanyAI');
-      const response = await searchCompanyAI({ query: inputText });
+      const response = await searchCompanyAI({ query: inputText, language: language });
       
       if (currentSearchId.current !== searchId) return; // Discard if stopped
       
@@ -353,7 +439,7 @@ export default function App() {
 
       // 3. Send to Firebase Cloud Function (Sarvam AI integration)
       const processVoiceSearch = httpsCallable(functions, 'processVoiceSearch');
-      const response = await processVoiceSearch({ audioBase64: base64Audio });
+      const response = await processVoiceSearch({ audioBase64: base64Audio, language: language });
       
       if (currentSearchId.current !== searchId) return; // Discard if stopped
       
@@ -487,20 +573,20 @@ export default function App() {
                   <Ionicons name="person" size={20} color={t.textSecondary} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? `Welcome, ${user.displayName || user.phoneNumber || 'User'}` : 'Guest User'}</Text>
+                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? `${tr.welcomeUser}, ${user.displayName || user.phoneNumber || 'User'}` : 'Guest User'}</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
                     {user ? (
                       <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
-                        <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>Logout</Text>
+                        <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>{tr.logout}</Text>
                       </TouchableOpacity>
                     ) : (
                       <>
                         <TouchableOpacity onPress={() => router.push('/login')}>
-                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Login</Text>
+                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>{tr.login}</Text>
                         </TouchableOpacity>
                         <Text style={{ color: t.textSecondary, fontSize: 12 }}>|</Text>
                         <TouchableOpacity onPress={() => router.push('/signup')}>
-                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Sign Up</Text>
+                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>{tr.signup}</Text>
                         </TouchableOpacity>
                       </>
                     )}
@@ -511,11 +597,11 @@ export default function App() {
 
             <TouchableOpacity onPress={handleNewChat} style={[styles.newChatBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border }]}>
               <Ionicons name="add" size={20} color={t.textPrimary} />
-              <Text style={{ color: t.textPrimary, fontWeight: 'bold', marginLeft: 8 }}>New Chat</Text>
+              <Text style={{ color: t.textPrimary, fontWeight: 'bold', marginLeft: 8 }}>{tr.newChat}</Text>
             </TouchableOpacity>
 
             <ScrollView style={styles.historyList}>
-              <Text style={[styles.historySection, { color: t.textSecondary }]}>Recent</Text>
+              <Text style={[styles.historySection, { color: t.textSecondary }]}>{tr.history}</Text>
               {history.map(chat => (
                 <View key={chat.id} style={[styles.historyItem, chatId === chat.id && { backgroundColor: t.accent2, borderRadius: 8, paddingHorizontal: 4 }, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 4 }]}>
                   <TouchableOpacity onPress={() => loadChat(chat)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingVertical: 4 }}>
@@ -528,13 +614,13 @@ export default function App() {
                 </View>
               ))}
               {history.length === 0 && (
-                <Text style={{ color: t.textSecondary, fontSize: 12, paddingHorizontal: 12, marginTop: 10 }}>No history found.</Text>
+                <Text style={{ color: t.textSecondary, fontSize: 12, paddingHorizontal: 12, marginTop: 10 }}>{tr.noHistory}</Text>
               )}
             </ScrollView>
 
             {/* Branding */}
             <View style={{ marginTop: 'auto', paddingTop: 20, borderTopWidth: 1, borderTopColor: t.border, alignItems: 'center' }}>
-              <Text style={{ color: t.textSecondary, fontSize: 12 }}>A product of</Text>
+              <Text style={{ color: t.textSecondary, fontSize: 12 }}>{tr.aProductOf}</Text>
               <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 2 }}>
                 <Text style={{ color: '#EF4444' }}>T</Text>
                 <Text style={{ color: '#22C55E' }}>C</Text>
@@ -575,26 +661,26 @@ export default function App() {
                     <View style={{ position: 'relative', zIndex: 60 }}>
                       <TouchableOpacity onPress={() => setShowProfileMenu(!showProfileMenu)} style={{ alignItems: 'center' }}>
                         <Ionicons name="person-outline" size={20} color={t.textPrimary} />
-                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Profile</Text>
+                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.profile}</Text>
                       </TouchableOpacity>
                       {showProfileMenu && (
                         <View style={{ position: 'absolute', top: 40, right: -10, backgroundColor: t.cardBg, borderRadius: 12, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 120 }}>
                           {user ? (
                             <>
                               <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Welcome, {user.displayName || user.phoneNumber || 'User'}</Text>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.welcomeUser}, {user.displayName || user.phoneNumber || 'User'}</Text>
                               </View>
                               <TouchableOpacity onPress={async () => { setShowProfileMenu(false); await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }} style={{ padding: 10 }}>
-                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>Logout</Text>
+                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>{tr.logout}</Text>
                               </TouchableOpacity>
                             </>
                           ) : (
                             <>
                               <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/login'); }} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Login</Text>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.login}</Text>
                               </TouchableOpacity>
                               <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/signup'); }} style={{ padding: 10 }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>Sign Up</Text>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.signup}</Text>
                               </TouchableOpacity>
                             </>
                           )}
@@ -605,17 +691,17 @@ export default function App() {
 
                   <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
                     <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
-                    <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Upload</Text>
+                    <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.upload}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
                     <Ionicons name="megaphone-outline" size={20} color={t.textPrimary} />
-                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Ads</Text>
+                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.ads}</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
                     <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
-                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>Theme</Text>
+                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.theme}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -661,7 +747,7 @@ export default function App() {
                             {msg.results.length > 4 && (
                               <View style={{ width: '100%', alignItems: 'center', marginTop: 10 }}>
                                 <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 40, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
-                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {msg.results.length} Results</Text>
+                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>{tr.viewAll} {msg.results.length} {tr.results}</Text>
                                 </TouchableOpacity>
                               </View>
                             )}
@@ -672,7 +758,7 @@ export default function App() {
                             {msg.results.length > 4 && (
                               <View style={{ marginTop: 10 }}>
                                 <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
-                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>View All {msg.results.length} Results</Text>
+                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>{tr.viewAll} {msg.results.length} {tr.results}</Text>
                                 </TouchableOpacity>
                               </View>
                             )}
@@ -715,7 +801,7 @@ export default function App() {
                     <Ionicons name="sparkles" size={16} color={t.accent1} />
                   </View>
                   <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 15 : 13, fontStyle: 'italic', marginBottom: 10 }}>Thinking...</Text>
+                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 15 : 13, fontStyle: 'italic', marginBottom: 10 }}>{tr.thinking}</Text>
                     <SkeletonLoading t={t} isWebOrTablet={isWebOrTablet} />
                   </View>
                 </View>
@@ -727,16 +813,16 @@ export default function App() {
               {!hasText && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
                   <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
-                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Knitting Units</Text>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>{tr.quickSearches.knitting}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0F9FF', borderColor: '#93C5FD', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
-                    <Text style={{ color: '#166534', fontSize: 12, fontWeight: '500' }}>TCG Tech Services</Text>
+                    <Text style={{ color: '#166534', fontSize: 12, fontWeight: '500' }}>{tr.quickSearches.tcg}</Text>
                     <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, marginLeft: 2, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 2, elevation: 1 }}>
-                      <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+                      <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>{tr.sponsored}</Text>
                     </View>
                   </TouchableOpacity>
                   <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
-                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Compact Yarn</Text>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>{tr.quickSearches.compact}</Text>
                   </TouchableOpacity>
                 </ScrollView>
               )}
@@ -745,13 +831,13 @@ export default function App() {
                 {isRecording ? (
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, height: 40 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444', marginRight: 10 }} />
-                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: 'bold' }}>Recording... {formatTime(recordingTime)}</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: 'bold' }}>{tr.recording} {formatTime(recordingTime)}</Text>
                   </View>
                 ) : (
                   <TextInput
                     style={[styles.textInput, { color: t.textPrimary, paddingHorizontal: 0 }]}
                     placeholderTextColor={t.textSecondary}
-                    placeholder="Ask Tiruppur AI..."
+                    placeholder={tr.askPlaceholder}
                     multiline
                     value={inputText}
                     onChangeText={setInputText}

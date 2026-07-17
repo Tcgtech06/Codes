@@ -45,7 +45,7 @@ const CompanySchema = z.object({
 });
 
 // Helper function to search companies using AI
-async function getCompaniesFromQuery(query: string) {
+async function getCompaniesFromQuery(query: string, language: string = 'EN') {
     let contextData = "";
 
     try {
@@ -84,6 +84,13 @@ async function getCompaniesFromQuery(query: string) {
     let success = false;
 
     for (const model of FALLBACK_MODELS) {
+        const langMap: Record<string, string> = {
+            'EN': 'English',
+            'TA': 'Tamil (தமிழ்) - Use Tamil script',
+            'HI': 'Hindi (हिंदी) - Use Hindi script'
+        };
+        const targetLang = langMap[language] || 'English';
+
         try {
             const response = await ai.generate({
                 model: model,
@@ -94,10 +101,10 @@ async function getCompaniesFromQuery(query: string) {
                 ${contextData}
                 
                 Guidelines:
-                1. LANGUAGE MATCHING (CRITICAL): Strictly mirror the user's language.
-                   - If user speaks full English -> Reply in full English.
-                   - If user speaks Tanglish -> Reply in Tanglish.
-                   - If user speaks Pure Tamil -> Reply in Pure Tamil.
+                1. LANGUAGE (CRITICAL): The user has explicitly selected their language preference as: ${targetLang}. 
+                   YOU MUST REPLY STRICTLY IN ${targetLang}. 
+                   EVEN IF the user asks the question in English or Tanglish, YOU MUST translate your response and reply ONLY in ${targetLang}.
+                   (Exception: If they select English but type in Tanglish, you can reply in Tanglish).
                 2. If the user says a casual greeting (like "hi ena panra"), reply casually. DO NOT say "Vanakam" or "Hello" repeatedly in every message.
                 3. Keep the 'text' response EXTREMELY SHORT (max 1 or 2 small sentences). Use relevant emojis!
                 4. If they search for something, find the matching companies and return them in the 'results' array.
@@ -129,13 +136,14 @@ async function getCompaniesFromQuery(query: string) {
 // Genkit Flow exposed as a Firebase Callable Function
 export const searchCompanyAI = onCall({ cors: true }, async (request) => {
     const query = request.data?.query;
+    const language = request.data?.language || 'EN';
     
     if (!query) {
         return { error: "Please provide a query." };
     }
 
     try {
-        const responseData = await getCompaniesFromQuery(query) as any;
+        const responseData = await getCompaniesFromQuery(query, language) as any;
         return { 
             text: responseData?.text || `I found ${responseData?.results?.length || 0} matching companies for your request.`,
             results: responseData?.results || [] 
@@ -149,6 +157,7 @@ export const searchCompanyAI = onCall({ cors: true }, async (request) => {
 // Sarvam AI Voice Search Endpoint
 export const processVoiceSearch = onCall({ cors: true }, async (request) => {
     const audioBase64 = request.data?.audioBase64;
+    const language = request.data?.language || 'EN';
     
     if (!audioBase64) {
         return { error: "Please provide an audio recording." };
@@ -212,7 +221,7 @@ export const processVoiceSearch = onCall({ cors: true }, async (request) => {
         console.log("Extracted Text:", textQuery);
 
         // 2. Search database using the extracted text (via our shared helper)
-        const responseData = await getCompaniesFromQuery(textQuery) as any;
+        const responseData = await getCompaniesFromQuery(textQuery, language) as any;
         
         return { 
             text: responseData?.text || `(Heard: "${textQuery}") - I found ${responseData?.results?.length || 0} matching companies.`,
