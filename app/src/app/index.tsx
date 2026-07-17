@@ -952,9 +952,11 @@ export default function App() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
                   {/* Language Toggle Button */}
                   <View style={{ position: 'relative', zIndex: 50 }}>
-                    {messages.length === 0 && (
-                      <View style={{ position: 'absolute', top: -35, left: -40, backgroundColor: t.textPrimary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 120, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
-                        <Text style={{ color: t.bg, fontSize: 11, fontWeight: 'bold' }}>Change Language</Text>
+                    {messages.length === 0 && !showLangMenu && (
+                      <View pointerEvents="none" style={{ position: 'absolute', top: -35, left: -40, backgroundColor: t.textPrimary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 120, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
+                        <Text style={{ color: t.bg, fontSize: 11, fontWeight: 'bold' }}>
+                          {language === 'TA' ? 'மொழியை மாற்றுக' : language === 'HI' ? 'भाषा बदलें' : 'Change Language'}
+                        </Text>
                         <View style={{ position: 'absolute', bottom: -4, left: 50, width: 10, height: 10, backgroundColor: t.textPrimary, transform: [{ rotate: '45deg' }] }} />
                       </View>
                     )}
@@ -990,7 +992,7 @@ export default function App() {
                   {/* Mic Button (Left of Send Button) */}
                   <View style={{ position: 'relative' }}>
                     {messages.length > 0 && !hasUsedMic && !isRecording && (
-                      <View style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 90, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
+                      <View pointerEvents="none" style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 90, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
                         <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
                           {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : 'Tap to Speak'}
                         </Text>
