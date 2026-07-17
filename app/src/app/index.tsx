@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { httpsCallable } from 'firebase/functions';
-import { collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc, limit } from 'firebase/firestore';
 import { app, functions, db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Audio } from 'expo-av';
@@ -36,27 +36,68 @@ const tDark = {
   sidebarBg: '#052E16'
 };
 
-const SkeletonLoading = ({ t, isWebOrTablet }: any) => {
-  const opacity = useRef(new Animated.Value(0.3)).current;
+const DatabaseScanner = ({ t, data, tr }: any) => {
+  const scanAnim = useRef(new Animated.Value(0)).current;
+  const [step, setStep] = useState(0);
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true })
+        Animated.timing(scanAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(scanAnim, { toValue: 0, duration: 1200, useNativeDriver: true })
       ])
     ).start();
+    
+    const interval = setInterval(() => {
+      setStep(s => (s + 1) % 4);
+    }, 800);
+    return () => clearInterval(interval);
   }, []);
+
+  const steps = [
+    "🔍 Scanning Tiruppur Database...",
+    "🗂️ Filtering matching companies...",
+    "🧠 AI is analyzing the best suppliers...",
+    "✅ Extracting top results!"
+  ];
+
+  const displayData = data && data.length > 0 ? data.slice(0, 3) : [
+    { name: "S.K. Garments", address: "PN Road", products: ["Cotton", "Yarn"] },
+    { name: "Tiruppur Exports", address: "Khaderpet", products: ["Dyeing", "Printing"] },
+    { name: "Royal Tex", address: "Avinashi Road", products: ["Compact Yarn"] }
+  ];
+
   return (
-    <View style={{ flexDirection: 'column', justifyContent: 'flex-start', marginBottom: 20, width: '100%' }}>
-      <Animated.View style={{ width: 200, height: 20, borderRadius: 6, backgroundColor: t.border, opacity, marginBottom: 15 }} />
-      <View style={isWebOrTablet ? { flexDirection: 'row', gap: 16, maxWidth: 816 } : { gap: 12 }}>
-        {[1, 2].map(i => (
-          <Animated.View key={i} style={[{ height: 140, borderRadius: 12, backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, opacity }, isWebOrTablet ? { flex: 1, maxWidth: 400 } : { width: '100%' }]} />
+    <View style={{ width: '100%', marginBottom: 15, padding: 12, backgroundColor: t.cardBg, borderRadius: 12, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }}>
+      <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 13, marginBottom: 12, fontStyle: 'italic' }}>
+        {steps[step]}
+      </Text>
+      
+      <View style={{ position: 'relative' }}>
+        <Animated.View style={{ 
+          position: 'absolute', top: 0, left: 0, right: 0, height: 40, 
+          backgroundColor: 'rgba(16, 185, 129, 0.15)', 
+          borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(16, 185, 129, 0.5)',
+          zIndex: 10,
+          transform: [{ translateY: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 100] }) }]
+        }} />
+
+        {displayData.map((c: any, i: number) => (
+          <View key={i} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: t.border, paddingVertical: 8, opacity: 0.8 }}>
+            <Ionicons name="document-text-outline" size={16} color={t.textSecondary} style={{ marginRight: 8, marginTop: 2 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.textPrimary, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>{c.name}</Text>
+              <Text style={{ color: t.textSecondary, fontSize: 11 }} numberOfLines={1}>
+                {c.products?.length > 0 ? c.products.join(', ') : c.address}
+              </Text>
+            </View>
+          </View>
         ))}
       </View>
     </View>
   );
 };
+
 
 const HotDogMenu = ({ isOpen, isMobile }: { isOpen?: boolean, isMobile?: boolean }) => (
   <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ scale: isMobile ? 0.85 : 1 }] }}>
@@ -243,8 +284,23 @@ export default function App() {
   const userId = user?.uid || 'guest';
   const [chatId, setChatId] = useState(() => Date.now().toString());
   const [history, setHistory] = useState<any[]>([]);
+  const [scanData, setScanData] = useState<any[]>([]);
 
   const tr = translations[language] || translations['EN'];
+
+  useEffect(() => {
+    const fetchScanData = async () => {
+      try {
+        const q = query(collection(db, 'companies'), limit(5));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(d => d.data());
+        if (data.length > 0) setScanData(data);
+      } catch (err) {
+        console.error("Failed to fetch scan data", err);
+      }
+    };
+    fetchScanData();
+  }, []);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -952,8 +1008,7 @@ export default function App() {
                     <Ionicons name="sparkles" size={16} color={t.accent1} />
                   </View>
                   <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                    <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 15 : 13, fontStyle: 'italic', marginBottom: 10 }}>{tr.thinking}</Text>
-                    <SkeletonLoading t={t} isWebOrTablet={isWebOrTablet} />
+                    <DatabaseScanner t={t} data={scanData} tr={tr} />
                   </View>
                 </View>
               )}
