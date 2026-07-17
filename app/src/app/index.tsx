@@ -349,11 +349,11 @@ export default function App() {
               <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
             </View>
           )}
-          {!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
+          {(!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
             <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, borderWidth: 1, borderColor: '#FDA4AF', borderTopWidth: 0, borderRightWidth: 0 }}>
               <Text style={{ color: '#BE123C', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{company.offer.toUpperCase()}</Text>
             </View>
-          )}
+          ) : null}
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
             {!!(company.logo || company.verified) && (
               <View style={{ position: 'relative', marginRight: 12 }}>
@@ -373,12 +373,12 @@ export default function App() {
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
               <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
-              {!!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
+              {(!!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
                 <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
                   <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
                   <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
                 </View>
-              )}
+              ) : null}
             </View>
           </View>
           <View style={[styles.cardActions, { marginTop: 4 }]}>
@@ -1082,21 +1082,21 @@ export default function App() {
                       <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
                     </View>
                     <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
-                    {!isWebOrTablet && selectedCompany?.offer && selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
+                    {(!isWebOrTablet && !!selectedCompany?.offer && !!selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
                       <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 10 }}>
                         <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
                         <Text style={{ color: '#BE123C', fontSize: 11, fontWeight: '900' }}>{selectedCompany.offer}</Text>
                       </View>
-                    )}
+                    ) : null}
                   </View>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: selectedCompany?.ad ? 28 : 0 }}>
-                  {isWebOrTablet && selectedCompany?.offer && selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
+                  {(isWebOrTablet && !!selectedCompany?.offer && !!selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
                     <View style={{ flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginRight: 12 }}>
                       <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
                       <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '900' }}>{selectedCompany.offer}</Text>
                     </View>
-                  )}
+                  ) : null}
                   <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20 }}>
                     <Ionicons name="close" size={24} color={t.textPrimary} />
                   </TouchableOpacity>

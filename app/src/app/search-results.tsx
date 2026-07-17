@@ -108,21 +108,21 @@ export default function SearchResults() {
       >
         {SEARCH_RESULTS.map(company => (
           <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { width: '48%', maxWidth: 400, flexGrow: 1 }]}>
-            {company.ad && (
+            {!!company.ad && (
               <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
                 <Text style={{ color: '#D97706', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
               </View>
             )}
-            {!company.ad && company.offer && company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/) && (
+            {(!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
               <View style={{ position: 'absolute', top: 8, right: 8, backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, zIndex: 10, borderWidth: 1, borderColor: '#FDA4AF', flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="pricetag" size={10} color="#E11D48" style={{ marginRight: 4 }} />
                 <Text style={{ color: '#BE123C', fontSize: 9, fontWeight: '900' }}>{company.offer.toUpperCase()}</Text>
               </View>
-            )}
+            ) : null}
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
               {(company.logo || company.verified) && (
                 <View style={{ position: 'relative', marginRight: 12 }}>
-                  {company.logo && (
+                  {!!company.logo && (
                     <Image 
                       source={{ uri: company.logo }} 
                       style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }} 
