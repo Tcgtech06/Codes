@@ -228,6 +228,7 @@ export default function SignupScreen() {
                         keyboardType="phone-pad"
                       />
                     </View>
+                  </View>
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Preferred Language</Text>
                     <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
