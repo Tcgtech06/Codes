@@ -45,20 +45,20 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
     Animated.loop(
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(scanX, { toValue: 120, duration: 1500, useNativeDriver: false }),
-          Animated.timing(scanY, { toValue: 15, duration: 1500, useNativeDriver: false })
+          Animated.timing(scanX, { toValue: 100, duration: 1500, useNativeDriver: false }),
+          Animated.timing(scanY, { toValue: 5, duration: 1500, useNativeDriver: false })
         ]),
         Animated.parallel([
           Animated.timing(scanX, { toValue: 10, duration: 1500, useNativeDriver: false }),
+          Animated.timing(scanY, { toValue: 25, duration: 1500, useNativeDriver: false })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 120, duration: 1500, useNativeDriver: false }),
           Animated.timing(scanY, { toValue: 40, duration: 1500, useNativeDriver: false })
         ]),
         Animated.parallel([
-          Animated.timing(scanX, { toValue: 140, duration: 1500, useNativeDriver: false }),
-          Animated.timing(scanY, { toValue: 55, duration: 1500, useNativeDriver: false })
-        ]),
-        Animated.parallel([
           Animated.timing(scanX, { toValue: 0, duration: 1500, useNativeDriver: false }),
-          Animated.timing(scanY, { toValue: -5, duration: 1500, useNativeDriver: false })
+          Animated.timing(scanY, { toValue: 0, duration: 1500, useNativeDriver: false })
         ])
       ])
     ).start();
@@ -82,9 +82,9 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
   ];
 
   const getRowOpacity = (index: number) => {
-    const center = index === 0 ? 15 : 55;
+    const center = index === 0 ? 5 : 40;
     return scanY.interpolate({
-      inputRange: [center - 40, center, center + 40],
+      inputRange: [center - 20, center, center + 20],
       outputRange: [0.2, 1, 0.2],
       extrapolate: 'clamp'
     });
@@ -116,7 +116,7 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
 
         <Text style={{ color: t.textSecondary, fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[</Text>
         {displayData.map((c: any, i: number) => {
-          const entries = Object.entries(c).filter(([k, v]) => k !== 'id' && k !== 'offer' && typeof v === 'string' && v.trim() !== '').slice(0, 2);
+          const entries = Object.entries(c).filter(([k, v]) => k !== 'id' && k !== 'offer' && typeof v === 'string' && v.trim() !== '').slice(0, 1);
           return (
           <Animated.View key={i} style={{ paddingLeft: 12, marginBottom: 4, opacity: getRowOpacity(i) }}>
             <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`{`}</Text>
