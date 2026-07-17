@@ -70,16 +70,16 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
   }, []);
 
   const steps = [
-    { text: "Scanning Tiruppur DB...", icon: "search-outline" },
-    { text: "Filtering matching rows...", icon: "filter-outline" },
-    { text: "AI is parsing JSON...", icon: "hardware-chip-outline" },
-    { text: "Extracting objects!", icon: "checkmark-circle-outline" }
+    { text: tr.scan1 || "Scanning Tiruppur DB...", icon: "search-outline" },
+    { text: tr.scan2 || "Filtering matching rows...", icon: "filter-outline" },
+    { text: tr.scan3 || "AI is parsing JSON...", icon: "hardware-chip-outline" },
+    { text: tr.scan4 || "Extracting objects!", icon: "checkmark-circle-outline" }
   ];
 
   const displayData = data && data.length > 0 ? data.slice(0, 3) : [
-    { name: "S.K. Garments", address: "PN Road", products: ["Cotton", "Yarn"] },
-    { name: "Tiruppur Exports", address: "Khaderpet", products: ["Dyeing", "Printing"] },
-    { name: "Royal Tex", address: "Avinashi Road", products: ["Compact Yarn"] }
+    { "Company Name": "S.K. Garments", "Products": "Cotton, Yarn" },
+    { "Company Name": "Tiruppur Exports", "Products": "Dyeing, Printing" },
+    { "Company Name": "Royal Tex", "Products": "Compact Yarn" }
   ];
 
   const getRowOpacity = (index: number) => {
@@ -92,7 +92,7 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
   };
 
   return (
-    <View style={{ width: '90%', maxWidth: 350, marginBottom: 15, padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }}>
+    <View style={{ width: '90%', maxWidth: 260, marginBottom: 15, padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
         <Ionicons name={steps[step].icon as any} size={16} color={t.accent1} style={{ marginRight: 6 }} />
         <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 12, fontStyle: 'italic' }}>
@@ -116,24 +116,27 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
         </Animated.View>
 
         <Text style={{ color: t.textSecondary, fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[</Text>
-        {displayData.map((c: any, i: number) => (
+        {displayData.map((c: any, i: number) => {
+          const cName = c['Company Name'] || c.name || "Unknown";
+          const cData = c['Products'] || c.products?.join(', ') || c.address || "...";
+          return (
           <Animated.View key={i} style={{ paddingLeft: 12, marginBottom: 4, opacity: getRowOpacity(i) }}>
             <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`{`}</Text>
             <View style={{ paddingLeft: 12 }}>
               <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 }} numberOfLines={1}>
                 <Text style={{ color: t.accent1 }}>"name"</Text>
                 <Text style={{ color: t.textSecondary }}>: </Text>
-                <Text style={{ color: t.textPrimary, fontWeight: '600' }}>"{c.name}"</Text><Text style={{ color: t.textSecondary }}>,</Text>
+                <Text style={{ color: t.textPrimary, fontWeight: '600' }}>"{cName}"</Text><Text style={{ color: t.textSecondary }}>,</Text>
               </Text>
               <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 }} numberOfLines={1}>
                 <Text style={{ color: t.accent1 }}>"data"</Text>
                 <Text style={{ color: t.textSecondary }}>: </Text>
-                <Text style={{ color: t.textPrimary }}>"{c.products?.length > 0 ? c.products.join(', ') : c.address}"</Text>
+                <Text style={{ color: t.textPrimary }}>"{cData}"</Text>
               </Text>
             </View>
             <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`}`}{i < displayData.length - 1 ? ',' : ''}</Text>
           </Animated.View>
-        ))}
+        )})}
         <Text style={{ color: t.textSecondary, fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>]</Text>
       </View>
     </View>
@@ -185,7 +188,11 @@ const translations = {
     dashP3Sub: "Get direct contacts and build your network.",
     dashEg1: "Need best Compact Yarn suppliers",
     dashEg2: "Dyeing units in PN Road",
-    dashEg3: "Find export garments manufacturers"
+    dashEg3: "Find export garments manufacturers",
+    scan1: "Scanning Tiruppur DB...",
+    scan2: "Filtering matching rows...",
+    scan3: "AI is parsing JSON...",
+    scan4: "Extracting objects!"
   },
   TA: {
     welcome: "திருப்பூர் AI-க்கு வரவேற்கிறோம்",
@@ -222,7 +229,11 @@ const translations = {
     dashP3Sub: "நேரடி தொடர்புகளைப் பெற்று தொழிலை வளர்க்கவும்.",
     dashEg1: "சிறந்த கம்பாக்ட் நூல் சப்ளையர்கள் வேண்டும்",
     dashEg2: "PN ரோடில் உள்ள டையிங் யூனிட்கள்",
-    dashEg3: "ஏற்றுமதி கார்மெண்ட்ஸ் உற்பத்தியாளர்கள்"
+    dashEg3: "ஏற்றுமதி கார்மெண்ட்ஸ் உற்பத்தியாளர்கள்",
+    scan1: "திருப்பூர் DB-யை தேடுகிறது...",
+    scan2: "சரியான தகவல்களை வடிகட்டுகிறது...",
+    scan3: "AI தரவை பகுப்பாய்வு செய்கிறது...",
+    scan4: "முடிவுகளை எடுக்கிறது!"
   },
   HI: {
     welcome: "तिरुपुर AI में आपका स्वागत है",
@@ -259,7 +270,11 @@ const translations = {
     dashP3Sub: "सीधे संपर्क प्राप्त करें और अपना नेटवर्क बनाएं।",
     dashEg1: "सर्वश्रेष्ठ कॉम्पैक्ट यार्न आपूर्तिकर्ताओं की आवश्यकता है",
     dashEg2: "पीएन रोड में रंगाई इकाइयां",
-    dashEg3: "निर्यात गारमेंट निर्माताओं का पता लगाएं"
+    dashEg3: "निर्यात गारमेंट निर्माताओं का पता लगाएं",
+    scan1: "तिरुपुर DB स्कैन कर रहा है...",
+    scan2: "मिलान डेटा फ़िल्टर कर रहा है...",
+    scan3: "AI डेटा को पार्स कर रहा है...",
+    scan4: "परिणाम निकाल रहा है!"
   },
   TG: {
     welcome: "Tiruppur AI ku Welcome",
@@ -296,7 +311,11 @@ const translations = {
     dashP3Sub: "Direct contacts eduthu business valarkavum.",
     dashEg1: "Best compact yarn suppliers venum",
     dashEg2: "PN Road la irukka dyeing units",
-    dashEg3: "Export garments manufacturers"
+    dashEg3: "Export garments manufacturers",
+    scan1: "Tiruppur DB-ya theduthu...",
+    scan2: "Sariyana data filter aaguthu...",
+    scan3: "AI data-va parse pannuthu...",
+    scan4: "Results edukuthu!"
   }
 };
 
