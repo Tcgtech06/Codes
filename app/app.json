@@ -1,16 +1,25 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "Tiruppur Ai",
+    "slug": "tiruppur-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "tiruppurai",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app requires access to the microphone for voice-to-text search capabilities.",
+        "NSPhotoLibraryUsageDescription": "This app requires access to the photo library for uploading profile and company images."
+      }
     },
     "android": {
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

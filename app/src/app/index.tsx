@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Alert } from 'react-native';
 import { httpsCallable } from 'firebase/functions';
 import { collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc, limit } from 'firebase/firestore';
 import { app, functions, db } from '../config/firebase';
@@ -337,10 +337,32 @@ export default function App() {
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const userId = user?.uid || 'guest';
   const [chatId, setChatId] = useState(() => Date.now().toString());
   const [history, setHistory] = useState<any[]>([]);
+
+  const handleDeleteAccount = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+        deleteAccount().then(() => {
+          setMessages([]); setHistory([]); setChatId(Date.now().toString());
+        }).catch(e => console.error(e));
+      }
+    } else {
+      Alert.alert("Delete Account", "Are you sure you want to delete your account? This action cannot be undone.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: async () => {
+          try {
+            await deleteAccount();
+            setMessages([]); setHistory([]); setChatId(Date.now().toString());
+          } catch(e) {
+            console.error(e);
+          }
+        } }
+      ]);
+    }
+  };
   const [scanData, setScanData] = useState<any[]>([]);
 
   const tr = translations[language] || translations['EN'];
@@ -777,9 +799,14 @@ export default function App() {
                   <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? `${tr.welcomeUser}, ${user.displayName || user.phoneNumber || 'User'}` : 'Guest User'}</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
                     {user ? (
-                      <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
-                        <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>{tr.logout}</Text>
-                      </TouchableOpacity>
+                      <View style={{ flexDirection: 'row', gap: 12 }}>
+                        <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
+                          <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>{tr.logout}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleDeleteAccount}>
+                          <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>Delete Account</Text>
+                        </TouchableOpacity>
+                      </View>
                     ) : (
                       <>
                         <TouchableOpacity onPress={() => router.push('/login')}>
@@ -873,6 +900,9 @@ export default function App() {
                               </View>
                               <TouchableOpacity onPress={async () => { setShowProfileMenu(false); await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }} style={{ padding: 10 }}>
                                 <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>{tr.logout}</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); handleDeleteAccount(); }} style={{ padding: 10, borderTopWidth: 1, borderTopColor: t.border }}>
+                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>Delete Account</Text>
                               </TouchableOpacity>
                             </>
                           ) : (
