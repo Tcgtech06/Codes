@@ -50,7 +50,7 @@ const stories = [
   { title: 'Knit Info Launched by EX.M.L.A', date: 'April-2007', image: '/s1.jpg' },
   { title: 'Knit Info Office Opened By Tripur Garments Head', date: 'May-2008', image: '/s2.jpg' },
   { title: 'Meeting Honourable Dhayanithi Maran Sir M.P', date: 'June-2009', image: '/s3.jpg' },
-  { title: 'Meeting Karur M.P MRS. Jothi Mani', date: 'February-2026', image: '/s4.JPG' },
+  { title: 'Meeting Karur M.P Ms. Jothi Mani', date: 'February-2026', image: '/s4.JPG' },
   { title: 'Technology Innovation Summit', date: 'March-2015', image: '/s5.JPG' },
   { title: 'Global Textile Conference', date: 'November-2018', image: '/s6.JPG' },
 ];
