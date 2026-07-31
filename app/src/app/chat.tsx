@@ -798,26 +798,9 @@ export default function App() {
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? `${tr.welcomeUser}, ${user.displayName || user.phoneNumber || 'User'}` : 'Guest User'}</Text>
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-                    {user ? (
-                      <View style={{ flexDirection: 'row', gap: 12 }}>
-                        <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
-                          <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>{tr.logout}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={handleDeleteAccount}>
-                          <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>Delete Account</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <>
-                        <TouchableOpacity onPress={() => router.push('/login')}>
-                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>{tr.login}</Text>
-                        </TouchableOpacity>
-                        <Text style={{ color: t.textSecondary, fontSize: 12 }}>|</Text>
-                        <TouchableOpacity onPress={() => router.push('/signup')}>
-                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>{tr.signup}</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
+                    <TouchableOpacity onPress={() => { setSidebarOpen(false); router.push('/profile'); }}>
+                      <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>Go to Profile</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -886,38 +869,10 @@ export default function App() {
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
                   {isWebOrTablet && (
-                    <View style={{ position: 'relative', zIndex: 60 }}>
-                      <TouchableOpacity onPress={() => setShowProfileMenu(!showProfileMenu)} style={{ alignItems: 'center' }}>
-                        <Ionicons name="person-outline" size={20} color={t.textPrimary} />
-                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.profile}</Text>
-                      </TouchableOpacity>
-                      {showProfileMenu && (
-                        <View style={{ position: 'absolute', top: 40, right: -10, backgroundColor: t.cardBg, borderRadius: 12, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 120 }}>
-                          {user ? (
-                            <>
-                              <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.welcomeUser}, {user.displayName || user.phoneNumber || 'User'}</Text>
-                              </View>
-                              <TouchableOpacity onPress={async () => { setShowProfileMenu(false); await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }} style={{ padding: 10 }}>
-                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>{tr.logout}</Text>
-                              </TouchableOpacity>
-                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); handleDeleteAccount(); }} style={{ padding: 10, borderTopWidth: 1, borderTopColor: t.border }}>
-                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>Delete Account</Text>
-                              </TouchableOpacity>
-                            </>
-                          ) : (
-                            <>
-                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/login'); }} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.login}</Text>
-                              </TouchableOpacity>
-                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/signup'); }} style={{ padding: 10 }}>
-                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.signup}</Text>
-                              </TouchableOpacity>
-                            </>
-                          )}
-                        </View>
-                      )}
-                    </View>
+                    <TouchableOpacity onPress={() => router.push('/profile')} style={{ alignItems: 'center' }}>
+                      <Ionicons name="person-outline" size={20} color={t.textPrimary} />
+                      <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.profile}</Text>
+                    </TouchableOpacity>
                   )}
 
                   <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
