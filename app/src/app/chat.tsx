@@ -1,0 +1,1459 @@
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Image, KeyboardAvoidingView, Linking, Modal, PanResponder, Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, useWindowDimensions, View, Alert } from 'react-native';
+import { httpsCallable } from 'firebase/functions';
+import { collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc, limit } from 'firebase/firestore';
+import { app, functions, db } from '../config/firebase';
+import { useAuth } from '../context/AuthContext';
+import { Audio } from 'expo-av';
+
+export let SEARCH_RESULTS: any[] = [];
+
+const tLight = {
+  name: 'Tiruppur Pure Cotton',
+  bg: '#F8FAFC', // Pastel White background
+  cardBg: '#FFFFFF', // Pure White cards
+  textPrimary: '#0F172A', // Dark Gray text
+  textSecondary: '#4B5563', // Medium Gray text
+  accent1: '#14532D', // Deep Forest Green
+  accent2: '#FAFAFA', // Pastel White / Light Grey (User bubbles)
+  border: '#86EFAC', // Pastel Green border
+  sidebarBg: '#F8FAFC'
+};
+
+const tDark = {
+  name: 'Tiruppur Dark Cotton',
+  bg: '#052E16', // Very Dark Green
+  cardBg: '#064E3B', // Darker Forest Green
+  textPrimary: '#F0FDF4', // Mint White
+  textSecondary: '#A7F3D0', // Light Green
+  accent1: '#10B981', // Emerald
+  accent2: '#14532D', // Deep Green for bubbles
+  border: '#047857', // Border Green
+  sidebarBg: '#052E16'
+};
+
+const DatabaseScanner = ({ t, data, tr }: any) => {
+  const scanX = useRef(new Animated.Value(0)).current;
+  const scanY = useRef(new Animated.Value(0)).current;
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 100, duration: 1500, useNativeDriver: false }),
+          Animated.timing(scanY, { toValue: 5, duration: 1500, useNativeDriver: false })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 10, duration: 1500, useNativeDriver: false }),
+          Animated.timing(scanY, { toValue: 25, duration: 1500, useNativeDriver: false })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 120, duration: 1500, useNativeDriver: false }),
+          Animated.timing(scanY, { toValue: 40, duration: 1500, useNativeDriver: false })
+        ]),
+        Animated.parallel([
+          Animated.timing(scanX, { toValue: 0, duration: 1500, useNativeDriver: false }),
+          Animated.timing(scanY, { toValue: 0, duration: 1500, useNativeDriver: false })
+        ])
+      ])
+    ).start();
+    
+    const interval = setInterval(() => {
+      setStep(s => (s + 1) % 4);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    { text: tr.scan1 || "Scanning Tiruppur DB...", icon: "search-outline" },
+    { text: tr.scan2 || "Filtering matching rows...", icon: "filter-outline" },
+    { text: tr.scan3 || "AI is parsing JSON...", icon: "hardware-chip-outline" },
+    { text: tr.scan4 || "Extracting objects!", icon: "checkmark-circle-outline" }
+  ];
+
+  const displayData = data && data.length > 0 ? data.slice(0, 2) : [
+    { name: "S.K. Garments", products: "Cotton, Yarn", location: "PN Road" },
+    { name: "Tiruppur Exports", products: "Dyeing, Printing", type: "Manufacturer" }
+  ];
+
+  const getRowOpacity = (index: number) => {
+    const center = index === 0 ? 5 : 40;
+    return scanY.interpolate({
+      inputRange: [center - 20, center, center + 20],
+      outputRange: [0.2, 1, 0.2],
+      extrapolate: 'clamp'
+    });
+  };
+
+  return (
+    <View style={{ width: '90%', maxWidth: 260, marginBottom: 15, padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <Ionicons name={steps[step].icon as any} size={16} color={t.accent1} style={{ marginRight: 6 }} />
+        <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 12, fontStyle: 'italic' }}>
+          {steps[step].text}
+        </Text>
+      </View>
+      
+      <View style={{ position: 'relative' }}>
+        {/* Magnifying Glass */}
+        <Animated.View style={{ 
+          position: 'absolute', left: 10,
+          zIndex: 20,
+          transform: [
+            { translateX: scanX },
+            { translateY: scanY }
+          ]
+        }}>
+          <View style={{ backgroundColor: t.cardBg, padding: 6, borderRadius: 24, shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5, borderWidth: 1, borderColor: t.accent1 }}>
+            <Ionicons name="search" size={20} color={t.accent1} />
+          </View>
+        </Animated.View>
+
+        <Text style={{ color: t.textSecondary, fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>[</Text>
+        {displayData.map((c: any, i: number) => {
+          const entries = Object.entries(c).filter(([k, v]) => k !== 'id' && k !== 'offer' && typeof v === 'string' && v.trim() !== '').slice(0, 1);
+          return (
+          <Animated.View key={i} style={{ paddingLeft: 12, marginBottom: 4, opacity: getRowOpacity(i) }}>
+            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`{`}</Text>
+            <View style={{ paddingLeft: 12 }}>
+              {entries.map(([key, val], eIndex) => (
+                <Text key={key} style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11 }} numberOfLines={1}>
+                  <Text style={{ color: t.accent1 }}>"{key}"</Text>
+                  <Text style={{ color: t.textSecondary }}>: </Text>
+                  <Text style={{ color: t.textPrimary, fontWeight: eIndex === 0 ? '600' : 'normal' }}>"{String(val)}"</Text>
+                  {eIndex < entries.length - 1 && <Text style={{ color: t.textSecondary }}>,</Text>}
+                </Text>
+              ))}
+            </View>
+            <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: t.textSecondary }}>{`}`}{i < displayData.length - 1 ? ',' : ''}</Text>
+          </Animated.View>
+        )})}
+        <Text style={{ color: t.textSecondary, fontSize: 11, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}>]</Text>
+      </View>
+    </View>
+  );
+};
+
+
+const HotDogMenu = ({ isOpen, isMobile }: { isOpen?: boolean, isMobile?: boolean }) => (
+  <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ scale: isMobile ? 0.85 : 1 }] }}>
+    <View style={[{ width: isOpen ? 28 : 20, height: 5, borderRadius: 3, backgroundColor: '#EF4444', position: 'absolute' }, isOpen ? { top: 11.5, transform: [{ rotate: '45deg' }] } : { top: 4 }]} />
+    <View style={[{ width: 28, height: 5, borderRadius: 3, backgroundColor: '#22C55E', position: 'absolute', top: 11.5 }, isOpen ? { opacity: 0 } : {}]} />
+    <View style={[{ width: isOpen ? 28 : 20, height: 5, borderRadius: 3, backgroundColor: '#F59E0B', position: 'absolute' }, isOpen ? { top: 11.5, transform: [{ rotate: '-45deg' }] } : { top: 19 }]} />
+  </View>
+);
+
+const translations = {
+  EN: {
+    welcome: "Welcome to Tiruppur AI",
+    askPlaceholder: "Ask Tiruppur AI...",
+    thinking: "Thinking...",
+    upload: "Upload",
+    ads: "Ads",
+    theme: "Theme",
+    login: "Login",
+    signup: "Sign Up",
+    logout: "Logout",
+    sponsored: "SPONSORED",
+    recording: "Recording...",
+    viewAll: "View All",
+    results: "Results",
+    welcomeUser: "Welcome",
+    history: "History",
+    newChat: "New Chat",
+    noHistory: "No history found.",
+    profile: "Profile",
+    guestUser: "Guest User",
+    aProductOf: "A product of",
+    quickSearches: {
+      knitting: "Knitting Units",
+      tcg: "TCG Tech Services",
+      compact: "Compact Yarn"
+    },
+    dashTitle: "Your Textile Search Assistant",
+    dashP1: "Search Tiruppur",
+    dashP1Sub: "Garments, Dyeing, Printing - find anything.",
+    dashP2: "Just Speak",
+    dashP2Sub: "Tap the mic and speak in Tamil or English!",
+    dashP3: "Grow Business",
+    dashP3Sub: "Get direct contacts and build your network.",
+    dashEg1: "Need best Compact Yarn suppliers",
+    dashEg2: "Dyeing units in PN Road",
+    dashEg3: "Find export garments manufacturers",
+    scan1: "Scanning Tiruppur DB...",
+    scan2: "Filtering matching rows...",
+    scan3: "AI is parsing JSON...",
+    scan4: "Extracting objects!"
+  },
+  TA: {
+    welcome: "திருப்பூர் AI-க்கு வரவேற்கிறோம்",
+    askPlaceholder: "திருப்பூர் AI-யிடம் கேளுங்கள்...",
+    thinking: "யோசிக்கிறது...",
+    upload: "பதிவேற்று",
+    ads: "விளம்பரங்கள்",
+    theme: "தீம்",
+    login: "உள்நுழை",
+    signup: "பதிவு செய்",
+    logout: "வெளியேறு",
+    sponsored: "விளம்பரம்",
+    recording: "பதிவாகிறது...",
+    viewAll: "அனைத்தையும் காண்",
+    results: "முடிவுகள்",
+    welcomeUser: "வரவேற்கிறோம்",
+    history: "வரலாறு",
+    newChat: "புதிய தேடல்",
+    noHistory: "வரலாறு இல்லை.",
+    profile: "சுயவிவரம்",
+    guestUser: "விருந்தினர்",
+    aProductOf: "தயாரிப்பு",
+    quickSearches: {
+      knitting: "நிட்டிங் யூனிட்கள்",
+      tcg: "TCG டெக் சேவைகள்",
+      compact: "கம்பாக்ட் நூல்"
+    },
+    dashTitle: "உங்கள் டெக்ஸ்டைல் தேடல் உதவியாளர்",
+    dashP1: "திருப்பூரை தேடுங்கள்",
+    dashP1Sub: "கார்மெண்ட்ஸ், டையிங், பிரிண்டிங் - எதையும் தேடுங்கள்.",
+    dashP2: "பேசுங்கள் போதும்",
+    dashP2Sub: "மைக்கை அழுத்தி தமிழில் பேசுங்கள்!",
+    dashP3: "தொழிலை வளர்க்க",
+    dashP3Sub: "நேரடி தொடர்புகளைப் பெற்று தொழிலை வளர்க்கவும்.",
+    dashEg1: "சிறந்த கம்பாக்ட் நூல் சப்ளையர்கள் வேண்டும்",
+    dashEg2: "PN ரோடில் உள்ள டையிங் யூனிட்கள்",
+    dashEg3: "ஏற்றுமதி கார்மெண்ட்ஸ் உற்பத்தியாளர்கள்",
+    scan1: "திருப்பூர் DB-யை தேடுகிறது...",
+    scan2: "சரியான தகவல்களை வடிகட்டுகிறது...",
+    scan3: "AI தரவை பகுப்பாய்வு செய்கிறது...",
+    scan4: "முடிவுகளை எடுக்கிறது!"
+  },
+  HI: {
+    welcome: "तिरुपुर AI में आपका स्वागत है",
+    askPlaceholder: "तिरुपुर AI से पूछें...",
+    thinking: "सोच रहा है...",
+    upload: "अपलोड",
+    ads: "विज्ञापन",
+    theme: "थीम",
+    login: "लॉग इन",
+    signup: "साइन अप",
+    logout: "लॉग आउट",
+    sponsored: "प्रायोजित",
+    recording: "रिकॉर्डिंग...",
+    viewAll: "सभी देखें",
+    results: "परिणाम",
+    welcomeUser: "स्वागत है",
+    history: "इतिहास",
+    newChat: "नई खोज",
+    noHistory: "कोई इतिहास नहीं मिला।",
+    profile: "प्रोफ़ाइल",
+    guestUser: "अतिथि",
+    aProductOf: "का उत्पाद",
+    quickSearches: {
+      knitting: "बुनाई इकाइयाँ",
+      tcg: "TCG टेक सेवाएँ",
+      compact: "कॉम्पैक्ट यार्न"
+    },
+    dashTitle: "आपका कपड़ा खोज सहायक",
+    dashP1: "तिरुपुर खोजें",
+    dashP1Sub: "गारमेंट्स, रंगाई, छपाई - कुछ भी खोजें।",
+    dashP2: "बस बोलें",
+    dashP2Sub: "माइक दबाएं और तमिल में बोलें!",
+    dashP3: "व्यापार बढ़ाएं",
+    dashP3Sub: "सीधे संपर्क प्राप्त करें और अपना नेटवर्क बनाएं।",
+    dashEg1: "सर्वश्रेष्ठ कॉम्पैक्ट यार्न आपूर्तिकर्ताओं की आवश्यकता है",
+    dashEg2: "पीएन रोड में रंगाई इकाइयां",
+    dashEg3: "निर्यात गारमेंट निर्माताओं का पता लगाएं",
+    scan1: "तिरुपुर DB स्कैन कर रहा है...",
+    scan2: "मिलान डेटा फ़िल्टर कर रहा है...",
+    scan3: "AI डेटा को पार्स कर रहा है...",
+    scan4: "परिणाम निकाल रहा है!"
+  },
+  TG: {
+    welcome: "Tiruppur AI ku Welcome",
+    askPlaceholder: "Tiruppur AI ta kelunga...",
+    thinking: "Yosikuthu...",
+    upload: "Upload",
+    ads: "Ads",
+    theme: "Theme",
+    login: "Login",
+    signup: "Sign up",
+    logout: "Logout",
+    sponsored: "SPONSORED",
+    recording: "Kekuthu...",
+    viewAll: "Ellam Paaru",
+    results: "Results",
+    welcomeUser: "Welcome",
+    history: "History",
+    newChat: "Pudhu Thedal",
+    noHistory: "History illa.",
+    profile: "Profile",
+    guestUser: "Guest",
+    aProductOf: "Product of",
+    quickSearches: {
+      knitting: "Knitting Units",
+      tcg: "TCG Tech Services",
+      compact: "Compact Yarn"
+    },
+    dashTitle: "Unga Textile Search Assistant",
+    dashP1: "Tiruppur ah Search pannunga",
+    dashP1Sub: "Garments, Dyeing, Printing - edhuvenalum search pannunga.",
+    dashP2: "Pesanum nu kooda illa",
+    dashP2Sub: "Mic ah press panni Tamil la pesunga!",
+    dashP3: "Business ah valarkka",
+    dashP3Sub: "Direct contacts eduthu business valarkavum.",
+    dashEg1: "Best compact yarn suppliers venum",
+    dashEg2: "PN Road la irukka dyeing units",
+    dashEg3: "Export garments manufacturers",
+    scan1: "Tiruppur DB-ya theduthu...",
+    scan2: "Sariyana data filter aaguthu...",
+    scan3: "AI data-va parse pannuthu...",
+    scan4: "Results edukuthu!"
+  }
+};
+
+export default function App() {
+  const router = useRouter();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const t = isDarkMode ? tDark : tLight;
+
+  const { width } = useWindowDimensions();
+  const isWebOrTablet = width > 768;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingInstance, setRecordingInstance] = useState<Audio.Recording | null>(null);
+  const [language, setLanguage] = useState<'EN' | 'TA' | 'HI' | 'TG'>('EN');
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [hasUsedMic, setHasUsedMic] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number, results?: any[] }[]>([]);
+  const hasText = inputText.trim().length > 0;
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const { user, logout, deleteAccount } = useAuth();
+  const userId = user?.uid || 'guest';
+  const [chatId, setChatId] = useState(() => Date.now().toString());
+  const [history, setHistory] = useState<any[]>([]);
+
+  const handleDeleteAccount = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+        deleteAccount().then(() => {
+          setMessages([]); setHistory([]); setChatId(Date.now().toString());
+        }).catch(e => console.error(e));
+      }
+    } else {
+      Alert.alert("Delete Account", "Are you sure you want to delete your account? This action cannot be undone.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: async () => {
+          try {
+            await deleteAccount();
+            setMessages([]); setHistory([]); setChatId(Date.now().toString());
+          } catch(e) {
+            console.error(e);
+          }
+        } }
+      ]);
+    }
+  };
+  const [scanData, setScanData] = useState<any[]>([]);
+
+  const tr = translations[language] || translations['EN'];
+
+  useEffect(() => {
+    const fetchScanData = async () => {
+      try {
+        const q = query(collection(db, 'companies'), limit(5));
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(d => d.data());
+        if (data.length > 0) setScanData(data);
+      } catch (err) {
+        console.error("Failed to fetch scan data", err);
+      }
+    };
+    fetchScanData();
+  }, []);
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (userId === 'guest') {
+        setHistory([]);
+        return;
+      }
+      try {
+        const q = query(collection(db, 'chats'), where('userId', '==', userId));
+        const snapshot = await getDocs(q);
+        const chats = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as any[];
+        chats.sort((a, b) => b.updatedAt - a.updatedAt);
+        setHistory(chats);
+      } catch (err) {
+        console.error("Failed to fetch history:", err);
+      }
+    };
+    fetchHistory();
+  }, [userId]);
+
+  // Fetch Preferred Language
+  useEffect(() => {
+    const fetchUserLanguage = async () => {
+      if (userId === 'guest') return;
+      try {
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.preferredLanguage) {
+            setLanguage(data.preferredLanguage);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user language:", err);
+      }
+    };
+    fetchUserLanguage();
+  }, [userId]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      const saveChat = async () => {
+        // If guest, do not save to DB (saves cost, clears when app closes)
+        if (userId === 'guest') return;
+
+        try {
+          let title = 'New Chat';
+          const firstMsg = messages.find(m => m.role === 'user');
+          if (firstMsg) {
+             title = firstMsg.type === 'text' ? firstMsg.text.substring(0, 30) + '...' : 'Voice Search';
+          }
+          await setDoc(doc(db, 'chats', chatId), {
+            userId,
+            title,
+            messages,
+            updatedAt: Date.now()
+          }, { merge: true });
+          
+          setHistory(prev => {
+            const exists = prev.find(c => c.id === chatId);
+            if (exists) {
+               return prev.map(c => c.id === chatId ? { ...c, title, updatedAt: Date.now() } : c).sort((a, b) => b.updatedAt - a.updatedAt);
+            } else {
+               return [{ id: chatId, title, messages, updatedAt: Date.now() }, ...prev];
+            }
+          });
+        } catch (err) {
+          console.error("Failed to save chat:", err);
+        }
+      };
+      saveChat();
+    }
+  }, [messages]);
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setChatId(Date.now().toString());
+    if (!isWebOrTablet) setSidebarOpen(false);
+  };
+
+  const loadChat = (chat: any) => {
+    setMessages(chat.messages || []);
+    setChatId(chat.id);
+    if (!isWebOrTablet) setSidebarOpen(false);
+  };
+
+  const handleDeleteChat = async (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await deleteDoc(doc(db, 'chats', id));
+      setHistory(prev => prev.filter(c => c.id !== id));
+      if (chatId === id) {
+        setMessages([]);
+        setChatId(Date.now().toString());
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+    }
+  };
+
+  const currentSearchId = useRef(0);
+
+  const hideHeaderState = useState(false);
+  const hideHeader = hideHeaderState[0];
+  const setHideHeader = hideHeaderState[1];
+  const lastScrollY = useRef(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const modalScrollY = useRef(0);
+  const cardAnims = useRef([...Array(10)].map(() => new Animated.Value(0))).current;
+
+  const modalPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return gestureState.dy > 15 && gestureState.vy > 0.2 && modalScrollY.current <= 0;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 50) {
+          setSelectedCompany(null);
+        }
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    Animated.stagger(150, cardAnims.map(anim => Animated.timing(anim, { toValue: 1, duration: 600, useNativeDriver: true }))).start();
+  }, []);
+
+  const handleScroll = (event: any) => {
+    if (isWebOrTablet) return; // Only apply hide logic on mobile
+    const currentY = event.nativeEvent.contentOffset.y;
+    if (currentY <= 0) {
+      setHideHeader(false);
+      lastScrollY.current = currentY;
+      return;
+    }
+    const diff = currentY - lastScrollY.current;
+    if (Math.abs(diff) > 10) {
+      if (diff > 0) {
+        // Swiping up (scrolling down) - Hide header
+        setHideHeader(true);
+      } else {
+        // Swiping down (scrolling up) - Show header
+        setHideHeader(false);
+      }
+      lastScrollY.current = currentY;
+    }
+  };
+
+  const renderCard = (company: any, index: number) => {
+    const anim = cardAnims[index] || cardAnims[0];
+    return (
+      <Animated.View key={company.id} style={[{ opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }, isWebOrTablet && { flex: 1, maxWidth: 400, marginTop: 0 }]}>
+        <TouchableOpacity activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10, overflow: 'hidden' }, isWebOrTablet && { marginTop: 0, borderWidth: 3 }]}>
+          {!!company.ad && (
+            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#F59E0B', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 2 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+            </View>
+          )}
+          {(!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
+            <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10, borderWidth: 1, borderColor: '#FDA4AF', borderTopWidth: 0, borderRightWidth: 0 }}>
+              <Text style={{ color: '#BE123C', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 }}>{company.offer.toUpperCase()}</Text>
+            </View>
+          ) : null}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+            {!!(company.logo || company.verified) && (
+              <View style={{ position: 'relative', marginRight: 12 }}>
+                {!!company.logo && (
+                  <Image
+                    source={{ uri: company.logo }}
+                    style={{ width: 50, height: 50, borderRadius: 10, backgroundColor: t.border }}
+                  />
+                )}
+                {!!company.verified && (
+                  <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 10, padding: 2 }}>
+                    <MaterialIcons name="verified" size={16} color="#3B82F6" />
+                  </View>
+                )}
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: isWebOrTablet ? 16 : 13 }}>{company.name}</Text>
+              <Text style={{ color: t.textSecondary, fontSize: isWebOrTablet ? 14 : 11, marginTop: 2 }}>{company.address}</Text>
+              {(!!company.ad && !!company.offer && !!company.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
+                <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 6 }}>
+                  <Ionicons name="pricetag" size={12} color="#E11D48" style={{ marginRight: 4 }} />
+                  <Text style={{ color: '#BE123C', fontSize: 10, fontWeight: '900' }}>{company.offer}</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+          <View style={[styles.cardActions, { marginTop: 4 }]}>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`tel:${company.phone}`); }} style={[styles.actionBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, paddingVertical: isWebOrTablet ? 6 : 4, minHeight: 28 }]}>
+              <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 12 : 10, fontWeight: '600' }}>Call Now</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Linking.openURL(`https://wa.me/${company.phone.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hi, I found your company on the Tiruppur AI platform. I want to inquire about...`)}`); }} style={[styles.actionBtn, { backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.15)' : '#DCFCE7', borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : '#86EFAC', borderWidth: 1, paddingVertical: isWebOrTablet ? 6 : 4, minHeight: 28, flexDirection: 'row', gap: 6 }]}>
+              <Ionicons name="logo-whatsapp" size={isWebOrTablet ? 14 : 12} color={isDarkMode ? "#4ADE80" : "#16A34A"} />
+              <Text style={{ color: isDarkMode ? "#4ADE80" : "#16A34A", fontSize: isWebOrTablet ? 12 : 10, fontWeight: '600' }}>WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
+  const handleSend = async (textOverride?: string) => {
+    const textToSend = textOverride || inputText;
+    if (!textToSend.trim()) return;
+    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newMsg = { id: Date.now().toString(), role: 'user', type: 'text', text: textToSend } as any;
+    setMessages(prev => [...prev, newMsg]);
+    setInputText('');
+    setIsChatLoading(true);
+
+    const searchId = Date.now();
+    currentSearchId.current = searchId;
+
+    try {
+      const searchCompanyAI = httpsCallable(functions, 'searchCompanyAI');
+      const response = await searchCompanyAI({ query: textToSend, language: language });
+      
+      if (currentSearchId.current !== searchId) return; // Discard if stopped
+      
+      const data = response.data as any;
+
+      if (data.error) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: data.error }]);
+      } else {
+        if (data.results && Array.isArray(data.results)) {
+          SEARCH_RESULTS.length = 0; // Clear existing array
+          SEARCH_RESULTS.push(...data.results); // Update with new AI RAG results
+        }
+        setMessages(prev => [...prev, { 
+          id: Date.now().toString(), 
+          role: 'ai', 
+          type: 'text', 
+          text: data.text,
+          results: Array.isArray(data.results) ? data.results : []
+        }]);
+      }
+    } catch (e: any) {
+      console.error(e);
+      if (currentSearchId.current === searchId) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: 'Oops! AI Network error: ' + e.message }]);
+      }
+    } finally {
+      if (currentSearchId.current === searchId) {
+        setIsChatLoading(false);
+      }
+    }
+  };
+
+  const handleStop = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    currentSearchId.current = 0;
+    setIsChatLoading(false);
+  };
+
+  const handleSarvamVoiceSearch = async (uri: string | null) => {
+    if (!uri) return;
+    setIsChatLoading(true);
+    const searchId = Date.now();
+    currentSearchId.current = searchId;
+    try {
+      // 1. Read Audio URI as Blob
+      const fileResponse = await fetch(uri);
+      const blob = await fileResponse.blob();
+
+      // 2. Convert Blob to Base64 string
+      const base64Audio = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = () => {
+          const resultStr = reader.result as string;
+          resolve(resultStr.includes(',') ? resultStr.split(',')[1] : resultStr);
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      // 3. Send to Firebase Cloud Function (Sarvam AI integration)
+      const processVoiceSearch = httpsCallable(functions, 'processVoiceSearch');
+      const response = await processVoiceSearch({ audioBase64: base64Audio, language: language });
+      
+      if (currentSearchId.current !== searchId) return; // Discard if stopped
+      
+      const data = response.data as any;
+
+      if (data.error) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: data.error }]);
+      } else {
+        if (data.results && Array.isArray(data.results)) {
+          SEARCH_RESULTS.length = 0; // Clear existing array
+          SEARCH_RESULTS.push(...data.results); // Update with new AI RAG results
+        }
+        setMessages(prev => [...prev, { 
+          id: Date.now().toString(), 
+          role: 'ai', 
+          type: 'text', 
+          text: data.text,
+          results: Array.isArray(data.results) ? data.results : []
+        }]);
+      }
+    } catch (e: any) {
+      console.error(e);
+      if (currentSearchId.current === searchId) {
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'ai', type: 'text', text: 'Oops! Sarvam AI Voice Network error: ' + e.message }]);
+      }
+    } finally {
+      if (currentSearchId.current === searchId) setIsChatLoading(false);
+    }
+  };
+
+  const handleMicPress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (isRecording && recordingInstance) {
+      // Stop recording
+      setIsRecording(false);
+      try {
+        await recordingInstance.stopAndUnloadAsync();
+        const uri = recordingInstance.getURI();
+        console.log('Recording stopped and stored at', uri);
+        
+        setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', type: 'voice', text: '', duration: recordingTime }]);
+        
+        handleSarvamVoiceSearch(uri);
+        
+        setRecordingTime(0);
+        setRecordingInstance(null);
+      } catch (err) {
+        console.error('Failed to stop recording', err);
+      }
+    } else {
+      // Start recording
+      try {
+        const permission = await Audio.requestPermissionsAsync();
+        if (permission.status === 'granted') {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: true,
+            playsInSilentModeIOS: true,
+          });
+          const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+          setRecordingInstance(recording);
+          setIsRecording(true);
+          setHasUsedMic(true);
+          setRecordingTime(0);
+        } else {
+          console.error('Microphone permission not granted');
+        }
+      } catch (err) {
+        console.error('Failed to start recording', err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    let interval: any;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: t.bg }]}>
+      <StatusBar style="dark" />
+
+      <View style={styles.layout}>
+        {/* Overlay to close sidebar when tapping outside */}
+        {((isWebOrTablet && desktopSidebarOpen) || (!isWebOrTablet && sidebarOpen)) && (
+          <Pressable
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 5 }}
+            onPress={() => isWebOrTablet ? setDesktopSidebarOpen(false) : setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Overlay to close profile menu when tapping outside */}
+        {showProfileMenu && (
+          <Pressable
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }}
+            onPress={() => setShowProfileMenu(false)}
+          />
+        )}
+
+        {/* Sidebar */}
+        {((isWebOrTablet && desktopSidebarOpen) || (!isWebOrTablet && sidebarOpen)) && (
+          <View style={[styles.sidebar, !isWebOrTablet && { width: 250 }, { backgroundColor: t.sidebarBg, borderRightColor: t.border }, { position: 'absolute', left: 0, top: 0, bottom: 0, zIndex: 10 }]}>
+            <View style={styles.sidebarHeader}>
+              <Text style={[styles.sidebarTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
+              {isWebOrTablet ? (
+                <TouchableOpacity onPress={() => setDesktopSidebarOpen(false)}>
+                  <HotDogMenu isOpen={true} />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity onPress={() => setSidebarOpen(false)}>
+                  <HotDogMenu isOpen={true} isMobile={true} />
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {!isWebOrTablet && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: t.border, marginBottom: 20 }}>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.border, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                  <Ionicons name="person" size={20} color={t.textSecondary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.textPrimary, fontWeight: 'bold' }}>{user ? `${tr.welcomeUser}, ${user.displayName || user.phoneNumber || 'User'}` : 'Guest User'}</Text>
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                    {user ? (
+                      <View style={{ flexDirection: 'row', gap: 12 }}>
+                        <TouchableOpacity onPress={async () => { await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }}>
+                          <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>{tr.logout}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleDeleteAccount}>
+                          <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: 'bold' }}>Delete Account</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <>
+                        <TouchableOpacity onPress={() => router.push('/login')}>
+                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>{tr.login}</Text>
+                        </TouchableOpacity>
+                        <Text style={{ color: t.textSecondary, fontSize: 12 }}>|</Text>
+                        <TouchableOpacity onPress={() => router.push('/signup')}>
+                          <Text style={{ color: t.accent1, fontSize: 12, fontWeight: 'bold' }}>{tr.signup}</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity onPress={handleNewChat} style={[styles.newChatBtn, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border }]}>
+              <Ionicons name="add" size={20} color={t.textPrimary} />
+              <Text style={{ color: t.textPrimary, fontWeight: 'bold', marginLeft: 8 }}>{tr.newChat}</Text>
+            </TouchableOpacity>
+
+            <ScrollView style={styles.historyList}>
+              <Text style={[styles.historySection, { color: t.textSecondary }]}>{tr.history}</Text>
+              {history.map(chat => (
+                <View key={chat.id} style={[styles.historyItem, chatId === chat.id && { backgroundColor: t.accent2, borderRadius: 8, paddingHorizontal: 4 }, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 4 }]}>
+                  <TouchableOpacity onPress={() => loadChat(chat)} style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingVertical: 4 }}>
+                    <Ionicons name="chatbubble-outline" size={18} color={t.textPrimary} />
+                    <Text style={[styles.historyText, { color: t.textPrimary, fontWeight: chatId === chat.id ? 'bold' : 'normal', flex: 1, marginRight: 8 }]} numberOfLines={1}>{chat.title}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleDeleteChat(chat.id)} style={{ padding: 6 }}>
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              {history.length === 0 && (
+                <Text style={{ color: t.textSecondary, fontSize: 12, paddingHorizontal: 12, marginTop: 10 }}>{tr.noHistory}</Text>
+              )}
+            </ScrollView>
+
+            {/* Branding */}
+            <View style={{ marginTop: 'auto', paddingTop: 20, borderTopWidth: 1, borderTopColor: t.border, alignItems: 'center' }}>
+              <Text style={{ color: t.textSecondary, fontSize: 12 }}>{tr.aProductOf}</Text>
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 2 }}>
+                <Text style={{ color: '#EF4444' }}>T</Text>
+                <Text style={{ color: '#22C55E' }}>C</Text>
+                <Text style={{ color: '#F59E0B' }}>G</Text>
+                <Text style={{ color: '#3B82F6' }}> TECH</Text>
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Main Chat Area */}
+        <View style={[styles.mainContent, { backgroundColor: t.bg }]}>
+
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          >
+            {/* Main Header (Absolute) */}
+            {(!hideHeader || isWebOrTablet) && (
+              <View style={[styles.mobileHeader, { borderBottomColor: t.border, backgroundColor: t.bg }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {isWebOrTablet ? (
+                    <TouchableOpacity onPress={() => setDesktopSidebarOpen(true)} style={{ opacity: desktopSidebarOpen ? 0 : 1 }}>
+                      <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary, fontSize: 20 }]}>Tiruppur AI</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => setSidebarOpen(true)} style={{ opacity: sidebarOpen ? 0 : 1, marginRight: 10 }}>
+                      <HotDogMenu isMobile={true} />
+                    </TouchableOpacity>
+                  )}
+                  {!isWebOrTablet && (
+                    <Text style={[styles.mobileHeaderTitle, { color: t.textPrimary }]}>Tiruppur AI</Text>
+                  )}
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24, paddingRight: 10 }}>
+                  {isWebOrTablet && (
+                    <View style={{ position: 'relative', zIndex: 60 }}>
+                      <TouchableOpacity onPress={() => setShowProfileMenu(!showProfileMenu)} style={{ alignItems: 'center' }}>
+                        <Ionicons name="person-outline" size={20} color={t.textPrimary} />
+                        <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.profile}</Text>
+                      </TouchableOpacity>
+                      {showProfileMenu && (
+                        <View style={{ position: 'absolute', top: 40, right: -10, backgroundColor: t.cardBg, borderRadius: 12, padding: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 10, borderWidth: 1, borderColor: t.border, minWidth: 120 }}>
+                          {user ? (
+                            <>
+                              <View style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.welcomeUser}, {user.displayName || user.phoneNumber || 'User'}</Text>
+                              </View>
+                              <TouchableOpacity onPress={async () => { setShowProfileMenu(false); await logout(); setMessages([]); setHistory([]); setChatId(Date.now().toString()); }} style={{ padding: 10 }}>
+                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>{tr.logout}</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); handleDeleteAccount(); }} style={{ padding: 10, borderTopWidth: 1, borderTopColor: t.border }}>
+                                <Text style={{ color: '#EF4444', fontWeight: 'bold', textAlign: 'center' }}>Delete Account</Text>
+                              </TouchableOpacity>
+                            </>
+                          ) : (
+                            <>
+                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/login'); }} style={{ padding: 10, borderBottomWidth: 1, borderBottomColor: t.border }}>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.login}</Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => { setShowProfileMenu(false); router.push('/signup'); }} style={{ padding: 10 }}>
+                                <Text style={{ color: t.textPrimary, fontWeight: 'bold', textAlign: 'center' }}>{tr.signup}</Text>
+                              </TouchableOpacity>
+                            </>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  <TouchableOpacity onPress={() => router.push('/add-data')} style={{ alignItems: 'center' }}>
+                    <Ionicons name="cloud-upload-outline" size={20} color={t.accent1} />
+                    <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.upload}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => router.push('/advertise')} style={{ alignItems: 'center' }}>
+                    <Ionicons name="megaphone-outline" size={20} color={t.textPrimary} />
+                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.ads}</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={() => setIsDarkMode(!isDarkMode)} style={{ alignItems: 'center' }}>
+                    <Ionicons name={isDarkMode ? "sunny-outline" : "moon-outline"} size={20} color={t.textPrimary} />
+                    <Text style={{ color: t.textPrimary, fontWeight: 'bold', fontSize: 10, marginTop: 2 }}>{tr.theme}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            <ScrollView
+              ref={scrollViewRef}
+              style={{ flex: 1 }}
+              contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }, { paddingTop: isWebOrTablet ? 60 : 90 }]}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+
+              {/* Empty State Welcome Dashboard */}
+              {messages.length === 0 && !isChatLoading && (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: isWebOrTablet ? 40 : 20, paddingHorizontal: 20 }}>
+                  <View style={{ backgroundColor: t.cardBg, borderRadius: 24, padding: 24, width: '100%', maxWidth: 600, borderWidth: 1, borderColor: t.border, shadowColor: t.textPrimary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
+                    
+                    <View style={{ alignItems: 'center', marginBottom: 24 }}>
+                      <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(139, 92, 246, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                        <Ionicons name="sparkles" size={32} color="#8B5CF6" />
+                      </View>
+                      <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary, textAlign: 'center' }}>{tr.welcome}</Text>
+                      <Text style={{ fontSize: 16, color: t.textSecondary, textAlign: 'center', marginTop: 4 }}>{tr.dashTitle}</Text>
+                    </View>
+
+                    <View style={{ gap: 20, marginBottom: 30 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="search" size={20} color="#3B82F6" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP1}</Text>
+                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP1Sub}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="mic" size={20} color="#10B981" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP2}</Text>
+                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP2Sub}</Text>
+                        </View>
+                      </View>
+                      
+                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
+                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(245, 158, 11, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="trending-up" size={20} color="#F59E0B" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP3}</Text>
+                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP3Sub}</Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <View style={{ gap: 10 }}>
+                      <TouchableOpacity onPress={() => handleSend(tr.dashEg1)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg1}"</Text>
+                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleSend(tr.dashEg2)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg2}"</Text>
+                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => handleSend(tr.dashEg3)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg3}"</Text>
+                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              )}
+
+              {/* Dynamic Messages */}
+              {messages.map(msg => (
+                <View key={msg.id} style={[msg.role === 'user' ? styles.userMessageRow : styles.aiMessageRow, msg.role === 'ai' && { alignItems: 'flex-start', flexDirection: 'column', width: '100%' }]}>
+                  
+                  <View style={msg.role === 'user' ? 
+                    [styles.messageBubble, styles.userBubble, { backgroundColor: t.accent2, borderWidth: 1, borderColor: t.border, padding: isWebOrTablet ? 16 : 10 }] : 
+                    { flexDirection: 'row', width: '100%', alignItems: 'flex-start' }
+                  }>
+                    {msg.role === 'ai' && (
+                      <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1, marginRight: 12 }]}>
+                        <Ionicons name="sparkles" size={16} color={t.accent1} />
+                      </View>
+                    )}
+                    
+                    <View style={msg.role === 'ai' ? { flex: 1, paddingTop: 4 } : {}}>
+                      {/* Render results BEFORE the AI message if available */}
+                      {msg.role === 'ai' && msg.results && msg.results.length > 0 && (
+                        isWebOrTablet ? (
+                          <View style={{ gap: 16, maxWidth: 816, marginBottom: 15 }}>
+                            <View style={{ flexDirection: 'row', gap: 16 }}>
+                              {msg.results.slice(0, 2).map((c: any, i: number) => renderCard(c, i))}
+                            </View>
+                            {msg.results.length > 2 && (
+                              <View style={{ flexDirection: 'row', gap: 16 }}>
+                                {msg.results.slice(2, 4).map((c: any, i: number) => renderCard(c, i + 2))}
+                                {msg.results.length === 3 && <View style={{ flex: 1, maxWidth: 400 }} />}
+                              </View>
+                            )}
+                            {msg.results.length > 4 && (
+                              <View style={{ width: '100%', alignItems: 'center', marginTop: 10 }}>
+                                <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, paddingHorizontal: 40, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>{tr.viewAll} {msg.results.length} {tr.results}</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </View>
+                        ) : (
+                          <View style={{ width: '100%', marginBottom: 15 }}>
+                            {msg.results.slice(0, 4).map((c: any, i: number) => renderCard(c, i))}
+                            {msg.results.length > 4 && (
+                              <View style={{ marginTop: 10 }}>
+                                <TouchableOpacity onPress={() => router.push('/search-results')} style={{ paddingVertical: 10, backgroundColor: 'transparent', borderWidth: 1, borderColor: t.accent1, borderRadius: 12, alignItems: 'center' }}>
+                                  <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 14 }}>{tr.viewAll} {msg.results.length} {tr.results}</Text>
+                                </TouchableOpacity>
+                              </View>
+                            )}
+                          </View>
+                        )
+                      )}
+
+                      {/* Render Text AT THE BOTTOM with clickable links */}
+                      {msg.type === 'text' ? (
+                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20, fontWeight: msg.role === 'user' ? '500' : 'normal', marginTop: msg.results && msg.results.length > 0 ? 5 : 0 }}>
+                          {msg.text.split(/(https?:\/\/[^\s]+)/g).map((part: string, index: number) => {
+                            if (part.match(/https?:\/\/[^\s]+/)) {
+                              return (
+                                <Text
+                                  key={index}
+                                  style={{ color: '#3B82F6', textDecorationLine: 'underline' }}
+                                  onPress={() => Linking.openURL(part)}
+                                >
+                                  {part}
+                                </Text>
+                              );
+                            }
+                            return part;
+                          })}
+                        </Text>
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Ionicons name="play-circle" size={32} color={t.textPrimary} />
+                          <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
+                          <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              ))}
+              {isChatLoading && (
+                <View style={[styles.aiMessageRow, { alignItems: 'flex-start' }]}>
+                  <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1 }]}>
+                    <Ionicons name="sparkles" size={16} color={t.accent1} />
+                  </View>
+                  <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
+                    <DatabaseScanner t={t} data={scanData} tr={tr} />
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Bottom Input Area */}
+            <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: !hasText ? 12 : 8, borderTopWidth: 1, borderTopColor: t.border }]}>
+              {!hasText && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
+                  <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>{tr.quickSearches.knitting}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.chip, { backgroundColor: '#F0F9FF', borderColor: '#93C5FD', flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                    <Text style={{ color: '#166534', fontSize: 12, fontWeight: '500' }}>{tr.quickSearches.tcg}</Text>
+                    <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, marginLeft: 2, shadowColor: '#FBBF24', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 2, elevation: 1 }}>
+                      <Text style={{ color: '#D97706', fontSize: 8, fontWeight: 'bold', letterSpacing: 0.5 }}>{tr.sponsored}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>{tr.quickSearches.compact}</Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              )}
+
+              <View style={[styles.inputWrapper, { backgroundColor: t.accent2, borderColor: t.border, borderWidth: 1, alignItems: 'center', alignSelf: 'center', width: isWebOrTablet ? '100%' : '90%' }]}>
+                {isRecording ? (
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, height: 40 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444', marginRight: 10 }} />
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: 'bold' }}>{tr.recording} {formatTime(recordingTime)}</Text>
+                  </View>
+                ) : (
+                  <TextInput
+                    style={[styles.textInput, { color: t.textPrimary, paddingHorizontal: 0 }]}
+                    placeholderTextColor={t.textSecondary}
+                    placeholder={tr.askPlaceholder}
+                    multiline
+                    value={inputText}
+                    onChangeText={setInputText}
+                    onKeyPress={(e: any) => {
+                      if (e.nativeEvent.key === 'Enter' && Platform.OS === 'web') {
+                        if (!e.nativeEvent.shiftKey) {
+                          e.preventDefault();
+                          handleSend();
+                        }
+                      }
+                    }}
+                  />
+                )}
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                  {/* Language Toggle Button */}
+                  <View style={{ position: 'relative', zIndex: 50 }}>
+                    {messages.length === 0 && !showLangMenu && (
+                      <View pointerEvents="none" style={{ position: 'absolute', top: -35, left: -40, backgroundColor: t.textPrimary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 120, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
+                        <Text style={{ color: t.bg, fontSize: 11, fontWeight: 'bold' }}>
+                          {language === 'TA' ? 'மொழியை மாற்றுக' : language === 'HI' ? 'भाषा बदलें' : language === 'TG' ? 'Language Maathu' : 'Change Language'}
+                        </Text>
+                        <View style={{ position: 'absolute', bottom: -4, left: 50, width: 10, height: 10, backgroundColor: t.textPrimary, transform: [{ rotate: '45deg' }] }} />
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        setShowLangMenu(true);
+                      }}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: showLangMenu ? t.accent2 : t.cardBg, borderColor: showLangMenu ? t.accent2 : t.border, borderWidth: 1, marginRight: 6 }
+                      ]}
+                    >
+                      <Ionicons name="language" size={isWebOrTablet ? 18 : 16} color={showLangMenu ? '#fff' : t.textPrimary} />
+                    </TouchableOpacity>
+
+                    </View>
+
+                  {/* Mic Button (Left of Send Button) */}
+                  <View style={{ position: 'relative' }}>
+                    {messages.length > 0 && !hasUsedMic && !isRecording && (
+                      <View pointerEvents="none" style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 90, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
+                        <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
+                          {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : language === 'TG' ? 'Inga Pesunga' : 'Tap to Speak'}
+                        </Text>
+                        <View style={{ position: 'absolute', bottom: -4, right: 20, width: 10, height: 10, backgroundColor: t.accent1, transform: [{ rotate: '45deg' }] }} />
+                      </View>
+                    )}
+                    <TouchableOpacity
+                      onPress={handleMicPress}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: isRecording ? '#EF4444' : t.accent2, marginRight: 6 }
+                      ]}
+                    >
+                      <Ionicons name={isRecording ? "stop" : "mic"} size={isWebOrTablet ? 18 : 16} color={isRecording ? "#fff" : t.textPrimary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Send or Stop Button */}
+                  {isChatLoading ? (
+                    <TouchableOpacity
+                      onPress={handleStop}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: '#EF4444' }
+                      ]}
+                    >
+                      <Ionicons name="stop" size={isWebOrTablet ? 18 : 16} color="#fff" />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => handleSend()}
+                      style={[
+                        styles.actionIconBtn,
+                        !isWebOrTablet && { width: 32, height: 32, borderRadius: 16, marginBottom: 0 },
+                        { backgroundColor: hasText ? t.accent2 : (isDarkMode ? t.cardBg : '#F1F5F9') }
+                      ]}
+                      disabled={!hasText}
+                    >
+                      <Ionicons name="arrow-up" size={isWebOrTablet ? 18 : 16} color={hasText ? t.textPrimary : (isDarkMode ? t.border : "#94A3B8")} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+              <Text style={[styles.disclaimer, { color: t.textSecondary }]}>Tiruppur AI can make mistakes. Verify important information.</Text>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </View>
+      {/* Company Details Modal */}
+      <Modal visible={!!selectedCompany} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)' }]} onPress={() => setSelectedCompany(null)} />
+          <View {...modalPanResponder.panHandlers} style={{ backgroundColor: t.cardBg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '90%', overflow: 'hidden' }}>
+
+            <View>
+              <View style={{ width: '100%', alignItems: 'center', paddingBottom: 15, paddingTop: 5 }}>
+                <View style={{ width: 40, height: 5, backgroundColor: t.border, borderRadius: 3 }} />
+              </View>
+
+              {selectedCompany?.ad && (
+                <View style={{ position: 'absolute', top: 12, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 16, paddingVertical: 6, borderBottomLeftRadius: 16, zIndex: 10 }}>
+                  <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold', letterSpacing: 0.5 }}>SPONSORED</Text>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+                <View style={{ flexDirection: 'row', flex: 1, paddingRight: 10, alignItems: 'center' }}>
+                  {(selectedCompany?.logo || selectedCompany?.verified) && (
+                    <View style={{ position: 'relative', marginRight: 15 }}>
+                      {selectedCompany?.logo && (
+                        <Image
+                          source={{ uri: selectedCompany.logo }}
+                          style={{ width: 60, height: 60, borderRadius: 12, backgroundColor: t.border }}
+                        />
+                      )}
+                      {selectedCompany?.verified && (
+                        <View style={{ position: 'absolute', bottom: -4, right: -4, backgroundColor: t.cardBg, borderRadius: 12, padding: 2 }}>
+                          <MaterialIcons name="verified" size={20} color="#3B82F6" />
+                        </View>
+                      )}
+                    </View>
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <Text style={{ fontSize: 20, fontWeight: 'bold', color: t.textPrimary, flexShrink: 1 }}>{selectedCompany?.name}</Text>
+                    </View>
+                    <Text style={{ color: t.textSecondary, fontSize: 13 }}>{selectedCompany?.address}</Text>
+                    {(!isWebOrTablet && !!selectedCompany?.offer && !!selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
+                      <View style={{ alignSelf: 'flex-start', flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginTop: 10 }}>
+                        <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
+                        <Text style={{ color: '#BE123C', fontSize: 11, fontWeight: '900' }}>{selectedCompany.offer}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: selectedCompany?.ad ? 28 : 0 }}>
+                  {(isWebOrTablet && !!selectedCompany?.offer && !!selectedCompany.offer.toLowerCase().match(/(discount|off|%|rs|flat|free)/)) ? (
+                    <View style={{ flexDirection: 'row', backgroundColor: '#FFF1F2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#FDA4AF', alignItems: 'center', marginRight: 12 }}>
+                      <Ionicons name="pricetag" size={14} color="#E11D48" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '900' }}>{selectedCompany.offer}</Text>
+                    </View>
+                  ) : null}
+                  <TouchableOpacity onPress={() => setSelectedCompany(null)} style={{ padding: 4, backgroundColor: t.bg, borderRadius: 15, zIndex: 20 }}>
+                    <Ionicons name="close" size={24} color={t.textPrimary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              onScroll={(e) => { modalScrollY.current = e.nativeEvent.contentOffset.y; }}
+              scrollEventThrottle={16}
+            >
+              {/* Products/Services */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Products & Services</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+                {selectedCompany?.products?.map((prod: string, i: number) => {
+                  const colors = [
+                    { bg: '#DBEAFE', text: '#1E3A8A', border: '#BFDBFE' },
+                    { bg: '#F3E8FF', text: '#581C87', border: '#E9D5FF' },
+                    { bg: '#FCE7F3', text: '#831843', border: '#FBCFE8' },
+                    { bg: '#FFEDD5', text: '#7C2D12', border: '#FED7AA' }
+                  ];
+                  const c = colors[i % colors.length];
+                  return (
+                    <View key={i} style={{ backgroundColor: c.bg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: c.border }}>
+                      <Text style={{ color: c.text, fontSize: 14, fontWeight: '500' }}>{prod}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Details List */}
+              <View style={{ gap: 15, marginBottom: 24 }}>
+                <TouchableOpacity onPress={() => setShowPhoneOptions(selectedCompany?.phone)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(52, 211, 153, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="call" size={20} color={t.accent1} />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Contact Number</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.phone}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => Linking.openURL(`mailto:${selectedCompany?.email}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="mail" size={20} color="#3B82F6" />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Email Address</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.email}</Text>
+                  </View>
+                </TouchableOpacity>
+
+                {selectedCompany?.website && (
+                  <TouchableOpacity onPress={() => Linking.openURL(selectedCompany.website.startsWith('http') ? selectedCompany.website : `https://${selectedCompany.website}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(139, 92, 246, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="globe-outline" size={20} color="#8B5CF6" />
+                    </View>
+                    <View>
+                      <Text style={{ color: t.textSecondary, fontSize: 12 }}>Website</Text>
+                      <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }} numberOfLines={1}>{selectedCompany.website}</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity onPress={() => Linking.openURL(`https://maps.google.com/?q=${selectedCompany?.address}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, backgroundColor: t.bg, borderRadius: 12 }}>
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(239, 68, 68, 0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="location" size={20} color="#EF4444" />
+                  </View>
+                  <View>
+                    <Text style={{ color: t.textSecondary, fontSize: 12 }}>Location</Text>
+                    <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>{selectedCompany?.address}</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* Facility Images */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 12 }}>Facility Overview</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <Image key={i} source={{ uri: `https://picsum.photos/seed/${selectedCompany?.id}${i}/200` }} style={{ width: '48%', height: 100, borderRadius: 12, backgroundColor: t.border, flexGrow: 1 }} />
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={!!showLangMenu} transparent animationType="fade">
+        <Pressable onPress={() => setShowLangMenu(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: t.cardBg, padding: 16, borderRadius: 16, width: '70%', maxWidth: 260 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary, marginBottom: 16, textAlign: 'center' }}>
+              {language === 'TA' ? 'மொழியைத் தேர்ந்தெடுக்கவும்' : language === 'HI' ? 'भाषा चुनें' : language === 'TG' ? 'Language Select Pannunga' : 'Select Language'}
+            </Text>
+
+            {['EN', 'TA', 'TG', 'HI'].map(lang => (
+              <TouchableOpacity
+                key={lang}
+                onPress={() => { 
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); 
+                  setLanguage(lang as any); 
+                  setShowLangMenu(false); 
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: language === lang ? t.accent1 : t.bg, borderRadius: 10, marginBottom: 8, justifyContent: 'center' }}
+              >
+                <Text style={{ color: language === lang ? '#fff' : t.textPrimary, fontSize: 14, fontWeight: language === lang ? 'bold' : '600' }}>
+                  {lang === 'EN' ? 'English' : lang === 'TA' ? 'Tamil (தமிழ்)' : lang === 'TG' ? 'Tanglish' : 'Hindi (हिंदी)'}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Phone Action Sheet Mini Modal */}
+      <Modal visible={!!showPhoneOptions} transparent animationType="fade">
+        <Pressable onPress={() => setShowPhoneOptions(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ backgroundColor: t.cardBg, padding: 24, borderRadius: 20, width: '80%', maxWidth: 320 }}>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: t.textPrimary, marginBottom: 20, textAlign: 'center' }}>Contact via</Text>
+
+            <TouchableOpacity onPress={() => { Linking.openURL(`tel:${showPhoneOptions}`); setShowPhoneOptions(null); }} style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: t.bg, borderRadius: 12, marginBottom: 15 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.2)', alignItems: 'center', justifyContent: 'center', marginRight: 15 }}>
+                <Ionicons name="call" size={20} color="#3B82F6" />
+              </View>
+              <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>Dial Pad</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => { Linking.openURL(`https://wa.me/${showPhoneOptions?.replace(/[^0-9]/g, '')}`); setShowPhoneOptions(null); }} style={{ flexDirection: 'row', alignItems: 'center', padding: 15, backgroundColor: t.bg, borderRadius: 12 }}>
+              <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(37, 211, 102, 0.2)', alignItems: 'center', justifyContent: 'center', marginRight: 15 }}>
+                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+              </View>
+              <Text style={{ color: t.textPrimary, fontSize: 16, fontWeight: '600' }}>WhatsApp</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  layout: { flex: 1, flexDirection: 'row' },
+  sidebar: { width: 280, borderRightWidth: 1, padding: 20, paddingTop: Platform.OS === 'web' ? 20 : 50 },
+  sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 },
+  sidebarTitle: { fontSize: 22, fontWeight: '900' },
+  newChatBtn: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, justifyContent: 'center', marginBottom: 20 },
+  historyList: { flex: 1 },
+  historySection: { fontSize: 12, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 10, marginTop: 10 },
+  historyItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 12 },
+  historyText: { fontSize: 14, flex: 1 },
+
+  mainContent: { flex: 1 },
+  mobileHeader: { position: 'absolute', top: 0, width: '100%', zIndex: 50, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingTop: Platform.OS === 'web' ? 12 : 40, borderBottomWidth: 1 },
+  mobileHeaderTitle: { fontSize: 16, fontWeight: 'bold' },
+
+  chatArea: { padding: 10, paddingBottom: 20 },
+  messageBubble: { padding: 12, borderRadius: 16, maxWidth: '92%' },
+  userMessageRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 20 },
+  aiMessageRow: { flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 20, gap: 8 },
+  aiAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0', marginTop: 4 },
+  userBubble: { borderBottomRightRadius: 4 },
+  aiBubble: { borderBottomLeftRadius: 4, maxWidth: '88%' },
+
+  companyCard: { marginTop: 12, padding: 12, borderRadius: 12, borderWidth: 3 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  actionBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+
+  bottomContainer: { width: '100%', paddingBottom: Platform.OS === 'ios' ? 20 : 10, backgroundColor: 'transparent' },
+  chipsRow: { flexDirection: 'row', marginBottom: 10 },
+  chip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, marginRight: 8 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'flex-end', marginHorizontal: 10, borderRadius: 30, borderWidth: 1, padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  textInput: { flex: 1, minHeight: 36, maxHeight: 120, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 0, textAlignVertical: 'bottom', fontSize: 14, ...(Platform.OS === 'web' ? { outlineStyle: 'none' } : {}) as any },
+  actionIconBtn: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  disclaimer: { textAlign: 'center', fontSize: 11, marginTop: 10 }
+});
