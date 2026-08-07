@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, SafeAreaView, StatusBar, ScrollView, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, SafeAreaView, StatusBar, ScrollView, Pressable, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 
@@ -105,12 +105,14 @@ export default function IntroScreen() {
   const [showOptions1, setShowOptions1] = useState(false);
   const [showOptions2, setShowOptions2] = useState(false);
   const [showStartBtn, setShowStartBtn] = useState(false);
+  const [showLangDropdown, setShowLangDropdown] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const bgScaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Initial fade in for Welcome
@@ -123,36 +125,36 @@ export default function IntroScreen() {
         Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true })
       ])
     ).start();
+
+    // Slow breathing animation for background (Ken Burns style)
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bgScaleAnim, { toValue: 1.15, duration: 15000, useNativeDriver: true }),
+        Animated.timing(bgScaleAnim, { toValue: 1, duration: 15000, useNativeDriver: true })
+      ])
+    ).start();
   }, []);
 
   const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const handleNextTourStep = () => {
     if (tourStep === 0) {
-      // Go to Lang Tour
-      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-        setTourStep(1);
-        Animated.parallel([
-          Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-          Animated.timing(overlayOpacity, { toValue: 1, duration: 400, useNativeDriver: true })
-        ]).start();
-      });
+      setTourStep(1);
     } else if (tourStep === 1) {
-      // Go to About
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-        Animated.timing(overlayOpacity, { toValue: 0, duration: 300, useNativeDriver: true })
-      ]).start(() => {
-        setTourStep(2);
-        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-      });
+      setTourStep(2);
     } else if (tourStep === 2) {
-      // Start Chat Sim
-      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-        setTourStep(3);
-        Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-        runChatSim();
-      });
+      setTourStep(3);
+      runChatSim();
+    }
+  };
+
+  const getBackgroundImage = () => {
+    switch (tourStep) {
+      case 0: return require('../../assets/images/tiruppur_map.png');
+      case 1: return require('../../assets/images/knitting_machines.png');
+      case 2: return require('../../assets/images/clothes.png');
+      case 3: return require('../../assets/images/dyeing.png');
+      default: return require('../../assets/images/tiruppur_map.png');
     }
   };
 
@@ -199,19 +201,26 @@ export default function IntroScreen() {
     setShowStartBtn(true);
   };
 
-  const cycleLanguage = () => {
-    const currentIndex = LANGUAGES.indexOf(lang);
-    const nextIndex = (currentIndex + 1) % LANGUAGES.length;
-    setLang(LANGUAGES[nextIndex]);
+  const selectLanguage = (selectedLang: LangType) => {
+    setLang(selectedLang);
+    setShowLangDropdown(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={THEME.bg} />
+      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
+
+      <Animated.Image 
+        source={getBackgroundImage()} 
+        style={[StyleSheet.absoluteFillObject, { width: '100%', height: '100%', transform: [{ scale: bgScaleAnim }] }]}
+        resizeMode="cover"
+        blurRadius={3}
+      />
+      <View style={styles.bgOverlay} />
 
       {/* Full Screen Overlay for Step 1 */}
       {tourStep === 1 && (
-        <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} pointerEvents="none" />
+        <View style={styles.overlay} pointerEvents="none" />
       )}
 
       {/* Header - Always visible, but raised z-index for tour */}
@@ -220,39 +229,58 @@ export default function IntroScreen() {
           <Ionicons name="hardware-chip" size={24} color={THEME.accent} style={{ marginRight: 8 }} />
           <Text style={styles.headerText}>Tiruppur AI</Text>
         </View>
-        <TouchableOpacity 
-          style={[styles.langBtn, tourStep === 1 && styles.langBtnHighlight]} 
-          onPress={cycleLanguage}
-        >
-          <Ionicons name="language" size={16} color={THEME.accent} style={{ marginRight: 6 }} />
-          <Text style={styles.langBtnText}>{lang}</Text>
-        </TouchableOpacity>
+        <View style={{ position: 'relative', zIndex: 100 }}>
+          <TouchableOpacity 
+            style={[styles.langBtn, tourStep === 1 && styles.langBtnHighlight]} 
+            onPress={() => setShowLangDropdown(!showLangDropdown)}
+          >
+            <Ionicons name="language" size={16} color={THEME.accent} style={{ marginRight: 6 }} />
+            <Text style={styles.langBtnText}>{lang}</Text>
+            <Ionicons name="chevron-down" size={14} color={THEME.accent} style={{ marginLeft: 4 }} />
+          </TouchableOpacity>
+
+          {showLangDropdown && (
+            <View style={styles.dropdownMenu}>
+              {LANGUAGES.map((l) => (
+                <TouchableOpacity 
+                  key={l} 
+                  style={[styles.dropdownItem, lang === l && styles.dropdownItemSelected]} 
+                  onPress={() => selectLanguage(l)}
+                >
+                  <Text style={[styles.dropdownItemText, lang === l && { fontWeight: 'bold', color: THEME.accent }]}>
+                    {l === 'TA' ? 'Tamil' : l === 'EN' ? 'English' : l === 'HI' ? 'Hindi' : 'Tanglish'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Tour Step 1: Tooltip */}
       {tourStep === 1 && (
-        <Animated.View style={[styles.tooltipContainer, { opacity: fadeAnim }]}>
+        <View style={styles.tooltipContainer}>
           <View style={styles.tooltipArrow} />
           <View style={styles.tooltipBox}>
             <Ionicons name="information-circle-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
             <Text style={styles.tooltipText}>{t.tourLang}</Text>
           </View>
-        </Animated.View>
+        </View>
       )}
 
       {/* Main Content Area */}
       <View style={styles.mainContent}>
         {/* Step 0: Welcome */}
         {tourStep === 0 && (
-          <Animated.View style={[styles.centerBox, { opacity: fadeAnim }]}>
+          <View style={styles.centerBox}>
             <Ionicons name="sparkles" size={48} color={THEME.accent} style={{ marginBottom: 20 }} />
             <Text style={styles.welcomeText}>{t.welcome}</Text>
-          </Animated.View>
+          </View>
         )}
 
         {/* Step 1 & 2: About / Wait */}
         {(tourStep === 1 || tourStep === 2) && (
-          <Animated.View style={[styles.centerBox, { opacity: fadeAnim, zIndex: 10 }]}>
+          <View style={[styles.centerBox, { zIndex: 10 }]}>
             {tourStep === 2 && (
               <View style={styles.aboutCard}>
                 <View style={styles.aboutIconWrapper}>
@@ -262,12 +290,12 @@ export default function IntroScreen() {
                 <Text style={styles.aboutDesc}>{t.tourAboutDesc}</Text>
               </View>
             )}
-          </Animated.View>
+          </View>
         )}
 
         {/* Step 3: Chat Sim */}
         {tourStep === 3 && (
-          <Animated.View style={[{ flex: 1, width: '100%', height: '100%', opacity: fadeAnim }]}>
+          <View style={{ flex: 1, width: '100%', height: '100%' }}>
             <ScrollView 
               ref={scrollViewRef}
               style={styles.chatArea} 
@@ -310,19 +338,20 @@ export default function IntroScreen() {
                 </Pressable>
               )}
             </View>
-          </Animated.View>
+          </View>
         )}
       </View>
 
       {/* Tour Next Button Footer (for steps 0,1,2) */}
       {tourStep < 3 && (
-        <Animated.View style={[styles.footer, { opacity: fadeAnim, zIndex: tourStep === 1 ? 100 : 10 }]}>
+        <View style={[styles.footer, { zIndex: tourStep === 1 ? 100 : 10 }]}>
           <TouchableOpacity style={styles.nextBtn} onPress={handleNextTourStep}>
             <Text style={styles.nextBtnText}>{tourStep === 2 ? t.startChatTourBtn : t.nextBtn}</Text>
             <Ionicons name="arrow-forward" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </TouchableOpacity>
-        </Animated.View>
+        </View>
       )}
+
 
     </SafeAreaView>
   );
@@ -410,6 +439,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: THEME.bg,
   },
+  bgImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  bgOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(248, 250, 252, 0.88)', // Light frosted glass overlay to make text readable
+  },
   overlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -421,9 +459,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
+    paddingTop: 40, // for android status bar if translucent
     borderBottomWidth: 1,
-    borderBottomColor: THEME.border,
-    backgroundColor: THEME.cardBg,
+    borderBottomColor: 'rgba(226, 232, 240, 0.5)',
+    backgroundColor: 'transparent',
+    zIndex: 100,
   },
   headerLogoContainer: {
     flexDirection: 'row',
@@ -437,7 +477,7 @@ const styles = StyleSheet.create({
   langBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: THEME.bg,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -445,7 +485,7 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
   },
   langBtnHighlight: {
-    backgroundColor: THEME.cardBg,
+    backgroundColor: '#FFFFFF',
     borderColor: THEME.accent,
     borderWidth: 2,
     shadowColor: THEME.accent,
@@ -458,6 +498,34 @@ const styles = StyleSheet.create({
     color: THEME.accent,
     fontWeight: 'bold',
     fontSize: 13,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 8,
+    width: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: THEME.border,
+  },
+  dropdownItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  dropdownItemSelected: {
+    backgroundColor: '#F1F5F9',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: THEME.textPrimary,
   },
   tooltipContainer: {
     position: 'absolute',
@@ -513,7 +581,7 @@ const styles = StyleSheet.create({
     lineHeight: 42,
   },
   aboutCard: {
-    backgroundColor: THEME.cardBg,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     padding: 24,
     borderRadius: 24,
     alignItems: 'center',
@@ -529,7 +597,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: THEME.bg,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -551,7 +619,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    backgroundColor: THEME.bg,
+    backgroundColor: 'transparent',
   },
   nextBtn: {
     backgroundColor: THEME.accent,
@@ -654,9 +722,9 @@ const styles = StyleSheet.create({
   chipsWrapper: {
     padding: 16,
     paddingBottom: 24,
-    backgroundColor: THEME.cardBg,
+    backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: THEME.border,
+    borderTopColor: 'rgba(226, 232, 240, 0.5)',
   },
   chipsContainer: {
     flexDirection: 'row',

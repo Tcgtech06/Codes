@@ -28,6 +28,7 @@ export default function SignupScreen() {
   const [preferredLanguage, setPreferredLanguage] = useState<'EN' | 'TA' | 'TG' | 'HI'>('EN');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   // Phone Auth States
   const [authMode, setAuthMode] = useState<'email' | 'phone'>('email');
@@ -43,6 +44,10 @@ export default function SignupScreen() {
       setError('Please fill in all fields');
       return;
     }
+    if (!acceptedTerms) {
+      setError('You must accept the Terms & Conditions and Privacy Policy to register.');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -56,6 +61,8 @@ export default function SignupScreen() {
         name,
         email,
         preferredLanguage,
+        termsAccepted: true,
+        termsAcceptedAt: new Date().toISOString(),
         createdAt: new Date().toISOString()
       });
 
@@ -90,6 +97,10 @@ export default function SignupScreen() {
   const handleVerifyOTP = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (!otp || !confirmResult) return setError('Please enter OTP');
+    if (!acceptedTerms) {
+      setError('You must accept the Terms & Conditions and Privacy Policy to register.');
+      return;
+    }
     
     setLoading(true);
     setError('');
@@ -101,6 +112,8 @@ export default function SignupScreen() {
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         phone: phoneNumber,
         preferredLanguage,
+        termsAccepted: true,
+        termsAcceptedAt: new Date().toISOString(),
         createdAt: new Date().toISOString()
       }, { merge: true });
 
@@ -204,6 +217,21 @@ export default function SignupScreen() {
               </View>
 
               <TouchableOpacity 
+                style={styles.checkboxContainer} 
+                onPress={() => setAcceptedTerms(!acceptedTerms)}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={acceptedTerms ? "checkbox" : "square-outline"} 
+                  size={20} 
+                  color={acceptedTerms ? t.accent1 : t.textSecondary} 
+                />
+                <Text style={styles.checkboxText}>
+                  I agree to the <Text style={styles.linkText} onPress={() => router.push('/terms')}>Terms & Conditions</Text> and <Text style={styles.linkText} onPress={() => router.push('/privacy')}>Privacy Policy</Text>.
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
                 style={styles.signupButton} 
                 onPress={handleSignup}
                 disabled={loading}
@@ -272,6 +300,21 @@ export default function SignupScreen() {
                       />
                     </View>
                   </View>
+                  <TouchableOpacity 
+                    style={styles.checkboxContainer} 
+                    onPress={() => setAcceptedTerms(!acceptedTerms)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons 
+                      name={acceptedTerms ? "checkbox" : "square-outline"} 
+                      size={20} 
+                      color={acceptedTerms ? t.accent1 : t.textSecondary} 
+                    />
+                    <Text style={styles.checkboxText}>
+                      I agree to the <Text style={styles.linkText} onPress={() => router.push('/terms')}>Terms & Conditions</Text> and <Text style={styles.linkText} onPress={() => router.push('/privacy')}>Privacy Policy</Text>.
+                    </Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity 
                     style={styles.signupButton} 
                     onPress={handleVerifyOTP}
@@ -470,5 +513,23 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: t.textSecondary,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 12,
+    width: '100%',
+  },
+  checkboxText: {
+    fontSize: 13,
+    color: t.textSecondary,
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 20,
+  },
+  linkText: {
+    color: t.accent1,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   }
 });
