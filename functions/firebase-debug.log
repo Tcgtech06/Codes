@@ -1,28 +1,25 @@
-[debug] [2026-08-09T12:30:07.288Z] ----------------------------------------------------------------------
-[debug] [2026-08-09T12:30:07.291Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Mohankumar\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js emulators:start --only functions
-[debug] [2026-08-09T12:30:07.291Z] CLI Version:   15.23.0
-[debug] [2026-08-09T12:30:07.291Z] Platform:      win32
-[debug] [2026-08-09T12:30:07.291Z] Node Version:  v22.18.0
-[debug] [2026-08-09T12:30:07.292Z] Detected Agent: unknown
-[debug] [2026-08-09T12:30:07.292Z] Time:          Sun Aug 09 2026 18:00:07 GMT+0530 (India Standard Time)
-[debug] [2026-08-09T12:30:07.292Z] ----------------------------------------------------------------------
+[debug] [2026-08-09T12:35:53.050Z] ----------------------------------------------------------------------
+[debug] [2026-08-09T12:35:53.054Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Mohankumar\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js emulators:start --only functions
+[debug] [2026-08-09T12:35:53.058Z] CLI Version:   15.23.0
+[debug] [2026-08-09T12:35:53.058Z] Platform:      win32
+[debug] [2026-08-09T12:35:53.058Z] Node Version:  v22.18.0
+[debug] [2026-08-09T12:35:53.059Z] Detected Agent: unknown
+[debug] [2026-08-09T12:35:53.059Z] Time:          Sun Aug 09 2026 18:05:53 GMT+0530 (India Standard Time)
+[debug] [2026-08-09T12:35:53.059Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2026-08-09T12:30:07.306Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
-[debug] [2026-08-09T12:30:27.457Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
-[debug] [2026-08-09T12:30:27.457Z] > authorizing via signed-in user (tcgerp06@gmail.com)
+[debug] [2026-08-09T12:35:55.419Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-08-09T12:35:55.420Z] > authorizing via signed-in user (tcgerp06@gmail.com)
 [info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
-[debug] [2026-08-09T12:30:27.469Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2026-08-09T12:30:27.470Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
-[debug] [2026-08-09T12:30:27.485Z] Write emulator hub locator at C:\Users\MOHANK~1\AppData\Local\Temp\hub-tirupur-ai.json
-[debug] [2026-08-09T12:30:27.519Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2026-08-09T12:30:27.519Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2026-08-09T12:30:27.519Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2026-08-09T12:30:27.519Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[debug] [2026-08-09T12:35:55.432Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-08-09T12:35:55.432Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-08-09T12:35:55.440Z] Write emulator hub locator at C:\Users\MOHANK~1\AppData\Local\Temp\hub-tirupur-ai.json
+[debug] [2026-08-09T12:35:55.466Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-08-09T12:35:55.466Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-08-09T12:35:55.466Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-08-09T12:35:55.466Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
 [warn] !  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect\u001b[22m"}}
-[debug] [2026-08-09T12:30:27.680Z] defaultcredentials: writing to file C:\Users\Mohankumar\AppData\Roaming\firebase\tcgerp06_gmail_com_application_default_credentials.json
-[debug] [2026-08-09T12:30:27.682Z] Setting GAC to C:\Users\Mohankumar\AppData\Roaming\firebase\tcgerp06_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to C:\\Users\\Mohankumar\\AppData\\Roaming\\firebase\\tcgerp06_gmail_com_application_default_credentials.json"}}
-[debug] [2026-08-09T12:30:27.684Z] Checked if tokens are valid: false, expires at: 1785483855420
-[debug] [2026-08-09T12:30:27.685Z] Checked if tokens are valid: false, expires at: 1785483855420
-[debug] [2026-08-09T12:30:27.685Z] > refreshing access token with scopes: []
-[debug] [2026-08-09T12:30:27.687Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
-[debug] [2026-08-09T12:30:27.687Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-08-09T12:35:55.574Z] defaultcredentials: writing to file C:\Users\Mohankumar\AppData\Roaming\firebase\tcgerp06_gmail_com_application_default_credentials.json
+[debug] [2026-08-09T12:35:55.576Z] Setting GAC to C:\Users\Mohankumar\AppData\Roaming\firebase\tcgerp06_gmail_com_application_default_credentials.json {"metadata":{"emulator":{"name":"functions"},"message":"Setting GAC to C:\\Users\\Mohankumar\\AppData\\Roaming\\firebase\\tcgerp06_gmail_com_application_default_credentials.json"}}
+[debug] [2026-08-09T12:35:55.578Z] Checked if tokens are valid: true, expires at: 1786282228046
+[debug] [2026-08-09T12:35:55.579Z] Checked if tokens are valid: true, expires at: 1786282228046
+[debug] [2026-08-09T12:35:55.580Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/tirupur-ai/adminSdkConfig [none]

@@ -331,7 +331,7 @@ export default function App() {
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [hasUsedMic, setHasUsedMic] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number, results?: any[] }[]>([]);
+  const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number, results?: any[], feedback?: 'like' | 'dislike' }[]>([]);
   const hasText = inputText.trim().length > 0;
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
@@ -585,6 +585,11 @@ export default function App() {
         </TouchableOpacity>
       </Animated.View>
     );
+  };
+
+  const handleFeedback = (msgId: string, feedback: 'like' | 'dislike') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, feedback } : m));
   };
 
   const handleSend = async (textOverride?: string) => {
@@ -1052,11 +1057,11 @@ export default function App() {
                           }} style={{ padding: 4 }}>
                             <Ionicons name="copy-outline" size={16} color={t.textSecondary} />
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})} style={{ padding: 4 }}>
-                            <Ionicons name="thumbs-up-outline" size={16} color={t.textSecondary} />
+                          <TouchableOpacity onPress={() => handleFeedback(msg.id, 'like')} style={{ padding: 4 }}>
+                            <Ionicons name={msg.feedback === 'like' ? "thumbs-up" : "thumbs-up-outline"} size={16} color={msg.feedback === 'like' ? '#10B981' : t.textSecondary} />
                           </TouchableOpacity>
-                          <TouchableOpacity onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})} style={{ padding: 4 }}>
-                            <Ionicons name="thumbs-down-outline" size={16} color={t.textSecondary} />
+                          <TouchableOpacity onPress={() => handleFeedback(msg.id, 'dislike')} style={{ padding: 4 }}>
+                            <Ionicons name={msg.feedback === 'dislike' ? "thumbs-down" : "thumbs-down-outline"} size={16} color={msg.feedback === 'dislike' ? '#EF4444' : t.textSecondary} />
                           </TouchableOpacity>
                         </View>
                       )}
