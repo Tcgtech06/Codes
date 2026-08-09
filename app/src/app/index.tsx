@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, SafeAreaView, StatusBar, ScrollView, Pressable, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, SafeAreaView, StatusBar, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const translations = {
   TA: {
@@ -82,14 +83,14 @@ const LANGUAGES = ['TA', 'EN', 'TG', 'HI'] as const;
 type LangType = typeof LANGUAGES[number];
 
 const THEME = {
-  bg: '#F8FAFC',
-  cardBg: '#FFFFFF',
-  textPrimary: '#0F172A',
-  textSecondary: '#4B5563',
-  accent: '#14532D', // Forest Green
-  border: '#E2E8F0',
-  botBubble: '#F1F5F9',
-  userBubble: '#14532D',
+  bg: '#000000',
+  cardBg: 'rgba(255, 255, 255, 0.1)',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#94A3B8',
+  accent: '#22C55E', // Sleek Bright Green
+  border: 'rgba(255, 255, 255, 0.15)',
+  botBubble: 'rgba(255, 255, 255, 0.15)',
+  userBubble: '#22C55E',
 };
 
 export default function IntroScreen() {
@@ -110,12 +111,14 @@ export default function IntroScreen() {
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
+  const slideUpAnim = fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [30, 0] });
+  
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const bgScaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Initial fade in for Welcome
+    fadeAnim.setValue(0);
     Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }).start();
 
     // Pulse for buttons
@@ -138,6 +141,9 @@ export default function IntroScreen() {
   const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   const handleNextTourStep = () => {
+    fadeAnim.setValue(0); // Reset animation for next step
+    Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
+    
     if (tourStep === 0) {
       setTourStep(1);
     } else if (tourStep === 1) {
@@ -214,9 +220,12 @@ export default function IntroScreen() {
         source={getBackgroundImage()} 
         style={[StyleSheet.absoluteFillObject, { width: '100%', height: '100%', transform: [{ scale: bgScaleAnim }] }]}
         resizeMode="cover"
-        blurRadius={3}
+        blurRadius={2}
       />
-      <View style={styles.bgOverlay} />
+      <LinearGradient 
+        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']} 
+        style={styles.bgOverlay} 
+      />
 
       {/* Full Screen Overlay for Step 1 */}
       {tourStep === 1 && (
@@ -272,25 +281,25 @@ export default function IntroScreen() {
       <View style={styles.mainContent}>
         {/* Step 0: Welcome */}
         {tourStep === 0 && (
-          <View style={styles.centerBox}>
-            <Ionicons name="sparkles" size={48} color={THEME.accent} style={{ marginBottom: 20 }} />
+          <Animated.View style={[styles.centerBox, { opacity: fadeAnim, transform: [{ translateY: slideUpAnim }] }]}>
+            <Ionicons name="sparkles" size={56} color={THEME.textPrimary} style={{ marginBottom: 20, shadowColor: '#fff', shadowOpacity: 0.5, shadowRadius: 10 }} />
             <Text style={styles.welcomeText}>{t.welcome}</Text>
-          </View>
+          </Animated.View>
         )}
 
         {/* Step 1 & 2: About / Wait */}
         {(tourStep === 1 || tourStep === 2) && (
-          <View style={[styles.centerBox, { zIndex: 10 }]}>
+          <Animated.View style={[styles.centerBox, { zIndex: 10, opacity: fadeAnim, transform: [{ translateY: slideUpAnim }] }]}>
             {tourStep === 2 && (
               <View style={styles.aboutCard}>
                 <View style={styles.aboutIconWrapper}>
-                  <Ionicons name="business" size={32} color={THEME.accent} />
+                  <Ionicons name="business" size={32} color={THEME.textPrimary} />
                 </View>
                 <Text style={styles.aboutTitle}>{t.tourAboutTitle}</Text>
                 <Text style={styles.aboutDesc}>{t.tourAboutDesc}</Text>
               </View>
             )}
-          </View>
+          </Animated.View>
         )}
 
         {/* Step 3: Chat Sim */}
@@ -344,12 +353,20 @@ export default function IntroScreen() {
 
       {/* Tour Next Button Footer (for steps 0,1,2) */}
       {tourStep < 3 && (
-        <View style={[styles.footer, { zIndex: tourStep === 1 ? 100 : 10 }]}>
+        <Animated.View style={[styles.footer, { zIndex: tourStep === 1 ? 100 : 10, opacity: fadeAnim, transform: [{ translateY: slideUpAnim }] }]}>
+          
+          {/* Line Progress Indicator */}
+          <View style={styles.progressContainer}>
+            {[0, 1, 2].map(step => (
+              <View key={step} style={[styles.progressLine, { backgroundColor: tourStep >= step ? THEME.textPrimary : 'rgba(255,255,255,0.2)' }]} />
+            ))}
+          </View>
+
           <TouchableOpacity style={styles.nextBtn} onPress={handleNextTourStep}>
             <Text style={styles.nextBtnText}>{tourStep === 2 ? t.startChatTourBtn : t.nextBtn}</Text>
             <Ionicons name="arrow-forward" size={20} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       )}
 
 
@@ -367,7 +384,7 @@ const InteractiveChip = ({ text, icon, onPress }: { text: string, icon: any, onP
       onPress={onPress}
     >
       <Animated.View style={[styles.chip, { transform: [{ scale }] }]}>
-        <Ionicons name={icon} size={18} color={THEME.accent} style={{ marginRight: 8 }} />
+        <Ionicons name={icon} size={18} color={THEME.textPrimary} style={{ marginRight: 8 }} />
         <Text style={styles.chipText}>{text}</Text>
       </Animated.View>
     </Pressable>
@@ -446,12 +463,11 @@ const styles = StyleSheet.create({
   },
   bgOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(248, 250, 252, 0.88)', // Light frosted glass overlay to make text readable
   },
   overlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     zIndex: 50,
   },
   header: {
@@ -459,9 +475,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    paddingTop: 40, // for android status bar if translucent
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(226, 232, 240, 0.5)',
+    paddingTop: 40,
     backgroundColor: 'transparent',
     zIndex: 100,
   },
@@ -477,7 +491,7 @@ const styles = StyleSheet.create({
   langBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    backgroundColor: THEME.cardBg,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -485,10 +499,10 @@ const styles = StyleSheet.create({
     borderColor: THEME.border,
   },
   langBtnHighlight: {
-    backgroundColor: '#FFFFFF',
-    borderColor: THEME.accent,
-    borderWidth: 2,
-    shadowColor: THEME.accent,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderColor: THEME.textPrimary,
+    borderWidth: 1,
+    shadowColor: THEME.textPrimary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 10,
@@ -574,14 +588,15 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   welcomeText: {
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: '900',
     color: THEME.textPrimary,
     textAlign: 'center',
-    lineHeight: 42,
+    lineHeight: 52,
+    letterSpacing: -1,
   },
   aboutCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: THEME.cardBg,
     padding: 24,
     borderRadius: 24,
     alignItems: 'center',
@@ -597,7 +612,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -619,10 +634,24 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
+    paddingBottom: 40,
     backgroundColor: 'transparent',
   },
+  progressContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+    justifyContent: 'center',
+  },
+  progressLine: {
+    height: 4,
+    width: 40,
+    borderRadius: 2,
+  },
   nextBtn: {
-    backgroundColor: THEME.accent,
+    backgroundColor: THEME.cardBg,
+    borderWidth: 1,
+    borderColor: THEME.border,
     flexDirection: 'row',
     paddingVertical: 16,
     borderRadius: 20,
