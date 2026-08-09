@@ -901,70 +901,39 @@ export default function App() {
             <ScrollView
               ref={scrollViewRef}
               style={{ flex: 1 }}
-              contentContainerStyle={[styles.chatArea, isWebOrTablet && { paddingHorizontal: '10%', paddingVertical: 40 }, { paddingTop: isWebOrTablet ? 60 : 90 }]}
+              contentContainerStyle={[styles.chatArea, { width: '100%', maxWidth: 800, alignSelf: 'center', paddingHorizontal: 10 }, { paddingTop: isWebOrTablet ? 60 : 90 }]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
               onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
 
-              {/* Empty State Welcome Dashboard */}
+              {/* Empty State Welcome Dashboard (Idea 4) */}
               {messages.length === 0 && !isChatLoading && (
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: isWebOrTablet ? 40 : 20, paddingHorizontal: 20 }}>
-                  <View style={{ backgroundColor: t.cardBg, borderRadius: 24, padding: 24, width: '100%', maxWidth: 600, borderWidth: 1, borderColor: t.border, shadowColor: t.textPrimary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
-                    
-                    <View style={{ alignItems: 'center', marginBottom: 24 }}>
-                      <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(139, 92, 246, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-                        <Ionicons name="sparkles" size={32} color="#8B5CF6" />
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: isWebOrTablet ? 40 : 20, paddingHorizontal: 10 }}>
+                  <View style={{ width: '100%', maxWidth: 700 }}>
+                    <View style={{ alignItems: 'center', marginBottom: 40 }}>
+                      <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: t.bg, borderWidth: 1, borderColor: t.border, alignItems: 'center', justifyContent: 'center', marginBottom: 20, shadowColor: t.textPrimary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 }}>
+                        <Ionicons name="sparkles" size={32} color={t.textPrimary} />
                       </View>
-                      <Text style={{ fontSize: 24, fontWeight: 'bold', color: t.textPrimary, textAlign: 'center' }}>{tr.welcome}</Text>
-                      <Text style={{ fontSize: 16, color: t.textSecondary, textAlign: 'center', marginTop: 4 }}>{tr.dashTitle}</Text>
+                      <Text style={{ fontSize: 28, fontWeight: '700', color: t.textPrimary, textAlign: 'center', marginBottom: 8 }}>{tr.welcome}</Text>
+                      <Text style={{ fontSize: 16, color: t.textSecondary, textAlign: 'center' }}>{tr.dashTitle}</Text>
                     </View>
 
-                    <View style={{ gap: 20, marginBottom: 30 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
-                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-                          <Ionicons name="search" size={20} color="#3B82F6" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP1}</Text>
-                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP1Sub}</Text>
-                        </View>
-                      </View>
-                      
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
-                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-                          <Ionicons name="mic" size={20} color="#10B981" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP2}</Text>
-                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP2Sub}</Text>
-                        </View>
-                      </View>
-                      
-                      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16 }}>
-                        <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(245, 158, 11, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
-                          <Ionicons name="trending-up" size={20} color="#F59E0B" />
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 16, fontWeight: 'bold', color: t.textPrimary }}>{tr.dashP3}</Text>
-                          <Text style={{ fontSize: 13, color: t.textSecondary, marginTop: 2 }}>{tr.dashP3Sub}</Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    <View style={{ gap: 10 }}>
-                      <TouchableOpacity onPress={() => handleSend(tr.dashEg1)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg1}"</Text>
-                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleSend(tr.dashEg2)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg2}"</Text>
-                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleSend(tr.dashEg3)} style={{ padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ color: t.textPrimary, fontSize: 14 }}>"{tr.dashEg3}"</Text>
-                        <Ionicons name="arrow-forward" size={16} color={t.textSecondary} />
-                      </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                      {[
+                        { title: tr.dashP1, sub: tr.dashEg1, icon: 'search' },
+                        { title: tr.dashP2, sub: tr.dashEg2, icon: 'mic' },
+                        { title: tr.dashP3, sub: tr.dashEg3, icon: 'trending-up' },
+                        { title: "Tiruppur Data", sub: "Export garments manufacturers", icon: 'business' }
+                      ].map((item, idx) => (
+                        <TouchableOpacity key={idx} onPress={() => handleSend(item.sub)} style={{ width: isWebOrTablet ? '48%' : '100%', backgroundColor: t.cardBg, padding: 16, borderRadius: 16, borderWidth: 1, borderColor: t.border, marginBottom: 12 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                            <Ionicons name={item.icon as any} size={18} color={t.textSecondary} style={{ marginRight: 8 }} />
+                            <Text style={{ color: t.textPrimary, fontWeight: '600', fontSize: 14 }}>{item.title}</Text>
+                          </View>
+                          <Text style={{ color: t.textSecondary, fontSize: 13 }}>"{item.sub}"</Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
                   </View>
                 </View>
@@ -1081,8 +1050,8 @@ export default function App() {
               )}
             </ScrollView>
 
-            {/* Bottom Input Area */}
-            <View style={[styles.bottomContainer, isWebOrTablet && { paddingHorizontal: '10%' }, { backgroundColor: t.bg, paddingTop: !hasText ? 12 : 8, borderTopWidth: 1, borderTopColor: t.border }]}>
+            {/* Bottom Input Area (Idea 2 & 3) */}
+            <View style={[styles.bottomContainer, { width: '100%', maxWidth: 800, alignSelf: 'center', backgroundColor: 'transparent', paddingTop: !hasText ? 12 : 8 }]}>
               {!hasText && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsRow} contentContainerStyle={{ paddingHorizontal: 15 }}>
                   <TouchableOpacity style={[styles.chip, { backgroundColor: t.cardBg, borderColor: t.border }]}>
@@ -1100,7 +1069,7 @@ export default function App() {
                 </ScrollView>
               )}
 
-              <View style={[styles.inputWrapper, { backgroundColor: t.accent2, borderColor: t.border, borderWidth: 1, alignItems: 'center', alignSelf: 'center', width: isWebOrTablet ? '100%' : '90%' }]}>
+              <View style={[styles.inputWrapper, { backgroundColor: isDarkMode ? '#2D2D2D' : '#F4F4F5', borderColor: 'transparent', borderWidth: 0, alignItems: 'center', width: isWebOrTablet ? '100%' : '94%', alignSelf: 'center', borderRadius: 24, paddingVertical: 4, paddingHorizontal: 12 }]}>
                 {isRecording ? (
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, height: 40 }}>
                     <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444', marginRight: 10 }} />
