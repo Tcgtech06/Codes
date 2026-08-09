@@ -1017,7 +1017,7 @@ export default function App() {
 
                       {/* Render Text AT THE BOTTOM with clickable links */}
                       {msg.type === 'text' ? (
-                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 24 : 20, fontWeight: msg.role === 'user' ? '500' : 'normal', marginTop: msg.results && msg.results.length > 0 ? 5 : 0 }}>
+                        <Text style={{ color: t.textPrimary, fontSize: isWebOrTablet ? 16 : 14, lineHeight: isWebOrTablet ? 26 : 22, fontWeight: msg.role === 'user' ? '500' : 'normal', marginTop: msg.results && msg.results.length > 0 ? 5 : 0 }}>
                           {msg.text.split(/(https?:\/\/[^\s]+)/g).map((part: string, index: number) => {
                             if (part.match(/https?:\/\/[^\s]+/)) {
                               return (
@@ -1038,6 +1038,26 @@ export default function App() {
                           <Ionicons name="play-circle" size={32} color={t.textPrimary} />
                           <View style={{ height: 4, width: 100, backgroundColor: t.border, borderRadius: 2 }} />
                           <Text style={{ color: t.textPrimary, fontSize: 14, fontWeight: msg.role === 'user' ? '500' : 'normal' }}>{formatTime(msg.duration || 0)}</Text>
+                        </View>
+                      )}
+
+                      {/* Micro-interactions / Actions for AI */}
+                      {msg.role === 'ai' && (
+                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 12, marginLeft: 2, alignItems: 'center' }}>
+                          <TouchableOpacity onPress={() => {
+                            if (Platform.OS === 'web') {
+                              navigator.clipboard.writeText(msg.text);
+                            }
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                          }} style={{ padding: 4 }}>
+                            <Ionicons name="copy-outline" size={16} color={t.textSecondary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})} style={{ padding: 4 }}>
+                            <Ionicons name="thumbs-up-outline" size={16} color={t.textSecondary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})} style={{ padding: 4 }}>
+                            <Ionicons name="thumbs-down-outline" size={16} color={t.textSecondary} />
+                          </TouchableOpacity>
                         </View>
                       )}
                     </View>
