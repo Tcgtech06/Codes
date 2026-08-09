@@ -9,6 +9,7 @@ import { collection, doc, setDoc, getDoc, getDocs, query, where, deleteDoc, limi
 import { app, functions, db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { Audio } from 'expo-av';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export let SEARCH_RESULTS: any[] = [];
 
@@ -329,7 +330,7 @@ export default function App() {
   const [recordingInstance, setRecordingInstance] = useState<Audio.Recording | null>(null);
   const [language, setLanguage] = useState<'EN' | 'TA' | 'HI' | 'TG'>('EN');
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [hasUsedMic, setHasUsedMic] = useState(false);
+  const [showMicGuide, setShowMicGuide] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [messages, setMessages] = useState<{ id: string, role: 'user' | 'ai', type: 'text' | 'voice', text: string, duration?: number, results?: any[], feedback?: 'like' | 'dislike' }[]>([]);
   const hasText = inputText.trim().length > 0;
@@ -418,6 +419,26 @@ export default function App() {
       }
     };
     fetchUserLanguage();
+  }, [userId]);
+
+  // Handle First Time Mic Guide (Show only once for 5 seconds)
+  useEffect(() => {
+    const checkMicGuide = async () => {
+      if (userId === 'guest') return;
+      try {
+        const hasSeen = await AsyncStorage.getItem(`hasSeenMicGuide_${userId}`);
+        if (!hasSeen) {
+          setShowMicGuide(true);
+          setTimeout(() => {
+            setShowMicGuide(false);
+            AsyncStorage.setItem(`hasSeenMicGuide_${userId}`, 'true').catch(() => {});
+          }, 5000);
+        }
+      } catch (e) {
+        console.error("Failed to check mic guide:", e);
+      }
+    };
+    checkMicGuide();
   }, [userId]);
 
   useEffect(() => {
@@ -731,7 +752,7 @@ export default function App() {
           const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
           setRecordingInstance(recording);
           setIsRecording(true);
-          setHasUsedMic(true);
+          setShowMicGuide(false);
           setRecordingTime(0);
         } else {
           console.error('Microphone permission not granted');
@@ -1116,7 +1137,7 @@ export default function App() {
 
                   {/* Mic Button (Left of Send Button) */}
                   <View style={{ position: 'relative' }}>
-                    {!hasUsedMic && !isRecording && (
+                    {showMicGuide && !isRecording && (
                       <View pointerEvents="none" style={{ position: 'absolute', top: -35, right: -10, backgroundColor: t.accent1, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, minWidth: 90, alignItems: 'center', shadowColor: t.accent1, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5 }}>
                         <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>
                           {language === 'TA' ? 'தமிழில் பேச' : language === 'HI' ? 'यहाँ बोलें' : language === 'TG' ? 'Inga Pesunga' : 'Tap to Speak'}
