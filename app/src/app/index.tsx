@@ -317,8 +317,8 @@ export default function IntroScreen() {
             <View style={styles.chipsWrapper}>
               {showOptions1 && (
                 <View style={styles.chipsContainer}>
-                  <InteractiveChip text={t.opt1_1} icon="flash-outline" onPress={() => handleOption1(t.opt1_1, true)} />
-                  <InteractiveChip text={t.opt1_2} icon="bulb-outline" onPress={() => handleOption1(t.opt1_2, false)} />
+                  <InteractiveChip text={t.opt1} icon="flash-outline" onPress={() => handleOption1(t.opt1, true)} />
+                  <InteractiveChip text={t.opt2} icon="bulb-outline" onPress={() => handleOption1(t.opt2, false)} />
                 </View>
               )}
 
