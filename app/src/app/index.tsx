@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   langBtnText: {
-    color: THEME.accent,
+    color: THEME.textPrimary,
     fontWeight: 'bold',
     fontSize: 13,
   },
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 45,
     right: 0,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(15, 23, 42, 0.95)',
     borderRadius: 12,
     padding: 8,
     width: 120,
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   dropdownItemSelected: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   dropdownItemText: {
     fontSize: 14,
