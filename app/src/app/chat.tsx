@@ -140,6 +140,67 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
   );
 };
 
+const MapScanner = ({ t, tr }: { t: any, tr: any }) => {
+  const scanAnim = React.useRef(new Animated.Value(0)).current;
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+  const [step, setStep] = React.useState(0);
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanAnim, { toValue: 1, duration: 1500, useNativeDriver: false }),
+        Animated.timing(scanAnim, { toValue: 0, duration: 1500, useNativeDriver: false })
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.3, duration: 800, useNativeDriver: false }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: false })
+      ])
+    ).start();
+
+    const interval = setInterval(() => {
+      setStep(s => (s + 1) % 4);
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    { text: "Locating on Map...", icon: "map-outline" },
+    { text: "Scanning region...", icon: "radar-outline" },
+    { text: "Analyzing internet data...", icon: "globe-outline" },
+    { text: "Synthesizing answer...", icon: "color-wand-outline" }
+  ];
+
+  return (
+    <View style={{ width: '90%', maxWidth: 260, marginBottom: 15, padding: 12, backgroundColor: t.bg, borderRadius: 12, borderWidth: 1, borderColor: t.border, overflow: 'hidden' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+        <Ionicons name={steps[step].icon as any} size={16} color={t.accent1} style={{ marginRight: 6 }} />
+        <Text style={{ color: t.accent1, fontWeight: 'bold', fontSize: 12, fontStyle: 'italic' }}>
+          {steps[step].text}
+        </Text>
+      </View>
+      
+      <View style={{ height: 60, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+        <Ionicons name="map" size={48} color={t.border} style={{ opacity: 0.5 }} />
+        
+        <Animated.View style={{ 
+          position: 'absolute',
+          transform: [
+            { translateX: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 30] }) },
+            { translateY: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 10] }) }
+          ]
+        }}>
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <Ionicons name="location" size={24} color="#EF4444" />
+          </Animated.View>
+        </Animated.View>
+      </View>
+    </View>
+  );
+};
+
 
 const HotDogMenu = ({ isOpen, isMobile }: { isOpen?: boolean, isMobile?: boolean }) => (
   <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center', transform: [{ scale: isMobile ? 0.85 : 1 }] }}>
@@ -337,6 +398,7 @@ export default function App() {
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [currentSearchType, setCurrentSearchType] = useState<'db' | 'general'>('db');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user, logout, deleteAccount } = useAuth();
   const userId = user?.uid || 'guest';
@@ -622,6 +684,10 @@ export default function App() {
     setMessages(prev => [...prev, newMsg]);
     setInputText('');
     setIsChatLoading(true);
+
+    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coimbatore', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna'];
+    const isGeneral = generalKeywords.some(kw => textToSend.toLowerCase().includes(kw));
+    setCurrentSearchType(isGeneral ? 'general' : 'db');
 
     const searchId = Date.now();
     currentSearchId.current = searchId;
@@ -1062,10 +1128,10 @@ export default function App() {
               {isChatLoading && (
                 <View style={[styles.aiMessageRow, { alignItems: 'flex-start' }]}>
                   <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1 }]}>
-                    <Ionicons name="sparkles" size={16} color={t.accent1} />
+                    <Ionicons name={currentSearchType === 'general' ? "globe" : "sparkles"} size={16} color={t.accent1} />
                   </View>
                   <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                    <DatabaseScanner t={t} data={scanData} tr={tr} />
+                    {currentSearchType === 'general' ? <MapScanner t={t} tr={tr} /> : <DatabaseScanner t={t} data={scanData} tr={tr} />}
                   </View>
                 </View>
               )}
