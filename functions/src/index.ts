@@ -45,9 +45,14 @@ const CompanySchema = z.object({
 });
 
 // Helper function to search companies using AI
-async function getCompaniesFromQuery(query: string, language: string = 'EN') {
+async function getCompaniesFromQuery(query: string, language: string = 'EN', history: any[] = []) {
     let contextData = "";
     let dbRecords: any[] = [];
+    
+    // Format chat history into a string context
+    const historyContext = history.length > 0 
+        ? "CHAT HISTORY:\n" + history.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n') + "\n\nCURRENT QUERY:\n"
+        : "";
 
     try {
         // 1. Generate Embedding for the user query
@@ -97,6 +102,8 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN') {
             const response = await ai.generate({
                 model: model,
                 prompt: `You are the AI assistant for 'Tiruppur AI', a platform connecting people with companies in Tiruppur. 
+                
+                ${historyContext}
                 The user is asking: "${query}".
                 
                 Here is the raw database of companies:
@@ -158,13 +165,14 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN') {
 export const searchCompanyAI = onCall({ cors: true }, async (request) => {
     const query = request.data?.query;
     const language = request.data?.language || 'EN';
+    const history = request.data?.history || [];
     
     if (!query) {
         return { error: "Please provide a query." };
     }
 
     try {
-        const responseData = await getCompaniesFromQuery(query, language) as any;
+        const responseData = await getCompaniesFromQuery(query, language, history) as any;
         return { 
             text: responseData?.text || `I found ${responseData?.results?.length || 0} matching companies for your request.`,
             results: responseData?.results || [] 

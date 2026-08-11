@@ -140,7 +140,7 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
   );
 };
 
-const MapScanner = ({ t, tr }: { t: any, tr: any }) => {
+const MapScanner = ({ t, tr, query }: { t: any, tr: any, query: string }) => {
   const scanAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const [step, setStep] = useState(0);
@@ -148,15 +148,8 @@ const MapScanner = ({ t, tr }: { t: any, tr: any }) => {
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scanAnim, { toValue: 1, duration: 1500, useNativeDriver: false }),
-        Animated.timing(scanAnim, { toValue: 0, duration: 1500, useNativeDriver: false })
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.3, duration: 800, useNativeDriver: false }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: false })
+        Animated.timing(scanAnim, { toValue: 1, duration: 2000, useNativeDriver: false }),
+        Animated.timing(scanAnim, { toValue: 0, duration: 2000, useNativeDriver: false })
       ])
     ).start();
 
@@ -165,6 +158,18 @@ const MapScanner = ({ t, tr }: { t: any, tr: any }) => {
     }, 1500);
     return () => clearInterval(interval);
   }, []);
+
+  let mapImage = require('../../assets/images/world_map.png');
+  const q = (query || '').toLowerCase();
+  if (q.includes('tirupur') || q.includes('tiruppur')) {
+    mapImage = require('../../assets/images/tiruppur_map.png');
+  } else if (q.includes('coimbatore') || q.includes('kovai')) {
+    mapImage = require('../../assets/images/coimbatore_map.png');
+  } else if (q.includes('tamil nadu') || q.includes('tamilnadu') || q.includes('chennai')) {
+    mapImage = require('../../assets/images/tamil_nadu_map.png');
+  } else if (q.includes('india')) {
+    mapImage = require('../../assets/images/india_map.png');
+  }
 
   const steps = [
     { text: "Locating on Map...", icon: "map-outline" },
@@ -182,21 +187,20 @@ const MapScanner = ({ t, tr }: { t: any, tr: any }) => {
         </Text>
       </View>
       
-      <View style={{ height: 60, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-        <Ionicons name="map" size={48} color={t.border} style={{ opacity: 0.5 }} />
-        
-        <Animated.View style={{ 
-          position: 'absolute',
-          transform: [
-            { translateX: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [-30, 30] }) },
-            { translateY: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 10] }) }
-          ]
-        }}>
-          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <Ionicons name="location" size={24} color="#EF4444" />
+        <View style={{ height: 60, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+          <View style={{ flexDirection: 'row', gap: 10, opacity: 0.8 }}>
+            <Image source={mapImage} style={{ width: 80, height: 80, resizeMode: 'contain' }} />
+          </View>
+          
+          <Animated.View style={{ 
+            position: 'absolute',
+            transform: [
+              { translateX: scanAnim.interpolate({ inputRange: [0, 1], outputRange: [-40, 40] }) }
+            ]
+          }}>
+            <Ionicons name="search" size={28} color="#EF4444" />
           </Animated.View>
-        </Animated.View>
-      </View>
+        </View>
     </View>
   );
 };
@@ -685,8 +689,8 @@ export default function App() {
     setInputText('');
     setIsChatLoading(true);
 
-    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coimbatore', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna'];
-    const isGeneral = generalKeywords.some(kw => textToSend.toLowerCase().includes(kw));
+    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coimbatore', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna', 'restaurant', 'hotel', 'hospital', 'place', 'travel'];
+    const isGeneral = generalKeywords.some(kw => textToSend.toLowerCase().includes(kw)) || (messages.length > 0 && currentSearchType === 'general');
     setCurrentSearchType(isGeneral ? 'general' : 'db');
 
     const searchId = Date.now();
@@ -694,7 +698,8 @@ export default function App() {
 
     try {
       const searchCompanyAI = httpsCallable(functions, 'searchCompanyAI');
-      const response = await searchCompanyAI({ query: textToSend, language: language });
+      const recentHistory = messages.slice(-5).map((m: any) => ({ role: m.role, text: m.text }));
+      const response = await searchCompanyAI({ query: textToSend, language: language, history: recentHistory });
       
       if (currentSearchId.current !== searchId) return; // Discard if stopped
       
@@ -1131,7 +1136,7 @@ export default function App() {
                     <Ionicons name={currentSearchType === 'general' ? "globe" : "sparkles"} size={16} color={t.accent1} />
                   </View>
                   <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                    {currentSearchType === 'general' ? <MapScanner t={t} tr={tr} /> : <DatabaseScanner t={t} data={scanData} tr={tr} />}
+                    {currentSearchType === 'general' ? <MapScanner t={t} tr={tr} query={messages.length > 0 ? messages[messages.length - 1].text : ''} /> : <DatabaseScanner t={t} data={scanData} tr={tr} />}
                   </View>
                 </View>
               )}
