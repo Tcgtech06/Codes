@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState, useRef } from 'react';
 import { Linking, Modal, PanResponder, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View, Image } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { SEARCH_RESULTS } from './index';
+import { SEARCH_RESULTS } from './chat';
 
 const tLight = {
   name: 'Pastel Mint',
@@ -89,7 +89,7 @@ export default function SearchResults() {
             <TouchableOpacity onPress={() => router.back()} style={{ padding: 4, marginLeft: -4 }}>
               <Ionicons name="arrow-back" size={20} color={t.textPrimary} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>All Results ({SEARCH_RESULTS.length})</Text>
+            <Text style={styles.headerTitle}>All Results ({SEARCH_RESULTS?.length || 0})</Text>
           </View>
           <View style={{ backgroundColor: 'rgba(251, 191, 36, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(251, 191, 36, 0.3)', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text style={{ color: '#D97706', fontSize: 10, fontWeight: 'bold' }}>AD</Text>
@@ -106,7 +106,7 @@ export default function SearchResults() {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {SEARCH_RESULTS.map(company => (
+        {(SEARCH_RESULTS || []).map(company => (
           <TouchableOpacity key={company.id} activeOpacity={0.8} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCompany(company); }} style={[styles.companyCard, { borderColor: t.border, backgroundColor: t.cardBg, padding: isWebOrTablet ? 16 : 10 }, isWebOrTablet && { width: '48%', maxWidth: 400, flexGrow: 1 }]}>
             {!!company.ad && (
               <View style={{ position: 'absolute', top: 0, right: 0, backgroundColor: 'rgba(251, 191, 36, 0.15)', paddingHorizontal: 12, paddingVertical: 4, borderBottomLeftRadius: 12, zIndex: 10 }}>
