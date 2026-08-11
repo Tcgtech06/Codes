@@ -141,11 +141,11 @@ const DatabaseScanner = ({ t, data, tr }: any) => {
 };
 
 const MapScanner = ({ t, tr }: { t: any, tr: any }) => {
-  const scanAnim = React.useRef(new Animated.Value(0)).current;
-  const pulseAnim = React.useRef(new Animated.Value(1)).current;
-  const [step, setStep] = React.useState(0);
+  const scanAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [step, setStep] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(scanAnim, { toValue: 1, duration: 1500, useNativeDriver: false }),
