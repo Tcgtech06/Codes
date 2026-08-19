@@ -20,6 +20,7 @@ const ai = genkit({
 });
 
 const FALLBACK_MODELS = [
+    "nvidia/gemma",
     "groq/llama-3.3-70b-versatile",
     "groq/llama-3.1-8b-instant",
     "googleai/gemini-1.5-flash",
@@ -99,9 +100,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
         const targetLang = langMap[language] || 'English';
 
         try {
-            const response = await ai.generate({
-                model: model,
-                prompt: `You are the AI assistant for 'Tiruppur AI', a platform connecting people with companies in Tiruppur. 
+            const promptStr = `You are the AI assistant for 'Tiruppur AI', a platform connecting people with companies in Tiruppur. 
                 
                 ${historyContext}
                 The user is asking: "${query}".
@@ -127,11 +126,48 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                    - Do NOT say "I am only a textile AI". Be a helpful assistant.
                    - For general questions, provide a conversational answer in the 'text' field and LEAVE THE 'results' ARRAY EMPTY.
 
-                Format the output strictly matching the provided JSON schema.`,
-                output: { schema: CompanySchema }
-            });
+                Format the output STRICTLY as a valid JSON object matching this schema, with no markdown code blocks wrapping it:
+                {
+                  "text": "Your string response",
+                  "results": [
+                    { "id": "company123", "name": "Company Name", "verified": true, "ad": false, "offer": "", "match": "99%", "address": "", "phone": "", "email": "", "website": "", "products": ["t-shirts"] }
+                  ]
+                }`;
 
-            resultData = response.output;
+            if (model === "nvidia/gemma") {
+                const nvResponse = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer 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",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "google/gemma-4-31b-it",
+                        messages: [{ role: "user", content: promptStr }],
+                        max_tokens: 1024,
+                        temperature: 0.7
+                    })
+                });
+
+                if (!nvResponse.ok) throw new Error("Nvidia API failed: " + nvResponse.statusText);
+                
+                const nvData = await nvResponse.json();
+                let rawText = nvData.choices[0].message.content.trim();
+                
+                // Strip markdown json block if present
+                if (rawText.startsWith("```json")) rawText = rawText.substring(7);
+                if (rawText.startsWith("```")) rawText = rawText.substring(3);
+                if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
+                
+                resultData = JSON.parse(rawText.trim());
+            } else {
+                const response = await ai.generate({
+                    model: model,
+                    prompt: promptStr,
+                    output: { schema: CompanySchema }
+                });
+                resultData = response.output;
+            }
             success = true;
             break;
         } catch (error: any) {
