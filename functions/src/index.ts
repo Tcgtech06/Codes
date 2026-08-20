@@ -20,9 +20,8 @@ const ai = genkit({
 });
 
 const FALLBACK_MODELS = [
+    "nvidia/llama",
     "nvidia/gemma",
-    "groq/llama-3.3-70b-versatile",
-    "groq/llama-3.1-8b-instant",
     "googleai/gemini-1.5-flash",
     "googleai/gemini-1.5-pro"
 ];
@@ -58,7 +57,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
     try {
         // 1. Generate Embedding for the user query
         const queryEmbeddingRes = await ai.embed({
-            embedder: "googleai/embedding-001",
+            embedder: "googleai/text-embedding-004",
             content: query
         });
 
@@ -82,7 +81,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
     } catch (error: any) {
         console.warn("Vector search failed, falling back to basic fetch:", error.message);
         // Basic fallback if vector search is not ready or fails
-        const snapshot = await db.collection("companies").limit(50).get();
+        const snapshot = await db.collection("companies").limit(15).get();
         dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         contextData = JSON.stringify(dbRecords);
     }
@@ -134,11 +133,45 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                   ]
                 }`;
 
-            if (model === "nvidia/gemma") {
+            if (model === "nvidia/llama") {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 seconds timeout
+                
                 const nvResponse = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": "Bearer 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",
+                        "Authorization": "Bearer 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",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "meta/llama-3.1-70b-instruct",
+                        messages: [{ role: "user", content: promptStr }],
+                        max_tokens: 1024,
+                        temperature: 0.7
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!nvResponse.ok) throw new Error("Nvidia API failed: " + nvResponse.statusText);
+                
+                const nvData = await nvResponse.json();
+                let rawText = nvData.choices[0].message.content.trim();
+                
+                // Strip markdown json block if present
+                if (rawText.startsWith("```json")) rawText = rawText.substring(7);
+                if (rawText.startsWith("```")) rawText = rawText.substring(3);
+                if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
+                
+                resultData = JSON.parse(rawText.trim());
+            } else if (model === "nvidia/gemma") {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 35000); // 35 seconds timeout
+                
+                const nvResponse = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer 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",
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
@@ -146,8 +179,10 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                         messages: [{ role: "user", content: promptStr }],
                         max_tokens: 1024,
                         temperature: 0.7
-                    })
+                    }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeoutId);
 
                 if (!nvResponse.ok) throw new Error("Nvidia API failed: " + nvResponse.statusText);
                 
@@ -330,7 +365,7 @@ export const autoGenerateCompanyEmbedding = onDocumentWritten("companies/{compan
 
     try {
         const embeddingRes = await ai.embed({
-            embedder: "googleai/embedding-001",
+            embedder: "googleai/text-embedding-004",
             content: textToEmbed
         });
         
