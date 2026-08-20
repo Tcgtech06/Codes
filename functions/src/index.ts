@@ -22,6 +22,7 @@ const ai = genkit({
 const FALLBACK_MODELS = [
     "nvidia/llama",
     "nvidia/gemma",
+    "groq/qwen",
     "googleai/gemini-1.5-flash",
     "googleai/gemini-1.5-pro"
 ];
@@ -140,7 +141,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 const nvResponse = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": "Bearer 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",
+                        "Authorization": "Bearer " + (process.env.NVIDIA_API_KEY || ""),
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
@@ -171,7 +172,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 const nvResponse = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Authorization": "Bearer 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",
+                        "Authorization": "Bearer " + (process.env.NVIDIA_API_KEY || ""),
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
@@ -193,6 +194,40 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 if (rawText.startsWith("```json")) rawText = rawText.substring(7);
                 if (rawText.startsWith("```")) rawText = rawText.substring(3);
                 if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
+                
+                resultData = JSON.parse(rawText.trim());
+            } else if (model === "groq/qwen") {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 seconds timeout
+                
+                const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + (process.env.GROQ_API_KEY || ""),
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "qwen/qwen3.6-27b",
+                        messages: [{ role: "user", content: promptStr }],
+                        max_tokens: 1024,
+                        temperature: 0.7
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!groqResponse.ok) throw new Error("Groq API failed: " + groqResponse.statusText);
+                
+                const groqData = await groqResponse.json();
+                let rawText = groqData.choices[0].message.content.trim();
+                
+                // Strip markdown json block if present
+                if (rawText.startsWith("```json")) rawText = rawText.substring(7);
+                if (rawText.startsWith("```")) rawText = rawText.substring(3);
+                if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
+                
+                // Strip <think> tags from reasoning models
+                rawText = rawText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
                 
                 resultData = JSON.parse(rawText.trim());
             } else {
