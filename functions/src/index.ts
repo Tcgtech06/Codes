@@ -20,9 +20,9 @@ const ai = genkit({
 });
 
 const FALLBACK_MODELS = [
+    "groq/gpt-oss",
     "nvidia/llama",
     "nvidia/gemma",
-    "groq/qwen",
     "googleai/gemini-1.5-flash",
     "googleai/gemini-1.5-pro"
 ];
@@ -196,7 +196,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
                 
                 resultData = JSON.parse(rawText.trim());
-            } else if (model === "groq/qwen") {
+            } else if (model === "groq/gpt-oss") {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 seconds timeout
                 
@@ -207,7 +207,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        model: "qwen/qwen3.6-27b",
+                        model: "openai/gpt-oss-120b",
                         messages: [{ role: "user", content: promptStr }],
                         max_tokens: 1024,
                         temperature: 0.7
