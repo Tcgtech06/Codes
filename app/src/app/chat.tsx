@@ -402,7 +402,7 @@ export default function App() {
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
   const [showPhoneOptions, setShowPhoneOptions] = useState<string | null>(null);
   const [isChatLoading, setIsChatLoading] = useState(false);
-  const [currentSearchType, setCurrentSearchType] = useState<'db' | 'general'>('db');
+  const [currentSearchType, setCurrentSearchType] = useState<'db' | 'general' | 'map'>('db');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { user, logout, deleteAccount } = useAuth();
   const userId = user?.uid || 'guest';
@@ -689,9 +689,30 @@ export default function App() {
     setInputText('');
     setIsChatLoading(true);
 
-    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coimbatore', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna', 'restaurant', 'hotel', 'hospital', 'place', 'travel', 'hi', 'hello', 'ena panra', 'pudikuma', 'joke', 'hey', 'vanakkam'];
-    const isGeneral = generalKeywords.some(kw => textToSend.toLowerCase().includes(kw)) || (messages.length > 0 && currentSearchType === 'general');
-    setCurrentSearchType(isGeneral ? 'general' : 'db');
+    const textLower = textToSend.toLowerCase();
+    
+    const garmentKeywords = ['printing', 'dyeing', 'fabric', 'garment', 'textile', 'stitching', 'yarn', 'knitting', 't-shirt', 'shirt', 'cotton', 'polyester', 'mill', 'company', 'manufacturer', 'supplier', 'exporter', 'industry', 'factory'];
+    const locationKeywords = ['coimbatore', 'tirupur', 'chennai', 'erode', 'salem', 'karur', 'madurai', 'bengaluru', 'mumbai', 'delhi', 'surat', 'location', 'district', 'area', 'city'];
+    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna', 'restaurant', 'hotel', 'hospital', 'place', 'travel', 'hi', 'hello', 'ena panra', 'pudikuma', 'joke', 'hey', 'vanakkam'];
+
+    const hasGarment = garmentKeywords.some(kw => textLower.includes(kw));
+    const hasLocation = locationKeywords.some(kw => textLower.includes(kw));
+    const hasGeneral = generalKeywords.some(kw => textLower.includes(kw));
+    
+    let newSearchType: 'general' | 'db' | 'map' = 'db';
+    
+    if (hasGarment && hasLocation) {
+      newSearchType = 'db';
+    } else if (hasGarment) {
+      newSearchType = 'db';
+    } else if (hasLocation) {
+      newSearchType = 'map';
+    } else if (hasGeneral) {
+      newSearchType = 'general';
+    }
+
+    setCurrentSearchType(newSearchType);
+    const isGeneral = newSearchType === 'general';
 
     const searchId = Date.now();
     currentSearchId.current = searchId;
@@ -1140,6 +1161,8 @@ export default function App() {
                       <View style={{ padding: 12, backgroundColor: t.cardBg, borderRadius: 12, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center' }}>
                          <Text style={{ color: t.textSecondary, fontStyle: 'italic' }}>{tr.thinking}</Text>
                       </View>
+                    ) : currentSearchType === 'map' ? (
+                      <MapScanner t={t} tr={tr} query={textToSend || (messages.length > 0 ? messages[messages.length - 1].text : '')} />
                     ) : (
                       <DatabaseScanner t={t} data={scanData} tr={tr} />
                     )}
