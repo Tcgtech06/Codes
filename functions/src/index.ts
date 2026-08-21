@@ -20,11 +20,11 @@ const ai = genkit({
 });
 
 const FALLBACK_MODELS = [
+    "openrouter/gpt-4o",
+    "openrouter/gemma",
     "groq/gpt-oss",
     "nvidia/llama",
-    "nvidia/gemma",
-    "googleai/gemini-1.5-flash",
-    "googleai/gemini-1.5-pro"
+    "nvidia/gemma"
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
@@ -189,6 +189,40 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 
                 const nvData = await nvResponse.json();
                 let rawText = nvData.choices[0].message.content.trim();
+                
+                // Strip markdown json block if present
+                if (rawText.startsWith("```json")) rawText = rawText.substring(7);
+                if (rawText.startsWith("```")) rawText = rawText.substring(3);
+                if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
+                
+                resultData = JSON.parse(rawText.trim());
+            } else if (model === "openrouter/gpt-4o" || model === "openrouter/gemma") {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 seconds timeout
+                
+                let targetModel = model === "openrouter/gpt-4o" ? "openai/gpt-4o" : "google/gemma-4-31b-it:free";
+                
+                const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer " + (process.env.OPENROUTER_API_KEY || ""),
+                        "HTTP-Referer": "http://localhost:4000", // Fallback URL
+                        "X-Title": "Tirupur AI", // Fallback App Name
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: targetModel,
+                        messages: [{ role: "user", content: promptStr }],
+                        response_format: { type: "json_object" }
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (!orResponse.ok) throw new Error("OpenRouter API failed: " + orResponse.statusText);
+                
+                const orData = await orResponse.json();
+                let rawText = orData.choices[0].message.content.trim();
                 
                 // Strip markdown json block if present
                 if (rawText.startsWith("```json")) rawText = rawText.substring(7);
