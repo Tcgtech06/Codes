@@ -216,7 +216,8 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                     body: JSON.stringify({
                         model: targetModel,
                         messages: [{ role: "user", content: promptStr }],
-                        response_format: { type: "json_object" }
+                        response_format: { type: "json_object" },
+                        max_tokens: 4096
                     }),
                     signal: controller.signal
                 });
@@ -248,7 +249,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                     body: JSON.stringify({
                         model: "openai/gpt-oss-120b",
                         messages: [{ role: "user", content: promptStr }],
-                        max_tokens: 1024,
+                        max_tokens: 4096,
                         temperature: 0.7
                     }),
                     signal: controller.signal
