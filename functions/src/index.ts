@@ -21,10 +21,10 @@ const ai = genkit({
 
 const FALLBACK_MODELS = [
     "openrouter/gpt-4o",
-    "openrouter/gemma",
-    "groq/gpt-oss",
-    "nvidia/llama",
-    "nvidia/gemma"
+    "openrouter/llama-3.1-405b",
+    "openrouter/llama-3.1-70b",
+    "openrouter/gemma-4-31b",
+    "groq/gpt-oss"
 ];
 
 // Define the exact schema the Frontend expects for the Result Container
@@ -196,18 +196,21 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 if (rawText.endsWith("```")) rawText = rawText.substring(0, rawText.length - 3);
                 
                 resultData = JSON.parse(rawText.trim());
-            } else if (model === "openrouter/gpt-4o" || model === "openrouter/gemma") {
+            } else if (model.startsWith("openrouter/")) {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 seconds timeout
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 seconds strict timeout to prevent hang
                 
-                let targetModel = model === "openrouter/gpt-4o" ? "openai/gpt-4o" : "google/gemma-4-31b-it:free";
+                let targetModel = "openai/gpt-4o";
+                if (model === "openrouter/llama-3.1-405b") targetModel = "meta-llama/llama-3.1-405b-instruct";
+                else if (model === "openrouter/llama-3.1-70b") targetModel = "meta-llama/llama-3.1-70b-instruct";
+                else if (model === "openrouter/gemma-4-31b") targetModel = "google/gemma-4-31b-it:free";
                 
                 const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                     method: "POST",
                     headers: {
                         "Authorization": "Bearer " + (process.env.OPENROUTER_API_KEY || ""),
-                        "HTTP-Referer": "http://localhost:4000", // Fallback URL
-                        "X-Title": "Tirupur AI", // Fallback App Name
+                        "HTTP-Referer": "http://localhost:4000",
+                        "X-Title": "Tirupur AI",
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
@@ -219,6 +222,8 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
                 });
                 clearTimeout(timeoutId);
 
+                // If OpenRouter returns 402 (Insufficient credits), throw a specific error so we fallback quickly
+                if (orResponse.status === 402) throw new Error("OpenRouter Insufficient Credits for " + targetModel);
                 if (!orResponse.ok) throw new Error("OpenRouter API failed: " + orResponse.statusText);
                 
                 const orData = await orResponse.json();
