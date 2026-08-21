@@ -20,6 +20,10 @@ const ai = genkit({
 });
 
 const FALLBACK_MODELS = [
+    "googleai/gemini-3.7-flash",
+    "googleai/gemini-3.5-flash",
+    "googleai/gemini-2.5-pro",
+    "googleai/gemini-2.5-flash",
     "openrouter/gpt-4o",
     "openrouter/llama-3.1-405b",
     "openrouter/llama-3.1-70b",
@@ -58,7 +62,7 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
     try {
         // 1. Generate Embedding for the user query
         const queryEmbeddingRes = await ai.embed({
-            embedder: "googleai/text-embedding-004",
+            embedder: "googleai/gemini-embedding-2",
             content: query
         });
 
@@ -440,7 +444,7 @@ export const autoGenerateCompanyEmbedding = onDocumentWritten("companies/{compan
 
     try {
         const embeddingRes = await ai.embed({
-            embedder: "googleai/text-embedding-004",
+            embedder: "googleai/gemini-embedding-2",
             content: textToEmbed
         });
         
