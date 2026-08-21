@@ -50,7 +50,7 @@ const CompanySchema = z.object({
 });
 
 // Helper function to search companies using AI
-async function getCompaniesFromQuery(query: string, language: string = 'EN', history: any[] = []) {
+async function getCompaniesFromQuery(query: string, language: string = 'EN', history: any[] = [], isGeneral: boolean = false) {
     let contextData = "";
     let dbRecords: any[] = [];
     
@@ -59,7 +59,8 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
         ? "CHAT HISTORY:\n" + history.map(m => `${m.role.toUpperCase()}: ${m.text}`).join('\n') + "\n\nCURRENT QUERY:\n"
         : "";
 
-    try {
+    if (!isGeneral) {
+        try {
         // 1. Generate Embedding for the user query
         const queryEmbeddingRes = await ai.embed({
             embedder: "googleai/gemini-embedding-2",
@@ -90,11 +91,24 @@ async function getCompaniesFromQuery(query: string, language: string = 'EN', his
         dbRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         contextData = JSON.stringify(dbRecords);
     }
+}
 
     let resultData = null;
     let success = false;
 
-    for (const model of FALLBACK_MODELS) {
+    // If it's a general question, use Groq or OpenRouter's free models first to save credits and time
+    let targetModels = FALLBACK_MODELS;
+    if (isGeneral) {
+        targetModels = [
+            "groq/gpt-oss",
+            "googleai/gemini-2.5-flash",
+            "googleai/gemini-3.5-flash",
+            "openrouter/gemma-4-31b",
+            "openrouter/gpt-4o"
+        ];
+    }
+
+    for (const model of targetModels) {
         const langMap: Record<string, string> = {
             'EN': 'English',
             'TA': 'Tamil (தமிழ்) - Use Tamil script',
@@ -317,13 +331,14 @@ export const searchCompanyAI = onCall({ cors: true }, async (request) => {
     const query = request.data?.query;
     const language = request.data?.language || 'EN';
     const history = request.data?.history || [];
+    const isGeneral = request.data?.isGeneral || false;
     
     if (!query) {
         return { error: "Please provide a query." };
     }
 
     try {
-        const responseData = await getCompaniesFromQuery(query, language, history) as any;
+        const responseData = await getCompaniesFromQuery(query, language, history, isGeneral) as any;
         return { 
             text: responseData?.text || `I found ${responseData?.results?.length || 0} matching companies for your request.`,
             results: responseData?.results || [] 

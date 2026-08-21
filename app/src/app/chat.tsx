@@ -689,7 +689,7 @@ export default function App() {
     setInputText('');
     setIsChatLoading(true);
 
-    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coimbatore', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna', 'restaurant', 'hotel', 'hospital', 'place', 'travel'];
+    const generalKeywords = ['what', 'how', 'why', 'who', 'where', 'tell me', 'pathi', 'epdi', 'theriyum', 'india', 'coimbatore', 'coffee', 'about', 'general', 'sollu', 'explain', 'history', 'food', 'weather', 'news', 'best place', 'good', 'nalla', 'entha', 'yaru', 'enna', 'restaurant', 'hotel', 'hospital', 'place', 'travel', 'hi', 'hello', 'ena panra', 'pudikuma', 'joke', 'hey', 'vanakkam'];
     const isGeneral = generalKeywords.some(kw => textToSend.toLowerCase().includes(kw)) || (messages.length > 0 && currentSearchType === 'general');
     setCurrentSearchType(isGeneral ? 'general' : 'db');
 
@@ -699,7 +699,7 @@ export default function App() {
     try {
       const searchCompanyAI = httpsCallable(functions, 'searchCompanyAI');
       const recentHistory = messages.slice(-5).map((m: any) => ({ role: m.role, text: m.text }));
-      const response = await searchCompanyAI({ query: textToSend, language: language, history: recentHistory });
+      const response = await searchCompanyAI({ query: textToSend, language: language, history: recentHistory, isGeneral: isGeneral });
       
       if (currentSearchId.current !== searchId) return; // Discard if stopped
       
@@ -1133,10 +1133,16 @@ export default function App() {
               {isChatLoading && (
                 <View style={[styles.aiMessageRow, { alignItems: 'flex-start' }]}>
                   <View style={[styles.aiAvatar, { backgroundColor: t.cardBg, borderColor: t.border, borderWidth: 1 }]}>
-                    <Ionicons name={currentSearchType === 'general' ? "globe" : "sparkles"} size={16} color={t.accent1} />
+                    <Ionicons name={currentSearchType === 'general' ? "chatbubbles" : "sparkles"} size={16} color={t.accent1} />
                   </View>
                   <View style={{ flex: 1, paddingLeft: 12, paddingTop: 4 }}>
-                    {currentSearchType === 'general' ? <MapScanner t={t} tr={tr} query={messages.length > 0 ? messages[messages.length - 1].text : ''} /> : <DatabaseScanner t={t} data={scanData} tr={tr} />}
+                    {currentSearchType === 'general' ? (
+                      <View style={{ padding: 12, backgroundColor: t.cardBg, borderRadius: 12, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center' }}>
+                         <Text style={{ color: t.textSecondary, fontStyle: 'italic' }}>{tr.thinking}</Text>
+                      </View>
+                    ) : (
+                      <DatabaseScanner t={t} data={scanData} tr={tr} />
+                    )}
                   </View>
                 </View>
               )}
